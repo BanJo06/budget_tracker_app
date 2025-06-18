@@ -1,45 +1,36 @@
-// src/constants/icons.ts
-import { FC } from 'react';
-import { SvgProps } from 'react-native-svg';
+// // Import your PNG files
+// import Add from '../icons/add.png';
+// import Dashboard from '../icons/dashboard.png';
+// import Graphs from '../icons/graphs.png';
+// import Quests from '../icons/quests.png';
+// import Reports from '../icons/reports.png';
 
-// Import your SVG files
-import Add from '../icons/add.svg';
-import DashboardActive from '../icons/dashboard_active.svg';
-import DashboardNormal from '../icons/dashboard_normal.svg';
-import GraphsActive from '../icons/graphs_active.svg';
-import GraphsNormal from '../icons/graphs_normal.svg';
-import QuestsActive from '../icons/quests_active.svg';
-import QuestsNormal from '../icons/quests_normal.svg';
-import ReportsActive from '../icons/reports_active.svg';
-import ReportsNormal from '../icons/reports_normal.svg';
+// import AddActive from '../icons/add_active.png';
+// import DashboardActive from '../icons/dashboard_active.png';
+// import GraphsActive from '../icons/graphs_active.png';
+// import QuestsActive from '../icons/quests_active.png';
+// import ReportsActive from '../icons/reports_active.png';
 
-// Define a type for your icon components
-export type IconComponentType = FC<SvgProps>;
 
-interface AppIcons {
-  dashboard_normal: IconComponentType;
-  dashboard_active: IconComponentType;
-  graphs_normal: IconComponentType;
-  graphs_active: IconComponentType;
-  reports_normal: IconComponentType;
-  reports_active: IconComponentType;
-  quests_normal: IconComponentType;
-  quests_active: IconComponentType;
-  add: IconComponentType;
-  
-}
+// export const ICONS = {
+//   dashboard: Dashboard,
+//   graphs: Graphs,
+//   reports: Reports,
+//   quests: Quests,
+//   add: Add,
 
-export const AppIcons: AppIcons = {
-  dashboard_normal: DashboardNormal,
-  dashboard_active: DashboardActive,
-  graphs_normal: GraphsNormal,
-  graphs_active: GraphsActive,
-  reports_normal: ReportsNormal,
-  reports_active: ReportsActive,
-  quests_normal: QuestsNormal,
-  quests_active: QuestsActive,
-  add: Add
+//   dashboard_active: DashboardActive,
+//   graphs_active: GraphsActive,
+//   reports_active: ReportsActive,
+//   quests_active: QuestsActive,
+//   add_active: AddActive
+// };
+
+// assets/constants/icons.js
+export const ICONS = {
+  dashboard: require('../icons/dashboard.png'), // Or whatever your path is
+  graphs: require('../icons/graphs.png'),
+  add: require('../icons/add.png'),
+  reports: require('../icons/reports.png'),
+  quests: require('../icons/quests.png'),
 };
-
-// You can also create a type for icon names for better autocomplete and type safety
-export type IconName = keyof typeof AppIcons;
