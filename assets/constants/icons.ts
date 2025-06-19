@@ -1,36 +1,30 @@
-// // Import your PNG files
-// import Add from '../icons/add.png';
-// import Dashboard from '../icons/dashboard.png';
-// import Graphs from '../icons/graphs.png';
-// import Quests from '../icons/quests.png';
-// import Reports from '../icons/reports.png';
+import AddActiveIcon from '../icons/AddActiveIcon';
+import AddIcon from '../icons/AddIcon';
+import DashboardActiveIcon from '../icons/DashboardActiveIcon';
+import DashboardIcon from '../icons/DashboardIcon';
+import GraphsActiveIcon from '../icons/GraphsActiveIcon';
+import GraphsIcon from '../icons/GraphsIcon';
+import QuestsActiveIcon from '../icons/QuestsActiveIcon';
+import QuestsIcon from '../icons/QuestsIcon';
+import ReportsActiveIcon from '../icons/ReportsActiveIcon';
+import ReportsIcon from '../icons/ReportsIcon';
 
-// import AddActive from '../icons/add_active.png';
-// import DashboardActive from '../icons/dashboard_active.png';
-// import GraphsActive from '../icons/graphs_active.png';
-// import QuestsActive from '../icons/quests_active.png';
-// import ReportsActive from '../icons/reports_active.png';
+// Define an interface for your icon map for better type safety
+interface SvgIconMap {
+  [key: string]: React.FC<any>; // React.FC takes props, using 'any' for flexibility here
+  // More specific types if your icons have consistent props:
+  // [key: string]: React.FC<{ width: number; height: number; color: string }>;
+}
 
-
-// export const ICONS = {
-//   dashboard: Dashboard,
-//   graphs: Graphs,
-//   reports: Reports,
-//   quests: Quests,
-//   add: Add,
-
-//   dashboard_active: DashboardActive,
-//   graphs_active: GraphsActive,
-//   reports_active: ReportsActive,
-//   quests_active: QuestsActive,
-//   add_active: AddActive
-// };
-
-// assets/constants/icons.js
-export const ICONS = {
-  dashboard: require('../icons/dashboard.png'), // Or whatever your path is
-  graphs: require('../icons/graphs.png'),
-  add: require('../icons/add.png'),
-  reports: require('../icons/reports.png'),
-  quests: require('../icons/quests.png'),
+export const SVG_ICONS: SvgIconMap = {
+  Dashboard: DashboardIcon,
+  DashboardActive: DashboardActiveIcon,
+  Graphs: GraphsIcon,
+  GraphsActive: GraphsActiveIcon,
+  Add: AddIcon,
+  AddActive: AddActiveIcon,
+  Reports: ReportsIcon,
+  ReportsActive: ReportsActiveIcon,
+  Quests: QuestsIcon,
+  QuestsActive: QuestsActiveIcon,
 };

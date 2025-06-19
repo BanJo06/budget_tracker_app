@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import DashboardIcon from '../../assets/icons/DashboardIcon';
 
 export default function Index() {
   return (
@@ -7,6 +8,7 @@ export default function Index() {
       <Text className="text-red-500 font-bold text-lg">
   If you can see this text styled, Tailwind CSS is working!
 </Text>
+  <DashboardIcon></DashboardIcon>
     </View>
   );
 }
