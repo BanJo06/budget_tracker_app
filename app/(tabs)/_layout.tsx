@@ -29,8 +29,6 @@ const NoHighlightTabBarButton: React.FC<BottomTabBarButtonProps> = (props) => {
   );
 };
   
-
-
 interface AddButtonProps extends BottomTabBarButtonProps {
   children: React.ReactNode;
 }
@@ -46,11 +44,7 @@ const AddTabBarButton: React.FC<AddButtonProps> = (props) => {
       className="flex-1 justify-center items-center relative -mt-6"
     >
       {({ pressed }) => (
-        <View
-          className={`
-            w-16 h-16 rounded-full items-center justify-center shadow-lg}
-          `}
-        >
+        <View>
           {pressed ? (
             // Icon when pressed (e.g., active icon)
             <SVG_ICONS.AddActive width={52} height={52} />
@@ -69,11 +63,9 @@ const _Layout = () => {
   return (
     <Tabs
       screenOptions={{
-        // Define your active and inactive tint colors here
-        // These colors will be passed as the 'color' prop to your icons
         tabBarActiveTintColor: '#8938E9', // Example: Tomato Red for active
-        tabBarInactiveTintColor: '#777777', // Example: Gray for inactive
-        tabBarShowLabel: true, // Show the text label below the icon
+        tabBarInactiveTintColor: '#000000', // Example: Gray for inactive
+        tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 10,
         },
@@ -81,13 +73,7 @@ const _Layout = () => {
           backgroundColor: '#FFFFFF', // Example background for the tab bar itself
           borderTopWidth: 1,
           borderTopColor: '#EEEEEE',
-        },
-        tabBarItemStyle: {
-          flex: 1,
-          justifyContent: 'center', // Center content vertically
-          alignItems: 'center',    // Center content horizontally
-          paddingVertical: 5,      // Add some padding if needed
-        },
+        }
       }}
     >
       <Tabs.Screen
@@ -100,8 +86,8 @@ const _Layout = () => {
               ? SVG_ICONS.DashboardActive
               : SVG_ICONS.Dashboard;
             return (
-              <View className="items-center justify-center">
-                <IconComponent width={size} height={size} color={color} />
+              <View>
+                <IconComponent/>
               </View>
             );
           },
@@ -118,8 +104,8 @@ const _Layout = () => {
               ? SVG_ICONS.GraphsActive
               : SVG_ICONS.Graphs;
             return (
-              <View className="items-center justify-center">
-                <IconComponent width={size} height={size} color={color} />
+              <View>
+                <IconComponent/>
               </View>
             );
           },
@@ -149,14 +135,9 @@ const _Layout = () => {
               : SVG_ICONS.Reports;
             return (
               <View className="items-center justify-center">
-                <IconComponent width={size} height={size} color={color} />
+                <IconComponent/>
               </View>
             );
-          },
-          tabBarItemStyle: {
-            flex: 1, // Ensure the item takes up its full available space
-            justifyContent: 'center', // Center content vertically
-            alignItems: 'center',   // Center content horizontally
           },
           tabBarButton: (props) => <NoHighlightTabBarButton {...props} />
         }}
@@ -172,7 +153,7 @@ const _Layout = () => {
               : SVG_ICONS.Quests;
             return (
               <View className="items-center justify-center">
-                <IconComponent width={size} height={size} color={color} />
+                <IconComponent/>
               </View>
             );
           },
