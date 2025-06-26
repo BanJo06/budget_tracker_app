@@ -59,7 +59,45 @@ export default function Index() {
             </View>
           </View>
             
-            <View className='w-full px-[32] py-[16]'> 
+            <View className='w-[330] h-[80] my-[16] p-[16] bg-white rounded-2xl' 
+            style={[
+                    { elevation: 5 },
+                  ]}>
+                <View className='flex-row'>
+                  <View className='w-[48] h-[48] bg-[#8938E9] rounded-[16]'>
+                  </View>
+
+                  <View className='pl-[20] gap-[6] self-center'>
+                    <Text className='text-[12px] text-[#392F46] opacity-65'>Spent this week:</Text>
+                    <Text className='text-[16px] font-medium'>₱800.00</Text>
+                  </View>
+                  
+                  <View className='flex-1 self-center items-end'>
+                    <SVG_ICONS.ArrowRight width={24} height={24}/>
+                  </View>
+                </View>
+            </View>
+
+            <View className='w-[330] h-[80] p-[16] bg-white rounded-2xl' 
+            style={[
+                    { elevation: 5 },
+                  ]}>
+                <View className='flex-row'>
+                  <View className='w-[48] h-[48] bg-[#8938E9] rounded-[16]'>
+                  </View>
+
+                  <View className='pl-[20] gap-[6] self-center'>
+                    <Text className='text-[12px] text-[#392F46] opacity-65'>Earned this week:</Text>
+                    <Text className='text-[16px] font-medium'>₱1300.00</Text>
+                  </View>
+                  
+                  <View className='flex-1 self-center items-end'>
+                    <SVG_ICONS.ArrowRight width={24} height={24}/>
+                  </View>
+                </View>
+            </View>
+
+            <View className='w-full m-[32] pl-[32]'> 
               <Text className='font-medium'>
               Planned Budgets
               </Text>
