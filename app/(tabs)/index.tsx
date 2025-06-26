@@ -1,29 +1,8 @@
 import React, { useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { Button, Text, View } from 'react-native';
+import { SVG_ICONS } from '../../assets/constants/icons';
 import ProgressRing from '../../components/ProgressRing';
 import ReusableRoundedBoxComponent from '../../components/RoundedBoxComponent';
-
-// Styles for your main Index component
-const mainStyles = StyleSheet.create({
-  container: {
-    flex: 1, // Make the main container fill the entire screen
-    justifyContent: 'flex-start', // Center content vertically
-    alignItems: 'center',   // Center content horizontally
-    backgroundColor: '#f0f0f0',
-  },
-  welcomeText: {
-    marginTop: 20,
-    marginBottom: 20,
-    paddingHorizontal: 20,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#555',
-  },
-  mainContent:  {
-    flex: 1,
-    alignItems:'center'
-  }
-});
 
 export default function Index() {
   
@@ -36,49 +15,60 @@ export default function Index() {
   const decreaseProgress = () => {
     setCurrentProgress((prev) => Math.max(prev - 0.1, 0));
   };
+
   return (
-    <View style={mainStyles.container}>
+    <View className='bg-[#f0f0f0] items-center'>
             <ReusableRoundedBoxComponent>
               Dashboard
             </ReusableRoundedBoxComponent>
 
-            <View className='w-[330] h-[220] p-[20] bg-white rounded-2xl'
+          <View className='w-[330] h-[220] p-[20] bg-white rounded-2xl'
             style={[
                     { elevation: 5 },
                   ]}>
               <View className='pb-[20] flex-row justify-between'>
                 <Text>Overview</Text>
-                <Text>This Week</Text>
+
+                {/* This is for navigation for 'This day', 'This week', and 'This month' */}
+                
+                <View className='flex-row justify-between gap-x-2'>
+                  <SVG_ICONS.ArrowLeft width={24} height={24}/>
+                  <Text>This Week</Text>
+                  <SVG_ICONS.ArrowRight width={24} height={24}/>
+                </View>
               </View>
 
+            <View className='flex-row justify-between'>
               <ProgressRing 
-                progress={currentProgress} // THIS IS THE FIX
+                progress={currentProgress}
                 radius={70}
                 strokeWidth={15}
-                progressColor="#8938E9" // Green
+                progressColor="#8938E9"
                 backgroundColor="#EDE1FB"
                 duration={500}
                 showPercentage={true}
               />
 
-              <View className='bg-[#EDE1FB]'><Text>Insight</Text></View>
-
-              {/* <Text className='pl-20'>The content goes here.</Text> */}
-
+              <View className='flex-col items-end justify-end pr-[10] pb-[6]'>
+                <View className='flex-row mb-[4] px-[8] py-[4] gap-[4] bg-[#EDE1FB] rounded-[16]'><SVG_ICONS.Insight width={16} height={16}/>
+                <Text className='text-[12px] text-[#8938E9]'>Insight</Text>
+                </View>
+                <Text className='text-[8px] text-[#392F46] opacity-65'>You spent 5% more</Text>
+                <Text className='text-[8px] text-[#392F46] opacity-65'>than last week</Text>
+              </View>
             </View>
+          </View>
             
-            <Text style={mainStyles.welcomeText}>
-                Welcome to the App!
-            </Text>
-
-            <View style={mainStyles.mainContent}>
-                <Text>The content goes here.</Text>
+            <View className='w-full px-[32] py-[16]'> 
+              <Text className='font-medium'>
+              Planned Budgets
+              </Text>
             </View>
 
             <View style={{ flexDirection: 'row', marginBottom: 50, gap: 10 }}>
               <Button title="Increase" onPress={increaseProgress} />
               <Button title="Decrease" onPress={decreaseProgress} />
             </View>
-        </View>
+    </View>
   );
 }

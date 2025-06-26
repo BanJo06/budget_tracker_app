@@ -83,14 +83,15 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
           cy={radius}
           r={radius - strokeWidth / 2}
           fill="transparent"
-          stroke={progressColor}
+          stroke={progressColor} // Color of the progress fill
           strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeLinecap="round"
-          animatedProps={animatedCircleProps} // Use the specific circle props
-          transform={[{ rotate: '-90deg' }]} // Start from the top
-          originX={radius}
-          originY={radius}
+          strokeDasharray={circumference} // Defines the pattern of dashes and gaps (one long dash, one long gap)
+          strokeLinecap="round" // Makes the ends of the stroke rounded
+          animatedProps={animatedCircleProps} // Apply the animated strokeDashoffset
+          // Transform to rotate the circle so the starting point is at 12 o'clock.
+          // By default, SVG draws strokes from the 3 o'clock position (0 degrees).
+          // Rotating it by -90 degrees around its center moves the start to 12 o'clock.
+          transform={`rotate(-90 ${radius} ${radius})`}
         />
       </Svg>
       {showPercentage && (

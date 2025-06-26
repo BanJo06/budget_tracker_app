@@ -6,6 +6,7 @@ import DashboardActiveIcon from '../icons/DashboardActiveIcon';
 import DashboardIcon from '../icons/DashboardIcon';
 import GraphsActiveIcon from '../icons/GraphsActiveIcon';
 import GraphsIcon from '../icons/GraphsIcon';
+import InsightIcon from '../icons/InsightIcon';
 import QuestsActiveIcon from '../icons/QuestsActiveIcon';
 import QuestsIcon from '../icons/QuestsIcon';
 import ReportsActiveIcon from '../icons/ReportsActiveIcon';
@@ -31,5 +32,6 @@ export const SVG_ICONS: SvgIconMap = {
   Quests: QuestsIcon,
   QuestsActive: QuestsActiveIcon,
   ArrowLeft: ArrowLeftIcon,
-  ArrowRight: ArrowRightIcon
+  ArrowRight: ArrowRightIcon,
+  Insight: InsightIcon
 };
