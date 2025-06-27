@@ -20,7 +20,7 @@ export default function Index() {
   return (
     <View className='bg-[#f0f0f0] items-center'>
             <ReusableRoundedBoxComponent>
-            Dashboard
+            <Text className='font-medium text-white'>Dashboard</Text>
             </ReusableRoundedBoxComponent>
 
           <View className='w-[330] h-[220] -mt-[46] p-[20] bg-white rounded-[20]'
@@ -111,9 +111,13 @@ export default function Index() {
                   <Text className='text-[14px]'>Clothes</Text>
                 </View>
               </View>
-                  <ProgressBar
-            progress={currentProgress}
-          />
+
+                  <View className='py-[16] px-[20]'>
+                    <ProgressBar progress={currentProgress}/>
+                      <View className='mt-[8]'>
+                        <Text className='text-[14px]'>Spent ₱600 from <Text className='text-[14px] text-[#8938E9]'>₱1000</Text></Text>
+                      </View>
+                  </View>
             </View>
 
             {/* <View style={{ flexDirection: 'row', marginBottom: 50, gap: 10 }}>

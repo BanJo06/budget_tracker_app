@@ -51,7 +51,7 @@ const RoundedBoxComponent = React.forwardRef<RoundedBoxHandle, RoundedBoxCompone
           ]}
         >
           {typeof children === 'string' ? (
-            <Text className="text-[16px] font-medium text-white">
+            <Text>
             {children}
             </Text>
           ) : (

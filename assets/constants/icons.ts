@@ -11,6 +11,7 @@ import QuestsActiveIcon from '../icons/QuestsActiveIcon';
 import QuestsIcon from '../icons/QuestsIcon';
 import ReportsActiveIcon from '../icons/ReportsActiveIcon';
 import ReportsIcon from '../icons/ReportsIcon';
+import SideMenuIcon from '../icons/SideMenuIcon';
 
 
 // Define an interface for your icon map for better type safety
@@ -33,5 +34,6 @@ export const SVG_ICONS: SvgIconMap = {
   QuestsActive: QuestsActiveIcon,
   ArrowLeft: ArrowLeftIcon,
   ArrowRight: ArrowRightIcon,
-  Insight: InsightIcon
+  Insight: InsightIcon,
+  SideMenu: SideMenuIcon
 };

@@ -12,8 +12,8 @@ interface ProgressBarProps {
 const ProgressBar: React.FC<ProgressBarProps> = ({
   progress,
   // Default Tailwind CSS classes for basic styling, can be overridden by props
-  containerClassName = 'w-full h-5 bg-gray-200 rounded-lg overflow-hidden border border-gray-300',
-  fillClassName = 'h-full bg-blue-500 rounded-lg',
+  containerClassName = 'w-full h-5 bg-[#EDE1FB] rounded-lg overflow-hidden',
+  fillClassName = 'h-full bg-[#8938E9] rounded-[20]',
 }) => {
   // useRef to hold the Animated.Value, ensuring it persists across re-renders
   const animatedProgress = useRef(new Animated.Value(0)).current;
