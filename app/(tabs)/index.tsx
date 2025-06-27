@@ -18,11 +18,23 @@ export default function Index() {
   };
 
   return (
+    // Main Header (Side menu, Logo and app name and Dashboard label)
     <View className='bg-[#f0f0f0] items-center'>
             <ReusableRoundedBoxComponent>
-            <Text className='font-medium text-white'>Dashboard</Text>
+              <View className='flex-col p-[32]'>
+                <View className='flex-row items-center gap-[4] mb-[16]'>
+                  <View className='w-[25] h-[25] bg-white'></View>
+                  <Text className='font-medium text-white'>Budget Tracker</Text>
+                </View>
+
+                <View className='flex-row items-center justify-center'>
+                  <SVG_ICONS.SideMenu width={30} height={30} style={{ position: 'absolute', left: 0 }}/>
+                  <Text className='text-[16px] font-medium text-white'>Dashboard</Text>
+                </View>
+              </View>
             </ReusableRoundedBoxComponent>
 
+      {/* Dashboard Overview */}
           <View className='w-[330] h-[220] -mt-[46] p-[20] bg-white rounded-[20]'
             style={[
                     { elevation: 5 },
@@ -38,7 +50,8 @@ export default function Index() {
                   <SVG_ICONS.ArrowRight width={24} height={24}/>
                 </View>
               </View>
-
+        
+        {/* Dashboard Pie Graph */}
             <View className='flex-row justify-between'>
               <ProgressRing 
                 progress={currentProgress}
@@ -59,7 +72,8 @@ export default function Index() {
               </View>
             </View>
           </View>
-            
+
+          {/* Expense overview (this week)  */}
             <View className='w-[330] h-[80] my-[16] p-[16] bg-white rounded-[20]' 
             style={[
                     { elevation: 5 },
@@ -79,6 +93,7 @@ export default function Index() {
                 </View>
             </View>
 
+            {/* Income overview (this week)  */}
             <View className='w-[330] h-[80] p-[16] bg-white rounded-[20]' 
             style={[
                     { elevation: 5 },
@@ -98,13 +113,18 @@ export default function Index() {
                 </View>
             </View>
 
+          {/* Planned Budgets Label */}
             <View className='w-full mt-[32] mb-[16] pl-[32]'> 
               <Text className='font-medium'>
               Planned Budgets
               </Text>
             </View>
             
-            <View className='w-[330] h-[140] bg-white rounded-[20]'>
+          {/* Budget Progress -- this section must have multiple data entries */}
+            <View className='w-[330] h-[140] bg-white rounded-[20]' 
+            style={[
+                    { elevation: 5 },
+                  ]}>
               <View className='w-[330] h-[40] px-[16] bg-[#8938E9]/40 rounded-t-[20] justify-center'>
                 <View className='flex-row gap-[12] items-center'>
                   <View className='w-[16] h-[16] bg-[#FCC21B]'></View>

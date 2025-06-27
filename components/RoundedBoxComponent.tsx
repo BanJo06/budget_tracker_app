@@ -1,5 +1,5 @@
 import React, { ReactNode, useImperativeHandle, useRef } from 'react';
-import { Dimensions, Platform, Text, View } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // Ensure this is from react-native-safe-area-context
 
 // 1. Define an interface for your component's props
@@ -12,8 +12,8 @@ interface RoundedBoxComponentProps {
 
 // 2. Define the interface for the custom ref handle
 interface RoundedBoxHandle {
-    measure: (...args: Parameters<View['measure']>) => void;
-    getNativeView: () => View | null;
+  measure: (...args: Parameters<View['measure']>) => void;
+  getNativeView: () => View | null;
 }
 
 // 3. Apply the custom handle interface to forwardRef and useImperativeHandle
@@ -38,25 +38,20 @@ const RoundedBoxComponent = React.forwardRef<RoundedBoxHandle, RoundedBoxCompone
       },
       getNativeView: () => innerViewRef.current,
     }));
-      
+
     return (
       // Use the 'edges' prop to control which safe area insets are applied
       <SafeAreaView className="w-full" edges={['left', 'right', 'top']}>
         <View
-            ref={innerViewRef}
-            className={`w-full p-[32] justify-center items-center bg-[#8938E9] rounded-b-[40]`}
-            style={[
+          ref={innerViewRef}
+          className={`w-full bg-[#8938E9] rounded-b-[40]`}
+          style={[
             { height: boxHeight },
             shadowStyles
           ]}
         >
-          {typeof children === 'string' ? (
-            <Text>
-            {children}
-            </Text>
-          ) : (
-           children
-          )}
+          {/* Render children directly without assuming they are strings or wrapping in Text */}
+          {children}
         </View>
       </SafeAreaView>
     );
