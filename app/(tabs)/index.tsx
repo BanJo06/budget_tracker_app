@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Button, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SVG_ICONS } from '../../assets/constants/icons';
+import ProgressBar from '../../components/ProgressBar';
 import ProgressRing from '../../components/ProgressRing';
 import ReusableRoundedBoxComponent from '../../components/RoundedBoxComponent';
 
@@ -19,21 +20,21 @@ export default function Index() {
   return (
     <View className='bg-[#f0f0f0] items-center'>
             <ReusableRoundedBoxComponent>
-              Dashboard
+            Dashboard
             </ReusableRoundedBoxComponent>
 
-          <View className='w-[330] h-[220] p-[20] bg-white rounded-2xl'
+          <View className='w-[330] h-[220] -mt-[46] p-[20] bg-white rounded-[20]'
             style={[
                     { elevation: 5 },
                   ]}>
               <View className='pb-[20] flex-row justify-between'>
-                <Text>Overview</Text>
+                <Text className='text-[12px] font-medium self-center'>Overview</Text>
 
                 {/* This is for navigation for 'This day', 'This week', and 'This month' */}
                 
                 <View className='flex-row justify-between gap-x-2'>
                   <SVG_ICONS.ArrowLeft width={24} height={24}/>
-                  <Text>This Week</Text>
+                  <Text className='text-[12px] font-medium self-center'>This Week</Text>
                   <SVG_ICONS.ArrowRight width={24} height={24}/>
                 </View>
               </View>
@@ -59,7 +60,7 @@ export default function Index() {
             </View>
           </View>
             
-            <View className='w-[330] h-[80] my-[16] p-[16] bg-white rounded-2xl' 
+            <View className='w-[330] h-[80] my-[16] p-[16] bg-white rounded-[20]' 
             style={[
                     { elevation: 5 },
                   ]}>
@@ -78,7 +79,7 @@ export default function Index() {
                 </View>
             </View>
 
-            <View className='w-[330] h-[80] p-[16] bg-white rounded-2xl' 
+            <View className='w-[330] h-[80] p-[16] bg-white rounded-[20]' 
             style={[
                     { elevation: 5 },
                   ]}>
@@ -97,16 +98,28 @@ export default function Index() {
                 </View>
             </View>
 
-            <View className='w-full m-[32] pl-[32]'> 
+            <View className='w-full mt-[32] mb-[16] pl-[32]'> 
               <Text className='font-medium'>
               Planned Budgets
               </Text>
             </View>
+            
+            <View className='w-[330] h-[140] bg-white rounded-[20]'>
+              <View className='w-[330] h-[40] px-[16] bg-[#8938E9]/40 rounded-t-[20] justify-center'>
+                <View className='flex-row gap-[12] items-center'>
+                  <View className='w-[16] h-[16] bg-[#FCC21B]'></View>
+                  <Text className='text-[14px]'>Clothes</Text>
+                </View>
+              </View>
+                  <ProgressBar
+            progress={currentProgress}
+          />
+            </View>
 
-            <View style={{ flexDirection: 'row', marginBottom: 50, gap: 10 }}>
+            {/* <View style={{ flexDirection: 'row', marginBottom: 50, gap: 10 }}>
               <Button title="Increase" onPress={increaseProgress} />
               <Button title="Decrease" onPress={decreaseProgress} />
-            </View>
+            </View> */}
     </View>
   );
 }

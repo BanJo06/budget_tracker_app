@@ -1,31 +1,26 @@
 import React, { ReactNode, useImperativeHandle, useRef } from 'react';
-import { Dimensions, Platform, Text, View } from 'react-native'; // Import NativeMethods
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Dimensions, Platform, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Ensure this is from react-native-safe-area-context
 
 // 1. Define an interface for your component's props
 interface RoundedBoxComponentProps {
-    children: ReactNode;
-    heightPercentage?: number;
-    shadowEnabled?: boolean;
-    elevation?: number;
+  children: ReactNode;
+  heightPercentage?: number;
+  shadowEnabled?: boolean;
+  elevation?: number;
 }
 
 // 2. Define the interface for the custom ref handle
-// This describes what methods/properties the parent will access via the ref
 interface RoundedBoxHandle {
     measure: (...args: Parameters<View['measure']>) => void;
-    getNativeView: () => View | null; // It's safer to allow null here as ref.current can be null
-    // Add any other methods you want to expose to the parent here
-    // Example: You could also expose some native methods directly if needed,
-    // though getNativeView often suffices for more complex interactions.
-    // focus?: () => void; // If you had an inner TextInput you wanted to focus
+    getNativeView: () => View | null;
 }
 
 // 3. Apply the custom handle interface to forwardRef and useImperativeHandle
 const RoundedBoxComponent = React.forwardRef<RoundedBoxHandle, RoundedBoxComponentProps>(
   ({
     children,
-    heightPercentage = 0.25,
+    heightPercentage = 0.20,
     shadowEnabled = true,
     elevation = 15,
   }, ref) => {
@@ -35,32 +30,32 @@ const RoundedBoxComponent = React.forwardRef<RoundedBoxHandle, RoundedBoxCompone
       { elevation: elevation } :
       {};
 
-    const innerViewRef = useRef<View>(null); // Type the ref for a View component
+    const innerViewRef = useRef<View>(null);
 
     useImperativeHandle(ref, () => ({
-      // Implement the methods defined in RoundedBoxHandle
       measure: (...args) => {
         innerViewRef.current?.measure(...args);
       },
       getNativeView: () => innerViewRef.current,
     }));
-
+      
     return (
-      <SafeAreaView className="w-full">
+      // Use the 'edges' prop to control which safe area insets are applied
+      <SafeAreaView className="w-full" edges={['left', 'right', 'top']}>
         <View
-          ref={innerViewRef}
-          className={`w-full justify-center items-center bg-[#8938E9] rounded-b-[40]`}
-          style={[
+            ref={innerViewRef}
+            className={`w-full p-[32] justify-center items-center bg-[#8938E9] rounded-b-[40]`}
+            style={[
             { height: boxHeight },
             shadowStyles
           ]}
         >
           {typeof children === 'string' ? (
-            <Text className="text-base text-white">
-              {children}
+            <Text className="text-[16px] font-medium text-white">
+            {children}
             </Text>
           ) : (
-            children
+           children
           )}
         </View>
       </SafeAreaView>
