@@ -28,30 +28,22 @@ export default function Graphs() {
 
                 <View className='flex-row items-center justify-center'>
                   <SVG_ICONS.SideMenu width={30} height={30} style={{ position: 'absolute', left: 0 }}/>
-                  <Text className='text-[16px] font-medium text-white'>Dashboard</Text>
+                  <Text className='text-[16px] font-medium text-white'>Graphs</Text>
                 </View>
               </View>
       </ReusableRoundedBoxComponent>
 
       {/* Graph Overview */}
-      <View className='w-[330] h-[220] p-[20] bg-white rounded-[20]'
+      <View className='w-[330] h-[220] p-[20] mt-[18] mb-[16] bg-white rounded-[20]'
             style={[
                     { elevation: 5 },
                   ]}>
               <View className='pb-[20] flex-row justify-between'>
-                <Text className='text-[12px] font-medium self-center'>Overview</Text>
 
-                {/* This is for navigation for 'This day', 'This week', and 'This month' */}
-                
-                <View className='flex-row justify-between gap-x-2'>
-                  <SVG_ICONS.ArrowLeft width={24} height={24}/>
-                  <Text className='text-[12px] font-medium self-center'>This Week</Text>
-                  <SVG_ICONS.ArrowRight width={24} height={24}/>
-                </View>
               </View>
         
-        {/* Dashboard Pie Graph */}
-            <View className='flex-row justify-between'>
+      {/* Graph Menu Pie Chart */}
+          <View className='flex-row justify-between'>
               <ProgressRing 
                 progress={currentProgress}
                 radius={70}
@@ -62,16 +54,109 @@ export default function Graphs() {
                 showPercentage={true}
               />
 
-              <View className='flex-col items-end justify-end pr-[10] pb-[6]'>
-                <View className='flex-row mb-[4] px-[8] py-[4] gap-[4] bg-[#EDE1FB] rounded-[16]'><SVG_ICONS.Insight width={16} height={16}/>
-                <Text className='text-[12px] text-[#8938E9]'>Insight</Text>
+      {/* Graph Menu Category and Percent */}
+            <View className='flex-1 flex-col items-start justify-start pl-[32] pr-[10] pb-[6] gap-[8]'>
+              {/* Food */}
+                <View className='flex-row gap-[8] w-full items-center'>
+                    <View className='w-[15] h-[15] bg-[#8938E9] rounded-full'></View>
+                  <View className='flex-row flex-1 justify-between items-center'> 
+                    <Text className='text-[10px] font-medium'>Food</Text>
+                    <Text className='text-[10px]'>60%</Text>
+                  </View>
                 </View>
-                <Text className='text-[8px] text-[#392F46] opacity-65'>You spent 5% more</Text>
-                <Text className='text-[8px] text-[#392F46] opacity-65'>than last week</Text>
-              </View>
+
+              {/* Shopping */}
+                <View className='flex-row gap-[8] w-full items-center'> 
+                    <View className='w-[15] h-[15] bg-yellow-400 rounded-full'></View>
+                  <View className='flex-row flex-1 justify-between items-center'> 
+                    <Text className='text-[10px] font-medium'>Shopping</Text>
+                    <Text className='text-[10px]'>32%</Text>
+                  </View>
+                </View>
+
+              {/* Gifts */}
+                <View className='flex-row gap-[8] w-full items-center'>
+                    <View className='w-[15] h-[15] bg-green-500 rounded-full'></View>
+                  <View className='flex-row flex-1 justify-between items-center'>
+                    <Text className='text-[10px] font-medium'>Gifts</Text>
+                    <Text className='text-[10px]'>8%</Text>
+                  </View>
+                </View>
             </View>
+          </View>
       </View>
 
+      <View className='w-full flex-row pl-[32] gap-[8]'>
+          <View className='w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]' 
+          style={[
+                  { elevation: 5 },
+                ]}>
+            <View className='flex-col justify-center items-center gap-[8]'>
+              <Text className='text-[16px] text-[#392F46] opacity-65'>Day</Text>
+              <Text className='text-[16px] font-bold text-[#8938E9]'>₱500.00</Text>
+            </View>
+          </View>
+
+          <View className='w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]' 
+          style={[
+                  { elevation: 5 },
+                ]}>
+            <View className='flex-col justify-center items-center gap-[8]'>
+              <Text className='text-[16px] text-[#392F46] opacity-65'>Week</Text>
+              <Text className='text-[16px] font-bold text-[#8938E9]'>₱800.00</Text>
+            </View>
+          </View>
+
+          <View className='w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]' 
+          style={[
+                  { elevation: 5 },
+                ]}>
+            <View className='flex-col justify-center items-center gap-[8]'>
+              <Text className='text-[16px] text-[#392F46] opacity-65'>Month</Text>
+              <Text className='text-[16px] font-bold text-[#8938E9]'>₱2500.00</Text>
+            </View>
+          </View>
+      </View>
+
+  {/* Total Balance based on category */}
+    <View className='w-full flex-col mt-[32] px-[32] gap-[16]'>
+          <View className='flex-row gap-[16] w-full items-center'>
+            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
+            <View className='justify-center gap-[4]'>
+              <Text className='text-[16px] font-medium'>Shopping</Text>
+              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
+            </View>
+            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
+              <Text className='text-[16px] font-medium'>₱800.00</Text>
+              <Text className='text-[12px] text-[#392F46] opacity-65'>32%</Text>
+            </View>
+          </View>
+        
+          <View className='flex-row gap-[16] w-full items-center'>
+            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
+            <View className='justify-center gap-[4]'>
+              <Text className='text-[16px] font-medium'>Food</Text>
+              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
+            </View>
+            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
+              <Text className='text-[16px] font-medium'>₱1500.00</Text>
+              <Text className='text-[12px] text-[#392F46] opacity-65'>60%</Text>
+            </View>
+          </View>
+        
+
+          <View className='flex-row gap-[16] w-full items-center'>
+            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
+            <View className='justify-center gap-[4]'>
+              <Text className='text-[16px] font-medium'>Gifts</Text>
+              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
+            </View>
+            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
+              <Text className='text-[16px] font-medium'>₱200.00</Text>
+              <Text className='text-[12px] text-[#392F46] opacity-65'>8%</Text>
+            </View>
+          </View>
+        </View>
     </View>
   );
 }
