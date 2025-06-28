@@ -1,13 +1,15 @@
 import React, { ReactNode, useImperativeHandle, useRef } from 'react';
-import { Dimensions, Platform, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; // Ensure this is from react-native-safe-area-context
+import { Dimensions, Platform, StatusBar, View } from 'react-native'; // Import StatusBar
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Still useful for iOS safe area
 
 // 1. Define an interface for your component's props
 interface RoundedBoxComponentProps {
   children: ReactNode;
-  heightPercentage?: number;
+  heightPercentage?: number; // This will define the *content* height below status bar
   shadowEnabled?: boolean;
   elevation?: number;
+  statusBarBackgroundColor?: string; // New prop for status bar background
+  statusBarStyle?: 'default' | 'light-content' | 'dark-content'; // New prop for status bar text color
 }
 
 // 2. Define the interface for the custom ref handle
@@ -20,42 +22,73 @@ interface RoundedBoxHandle {
 const RoundedBoxComponent = React.forwardRef<RoundedBoxHandle, RoundedBoxComponentProps>(
   ({
     children,
-    heightPercentage = 0.20,
+    heightPercentage = 0.20, // Default desired *content* height percentage
     shadowEnabled = true,
     elevation = 15,
+    statusBarBackgroundColor = '#f0f0f0', // Default to your header color
+    statusBarStyle = 'dark-content', // Default for dark backgrounds
   }, ref) => {
-    const boxHeight = Dimensions.get('window').height * heightPercentage;
+    // Get insets. For iOS, use insets.top. For Android, StatusBar.currentHeight
+    const insets = useSafeAreaInsets();
+    const statusBarHeight = Platform.OS === 'ios' ? insets.top : StatusBar.currentHeight || 0; // Fallback to 0
+
+    // Calculate the desired height for the main content area *below* the status bar.
+    const desiredContentHeight = Dimensions.get('window').height * heightPercentage;
+
+    // The total height of the blue box will be the desired content height
+    // PLUS the status bar height (statusBarHeight). This makes the blue background
+    // visually extend behind the status bar.
+    const totalBoxHeightIncludingStatusBar = desiredContentHeight + statusBarHeight;
 
     const shadowStyles = shadowEnabled && Platform.OS === 'android' ?
       { elevation: elevation } :
       {};
 
-    const innerViewRef = useRef<View>(null);
+    const outerViewRef = useRef<View>(null); // Ref for the main container View
 
     useImperativeHandle(ref, () => ({
       measure: (...args) => {
-        innerViewRef.current?.measure(...args);
+        outerViewRef.current?.measure(...args);
       },
-      getNativeView: () => innerViewRef.current,
+      getNativeView: () => outerViewRef.current,
     }));
 
     return (
-      // Use the 'edges' prop to control which safe area insets are applied
-      <SafeAreaView className="w-full" edges={['left', 'right', 'top']}>
-        <View
-          ref={innerViewRef}
-          className={`w-full bg-[#8938E9] rounded-b-[40]`}
-          style={[
-            { height: boxHeight },
-            shadowStyles
-          ]}
-        >
-          {/* Render children directly without assuming they are strings or wrapping in Text */}
+      // This is the outer container for the rounded blue box.
+      // It will now extend up behind the status bar.
+      <View
+        ref={outerViewRef} // Apply ref to this outer View
+        className={`w-full bg-[#8938E9] rounded-b-[40]`} // Apply background and rounding here
+        style={[
+          {
+            height: totalBoxHeightIncludingStatusBar, // Set the total height to include status bar space
+          },
+          shadowStyles
+        ]}
+      >
+        {/*
+          Control the StatusBar appearance here.
+          'translucent' ensures content can go behind the status bar on Android,
+          which is necessary if you want the header background to extend up.
+        */}
+        <StatusBar
+          backgroundColor={statusBarBackgroundColor}
+          barStyle={statusBarStyle}
+          translucent={true} // Crucial for Android to allow background to show behind
+        />
+
+        {/*
+          This inner View now applies the paddingTop explicitly based on statusBarHeight.
+          This ensures the 'children' (your menu and text) always start below the status bar.
+        */}
+        <View style={{ paddingTop: statusBarHeight, flex: 1, width: '100%' }}>
           {children}
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 );
 
 export default RoundedBoxComponent;
+
+
