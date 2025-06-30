@@ -12,6 +12,7 @@ import QuestsActiveIcon from '../icons/QuestsActiveIcon';
 import QuestsIcon from '../icons/QuestsIcon';
 import ReportsActiveIcon from '../icons/ReportsActiveIcon';
 import ReportsIcon from '../icons/ReportsIcon';
+import SearchIcon from '../icons/SearchIcon';
 import SideMenuIcon from '../icons/SideMenuIcon';
 
 
@@ -37,5 +38,6 @@ export const SVG_ICONS: SvgIconMap = {
   ArrowRight: ArrowRightIcon,
   Insight: InsightIcon,
   SideMenu: SideMenuIcon,
-  ButtonArrowDown: ButtonArrowDownIcon
+  ButtonArrowDown: ButtonArrowDownIcon,
+  Search: SearchIcon
 };
