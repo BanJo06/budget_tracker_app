@@ -21,16 +21,16 @@ export default function Index() {
     // Main Header (Side menu, Logo and app name and Dashboard label)
     <View className='bg-[#f0f0f0] items-center'>
             <ReusableRoundedBoxComponent>
-              <View className='flex-col p-[32]'>
-                <View className='flex-row items-center gap-[4] mb-[16]'>
+              <View className='flex-col px-[32] pt-[8]'>
+                <View className='flex-row items-center gap-[4] pb-[16]'>
                   <View className='w-[25] h-[25] bg-white'></View>
                   <Text className='font-medium text-white'>Budget Tracker</Text>
                 </View>
-
+              
                 <View className='flex-row items-center justify-center'>
                   <SVG_ICONS.SideMenu width={30} height={30} style={{ position: 'absolute', left: 0 }}/>
                   <Text className='text-[16px] font-medium text-white'>Dashboard</Text>
-                </View>
+                </View> 
               </View>
             </ReusableRoundedBoxComponent>
 

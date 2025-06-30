@@ -2,6 +2,7 @@ import AddActiveIcon from '../icons/AddActiveIcon';
 import AddIcon from '../icons/AddIcon';
 import ArrowLeftIcon from '../icons/ArrowLeftIcon';
 import ArrowRightIcon from '../icons/ArrowRightIcon';
+import ButtonArrowDownIcon from '../icons/ButtonArrowDownIcon';
 import DashboardActiveIcon from '../icons/DashboardActiveIcon';
 import DashboardIcon from '../icons/DashboardIcon';
 import GraphsActiveIcon from '../icons/GraphsActiveIcon';
@@ -35,5 +36,6 @@ export const SVG_ICONS: SvgIconMap = {
   ArrowLeft: ArrowLeftIcon,
   ArrowRight: ArrowRightIcon,
   Insight: InsightIcon,
-  SideMenu: SideMenuIcon
+  SideMenu: SideMenuIcon,
+  ButtonArrowDown: ButtonArrowDownIcon
 };
