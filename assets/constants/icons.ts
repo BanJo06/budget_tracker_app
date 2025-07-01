@@ -1,8 +1,10 @@
+import AccountIcon from '../icons/AccountIcon';
 import AddActiveIcon from '../icons/AddActiveIcon';
 import AddIcon from '../icons/AddIcon';
 import ArrowLeftIcon from '../icons/ArrowLeftIcon';
 import ArrowRightIcon from '../icons/ArrowRightIcon';
 import ButtonArrowDownIcon from '../icons/ButtonArrowDownIcon';
+import CategoryIcon from '../icons/CategoryIcon';
 import DailyRewardIcon from '../icons/DailyRewardIcon';
 import DashboardActiveIcon from '../icons/DashboardActiveIcon';
 import DashboardIcon from '../icons/DashboardIcon';
@@ -41,5 +43,7 @@ export const SVG_ICONS: SvgIconMap = {
   SideMenu: SideMenuIcon,
   ButtonArrowDown: ButtonArrowDownIcon,
   Search: SearchIcon,
-  DailyReward: DailyRewardIcon
+  DailyReward: DailyRewardIcon,
+  Category: CategoryIcon,
+  Account: AccountIcon
 };

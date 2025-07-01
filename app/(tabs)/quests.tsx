@@ -52,7 +52,7 @@ export default function Quests()  {
                   height={40}
                   width={168}
                   // Removed fixed width here to allow flexbox to manage layout (This comment is misleading if width is present)
-                  style={{ flex: 1, marginEnd: 10 }} // Use flex:1 to take available space, add margin to separate from button
+                  style={{ flex: 1}} // Use flex:1 to take available space, add margin to separate from button
                   // --- Styles for medium font weight ---
                   textStyle={{ fontSize: 12, fontWeight: '500' }} // Style for unselected text (medium font weight)
                   selectedTextStyle={{ fontSize: 12, fontWeight: '500' }} // Style for selected text (medium font weight)
