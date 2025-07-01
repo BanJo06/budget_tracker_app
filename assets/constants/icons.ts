@@ -3,6 +3,7 @@ import AddActiveIcon from '../icons/AddActiveIcon';
 import AddIcon from '../icons/AddIcon';
 import ArrowLeftIcon from '../icons/ArrowLeftIcon';
 import ArrowRightIcon from '../icons/ArrowRightIcon';
+import BackspaceIcon from '../icons/BackspaceIcon';
 import ButtonArrowDownIcon from '../icons/ButtonArrowDownIcon';
 import CategoryIcon from '../icons/CategoryIcon';
 import DailyRewardIcon from '../icons/DailyRewardIcon';
@@ -45,5 +46,6 @@ export const SVG_ICONS: SvgIconMap = {
   Search: SearchIcon,
   DailyReward: DailyRewardIcon,
   Category: CategoryIcon,
-  Account: AccountIcon
+  Account: AccountIcon,
+  Backspace: BackspaceIcon
 };
