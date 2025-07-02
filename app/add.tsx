@@ -119,85 +119,231 @@ export default function Add() {
       </View>
 
       <View className='mt-[24]'>
-          <View className='w-full h-[130] border-2 rounded-[10] p-4'>
+          <View className='w-full h-[100] border-2 rounded-[10] p-4'>
             <Text className='text-[14px]'>Notes</Text>
           </View>
       </View>
 
       <View className='mt-[16]'>
-        <View className='w-full h-[90] border-2 rounded-[10] p-2 flex items-end justify-center'>
-        <Text className='text-[75px] text-right' style={{ lineHeight: 75, includeFontPadding: false}}>
+        <View className='w-full h-[80] border-2 rounded-[10] p-2 flex items-end justify-center'>
+        <Text className='text-[75px] text-right' style={{ lineHeight: 65, includeFontPadding: false}}>
           0
         </Text>
         </View>
       </View>
 
       {/* Calculator Body */}
-      <View className='mt-[16] flex-col gap-4'>
-        <View className='flex-row gap-2'>
+      <View className='mt-[16] flex-col'>
+
+        {/* First Row */}
+        <View className='flex-row mb-2 justify-between'>
           <TouchableOpacity
             onPress={handlePress}
-            className="flex-1 w-1/2 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '49%',
+                flexGrow: 0,
+                flexShrink: 0,
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]" // No flex here yet
           >
             <SVG_ICONS.Backspace size={36} />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handlePress}
-            className="flex w-1/4 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            {/* Text beside the icon */}
             <Text className='text-[30px] font-bold text-[#392F46]'>C</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handlePress}
-            className="flex w-1/4 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            {/* Text beside the icon */}
             <Text className='text-[30px] font-bold text-[#392F46]'>÷</Text>
           </TouchableOpacity>
         </View>
 
-        <View className='flex-row gap-2'>
+        {/* Second Row */}
+        <View className='flex-row justify-between mb-2'>
           <TouchableOpacity
             onPress={handlePress}
-            className="flex-1 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            {/* Text beside the icon */}
             <Text className='text-[30px] font-bold text-[#392F46]'>7</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handlePress}
-            className="flex-1 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            {/* Text beside the icon */}
             <Text className='text-[30px] font-bold text-[#392F46]'>8</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handlePress}
-            className="flex-1 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            {/* Text beside the icon */}
             <Text className='text-[30px] font-bold text-[#392F46]'>9</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handlePress}
-            className="flex-1 h-[66] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            {/* Text beside the icon */}
             <Text className='text-[30px] font-bold text-[#392F46]'>X</Text>
           </TouchableOpacity>
         </View>
 
-          
+        {/* Third Row */}
+        <View className='flex-row justify-between mb-2'>
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>4</Text>
+          </TouchableOpacity>
 
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>5</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>6</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>-</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Fourth Row */}
+        <View className='flex-row justify-between mb-2'>
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>1</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>2</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>3</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>+</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Fifth Row */}
+        <View className='flex-row justify-between mb-2'>
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>0</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>00</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>.</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePress}
+            style={{
+                width: '24%',
+            }}
+            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
+          >
+            <Text className='text-[30px] font-bold text-[#392F46]'>=</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-
+      
     </View>
   )
 }
