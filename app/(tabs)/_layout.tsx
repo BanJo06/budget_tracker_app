@@ -1,5 +1,5 @@
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router'; // Import 'router' here
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import '../../app/globals.css';
@@ -28,29 +28,36 @@ const NoHighlightTabBarButton: React.FC<BottomTabBarButtonProps> = (props) => {
     </Pressable>
   );
 };
-  
+
 interface AddButtonProps extends BottomTabBarButtonProps {
+  // children is not strictly needed if we fully control the rendering
+  // but keeping it for type compatibility if props are spread
   children: React.ReactNode;
 }
 
 // Custom TabBarButton for the 'Add' tab
-const AddTabBarButton: React.FC<AddButtonProps> = (props) => {
-  const { onPress } = props;
+const AddTabBarButton: React.FC<AddButtonProps> = ({ onPress, accessibilityState }) => {
+  // `focused` indicates if this tab is currently selected, though for a navigation button, it might always be false
+  const focused = accessibilityState?.selected;
 
   return (
     <Pressable
-      onPress={onPress}
+      // CRUCIAL: This onPress navigates to the actual add.tsx screen outside the tabs
+      onPress={() => router.push('/add')} // Navigate to app/add.tsx
       android_ripple={null}
-      className="flex-1 justify-center items-center relative -mt-6"
+      // Tailwind classes for the Pressable itself, to position the floating button
+      className="flex-1 justify-center items-center relative -mt-6" // -mt-6 lifts it up
     >
       {({ pressed }) => (
-        <View>
+        <View
+          // This View creates the circular background for the icon
+          className="w-[52px] h-[52px] rounded-full justify-center items-center"
+        >
+          {/* Render the appropriate Add icon based on press state */}
           {pressed ? (
-            // Icon when pressed (e.g., active icon)
-            <SVG_ICONS.AddActive width={52} height={52} />
+            <SVG_ICONS.AddActive size={52} /> // Adjust size/color as needed
           ) : (
-            // Icon when not pressed (e.g., regular icon)
-            <SVG_ICONS.Add width={52} height={52} /> // Or a different color if AddIcon is meant to be colored
+            <SVG_ICONS.Add size={52} /> // Adjust size/color as needed
           )}
         </View>
       )}
@@ -87,7 +94,7 @@ const _Layout = () => {
               : SVG_ICONS.Dashboard;
             return (
               <View>
-                <IconComponent/>
+                <IconComponent />
               </View>
             );
           },
@@ -105,23 +112,24 @@ const _Layout = () => {
               : SVG_ICONS.Graphs;
             return (
               <View>
-                <IconComponent/>
+                <IconComponent />
               </View>
             );
           },
           tabBarButton: (props) => <NoHighlightTabBarButton {...props} />
         }}
       />
+      {/* This is the entry for your custom Add Button in the tab bar */}
       <Tabs.Screen
-        name='add'
+        name='_add-button' // CRUCIAL: Use the name of your dummy file
         options={{
-          title: 'Add',
+          title: '', // Hide default title
+          tabBarLabel: '', // Hide default label
           headerShown: false,
           tabBarButton: (props: BottomTabBarButtonProps) => (
-            <AddTabBarButton {...props} />
+            <AddTabBarButton {...props} /> // Use your custom button component
           ),
-          tabBarIcon: () => null, // Icon rendered inside AddTabBarButton
-          tabBarLabel: () => null, // Hide the label for the 'Add' tab
+          tabBarIcon: () => null, // Ensure no default icon is rendered by Tabs.Screen
         }}
       />
       <Tabs.Screen
@@ -135,7 +143,7 @@ const _Layout = () => {
               : SVG_ICONS.Reports;
             return (
               <View className="items-center justify-center">
-                <IconComponent/>
+                <IconComponent />
               </View>
             );
           },
@@ -153,7 +161,7 @@ const _Layout = () => {
               : SVG_ICONS.Quests;
             return (
               <View className="items-center justify-center">
-                <IconComponent/>
+                <IconComponent />
               </View>
             );
           },

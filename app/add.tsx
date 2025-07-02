@@ -1,9 +1,19 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 
+// Add this export to configure the screen options
+export const unstable_settings = {
+  headerShown: false, // This will hide the header for this specific screen
+};
+
 export default function Add() {
+
+  const cancelButton = () => {
+    router.replace('/(tabs)');
+  };
 
   const handlePress = () => {
         console.log("Completed quest!");
@@ -29,7 +39,7 @@ export default function Add() {
 
       <View className='mt-[16] flex-row justify-between'>
         <TouchableOpacity
-          onPress={handlePress}
+          onPress={cancelButton}
           className="w-[128px] h-[35px] justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
         >
           {/* Text beside the icon */}
