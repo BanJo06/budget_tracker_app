@@ -1,5 +1,6 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import ProgressBar from "@/components/ProgressBar";
+import { router } from "expo-router";
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
@@ -32,19 +33,25 @@ export default function Quests()  {
           </View>
 
           <View className='flex-row items-center justify-center'>
-            <SVG_ICONS.SideMenu width={30} height={30} style={{ position: 'absolute', left: 0 }}/>
+            <SVG_ICONS.SideMenu size={30} style={{ position: 'absolute', left: 0 }}/>
             <Text className='text-[16px] font-medium text-white'>Quests</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/shop')}
+              className="w-[30px] h-[30px] rounded-full flex-row absolute right-0 active:bg-[#F0E4FF]"
+            >
+              <SVG_ICONS.Shop size={30}/>
+            </TouchableOpacity>
           </View>
 
           {/* Container for the SwitchSelector and the Date/Month Selector Button */}
             <View className="flex-row justify-center w-full mt-10 gap-10">
               <SwitchSelector
                   options={options}
-                  initial={0} // Index of the initially selected option (0 for Expense)
-                  onPress={value => setSelectedOption(value)} // Callback when an option is pressed
-                  textColor={'#000000'} // Color for the unselected text
-                  selectedColor={'#ffffff'} // Color for the selected text
-                  buttonColor={'#7a44cf'} // Color for the selected button background
+                  initial={0}
+                  onPress={value => setSelectedOption(value)}
+                  textColor={'#000000'}
+                  selectedColor={'#ffffff'}
+                  buttonColor={'#7a44cf'}
                   hasPadding={true}
                   borderRadius={30}
                   borderColor={'#ffffff'}
@@ -52,10 +59,10 @@ export default function Quests()  {
                   height={40}
                   width={168}
                   // Removed fixed width here to allow flexbox to manage layout (This comment is misleading if width is present)
-                  style={{ flex: 1}} // Use flex:1 to take available space, add margin to separate from button
+                  style={{ flex: 1}}
                   // --- Styles for medium font weight ---
-                  textStyle={{ fontSize: 12, fontWeight: '500' }} // Style for unselected text (medium font weight)
-                  selectedTextStyle={{ fontSize: 12, fontWeight: '500' }} // Style for selected text (medium font weight)
+                  textStyle={{ fontSize: 12, fontWeight: '500' }}
+                  selectedTextStyle={{ fontSize: 12, fontWeight: '500' }}
               />
             </View>
           </View>
@@ -106,6 +113,8 @@ export default function Quests()  {
           <Text className='text-[16px] text-black font-medium'>Use the app for 5 minutes</Text>
         </View>
       </View>
+
+
     </View>
   )
 }

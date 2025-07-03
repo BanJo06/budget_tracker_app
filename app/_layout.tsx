@@ -1,24 +1,22 @@
 import { Stack } from "expo-router";
-import '../app/globals.css';
+import '../app/globals.css'; // Keep this if it's essential for styling to avoid other errors
 
 export default function RootLayout() {
   return (
     <Stack>
-      {/* This Stack.Screen manages the entire (tabs) group */}
       <Stack.Screen
         name="(tabs)"
-        options={{
-          headerShown: false,
-          animation: 'fade' 
-        }}
+        options={{ headerShown: false, animation: 'fade' }}
       />
 
-      {/* This Stack.Screen manages the 'add.tsx' route */}
       <Stack.Screen
-        name="add"
-        options={{
-          headerShown: false,
-        }}
+        name="add" // Try with just 'add' first
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="shop" // Or try with just 'shop'
+        options={{ headerShown: false }}
       />
     </Stack>
   );

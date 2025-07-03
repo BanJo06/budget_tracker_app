@@ -17,6 +17,8 @@ import QuestsIcon from '../icons/QuestsIcon';
 import ReportsActiveIcon from '../icons/ReportsActiveIcon';
 import ReportsIcon from '../icons/ReportsIcon';
 import SearchIcon from '../icons/SearchIcon';
+import ShopBackButtonIcon from '../icons/ShopBackButtonIcon';
+import ShopIcon from '../icons/ShopIcon';
 import SideMenuIcon from '../icons/SideMenuIcon';
 
 
@@ -47,5 +49,7 @@ export const SVG_ICONS: SvgIconMap = {
   DailyReward: DailyRewardIcon,
   Category: CategoryIcon,
   Account: AccountIcon,
-  Backspace: BackspaceIcon
+  Backspace: BackspaceIcon,
+  Shop: ShopIcon,
+  ShopBackButton: ShopBackButtonIcon
 };
