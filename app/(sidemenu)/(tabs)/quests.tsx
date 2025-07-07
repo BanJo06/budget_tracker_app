@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
-import ReusableRoundedBoxComponent from '../../components/RoundedBoxComponent';
+import ReusableRoundedBoxComponent from '../../../components/RoundedBoxComponent';
 
 export default function Quests()  {
 

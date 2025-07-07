@@ -2,7 +2,7 @@ import { SVG_ICONS } from "@/assets/constants/icons";
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
-import ReusableRoundedBoxComponent from '../../components/RoundedBoxComponent';
+import ReusableRoundedBoxComponent from '../../../components/RoundedBoxComponent';
 
 export default function Reports() {
 

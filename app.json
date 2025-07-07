@@ -11,6 +11,9 @@
     "ios": {
       "supportsTablet": true
     },
+    "experiments": {
+      "typedRoutes": true
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -34,9 +37,6 @@
           "backgroundColor": "#ffffff"
         }
       ]
-    ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    ]
   }
 }

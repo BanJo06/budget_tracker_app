@@ -18,6 +18,11 @@ export default function RootLayout() {
         name="shop" // Or try with just 'shop'
         options={{ headerShown: false }}
       />
+
+      <Stack.Screen
+        name="(sidemenu)"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

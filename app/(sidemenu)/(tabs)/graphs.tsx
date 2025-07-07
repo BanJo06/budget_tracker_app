@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
-import { SVG_ICONS } from '../../assets/constants/icons';
-import ProgressRing from '../../components/ProgressRing';
-import ReusableRoundedBoxComponent from '../../components/RoundedBoxComponent';
+import { SVG_ICONS } from '../../../assets/constants/icons';
+import ProgressRing from '../../../components/ProgressRing';
+import ReusableRoundedBoxComponent from '../../../components/RoundedBoxComponent';
 
 
 export default function Graphs() {

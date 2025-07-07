@@ -2,8 +2,8 @@ import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Tabs, router } from 'expo-router'; // Import 'router' here
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import '../../app/globals.css';
-import { SVG_ICONS } from '../../assets/constants/icons';
+import '../../../app/globals.css';
+import { SVG_ICONS } from '../../../assets/constants/icons';
 
 // A generic custom button to disable highlight/ripple for any tab
 const NoHighlightTabBarButton: React.FC<BottomTabBarButtonProps> = (props) => {

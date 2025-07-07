@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
-import { SVG_ICONS } from '../../assets/constants/icons';
-import ProgressBar from '../../components/ProgressBar';
-import ProgressRing from '../../components/ProgressRing';
-import ReusableRoundedBoxComponent from '../../components/RoundedBoxComponent';
+import { Text, TouchableOpacity, View } from 'react-native';
+
+// Assuming these are correctly imported from your project structure
+import { useNavigation, useRouter } from 'expo-router';
+import { SVG_ICONS } from '../../../assets/constants/icons';
+import ProgressBar from '../../../components/ProgressBar';
+import ProgressRing from '../../../components/ProgressRing';
+import ReusableRoundedBoxComponent from '../../../components/RoundedBoxComponent';
+import type { TabHomeScreenNavigationProp } from '../../../types';
 
 export default function Index() {
-  
+  const navigation = useNavigation<TabHomeScreenNavigationProp>();
+  const router = useRouter(); // If you need router for other actions
+
   const [currentProgress, setCurrentProgress] = useState(0.25); // State to manage progress
 
   const increaseProgress = () => {
@@ -28,7 +34,12 @@ export default function Index() {
                 </View>
               
                 <View className='flex-row items-center justify-center'>
-                  <SVG_ICONS.SideMenu width={30} height={30} style={{ position: 'absolute', left: 0 }}/>
+                  <TouchableOpacity
+                    className="w-[30px] h-[30px] rounded-full flex-row absolute left-0 active:bg-[#F0E4FF]"
+                    onPress={() => navigation.openDrawer()}
+                  >
+                    <SVG_ICONS.SideMenu width={30} height={30}/>
+                  </TouchableOpacity>
                   <Text className='text-[16px] font-medium text-white'>Dashboard</Text>
                 </View> 
               </View>
