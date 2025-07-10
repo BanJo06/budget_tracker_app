@@ -5,7 +5,12 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name="(tabs)"
+        name="index"
+        options={{ headerShown: false}}
+      />
+
+      <Stack.Screen
+        name="(sidemenu)"
         options={{ headerShown: false, animation: 'fade' }}
       />
 
@@ -16,11 +21,6 @@ export default function RootLayout() {
 
       <Stack.Screen
         name="shop" // Or try with just 'shop'
-        options={{ headerShown: false }}
-      />
-
-      <Stack.Screen
-        name="(sidemenu)"
         options={{ headerShown: false }}
       />
     </Stack>

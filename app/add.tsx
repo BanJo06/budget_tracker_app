@@ -12,7 +12,7 @@ export const unstable_settings = {
 export default function Add() {
 
   const cancelButton = () => {
-    router.replace('/(tabs)');
+    router.replace('/(sidemenu)/(tabs)');
   };
 
   const handlePress = () => {

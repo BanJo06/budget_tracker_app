@@ -6,9 +6,11 @@ import ArrowRightIcon from '../icons/ArrowRightIcon';
 import BackspaceIcon from '../icons/BackspaceIcon';
 import ButtonArrowDownIcon from '../icons/ButtonArrowDownIcon';
 import CategoryIcon from '../icons/CategoryIcon';
+import CategoryIconSidemenu from '../icons/CategoryIconSidemenu';
 import DailyRewardIcon from '../icons/DailyRewardIcon';
 import DashboardActiveIcon from '../icons/DashboardActiveIcon';
 import DashboardIcon from '../icons/DashboardIcon';
+import ExportRecordsIcon from '../icons/ExportRecordsIcon';
 import GraphsActiveIcon from '../icons/GraphsActiveIcon';
 import GraphsIcon from '../icons/GraphsIcon';
 import InsightIcon from '../icons/InsightIcon';
@@ -17,6 +19,7 @@ import QuestsIcon from '../icons/QuestsIcon';
 import ReportsActiveIcon from '../icons/ReportsActiveIcon';
 import ReportsIcon from '../icons/ReportsIcon';
 import SearchIcon from '../icons/SearchIcon';
+import SettingsIcon from '../icons/SettingsIcon';
 import ShopBackButtonIcon from '../icons/ShopBackButtonIcon';
 import ShopIcon from '../icons/ShopIcon';
 import SideMenuIcon from '../icons/SideMenuIcon';
@@ -51,5 +54,8 @@ export const SVG_ICONS: SvgIconMap = {
   Account: AccountIcon,
   Backspace: BackspaceIcon,
   Shop: ShopIcon,
-  ShopBackButton: ShopBackButtonIcon
+  ShopBackButton: ShopBackButtonIcon,
+  ExportRecords: ExportRecordsIcon,
+  CategorySidemenu: CategoryIconSidemenu,
+  Settings: SettingsIcon
 };
