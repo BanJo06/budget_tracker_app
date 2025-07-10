@@ -4,10 +4,16 @@ import { Text, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 import ReusableRoundedBoxComponent from '../../../components/RoundedBoxComponent';
 
+// import for ThreeWay Switch (content)
+
+import AccountsContent from '../../screens/accounts';
+import BudgetsContent from '../../screens/budgets';
+import RecordsContent from '../../screens/records';
+
 export default function Reports() {
 
-  // State to hold the currently selected value ('expense' or 'income')
-    const [selectedOption, setSelectedOption] = useState('expense');
+  // State to manage the selected tab
+  const [selectedReportTab, setSelectedReportTab] = useState('Records'); // State to manage the selected tab
   
     // Options for the SwitchSelector
     const options = [
@@ -15,12 +21,22 @@ export default function Reports() {
       { label: 'Budgets', value: 'budgets' },
       { label: 'Accounts', value: 'accounts' }
     ];
-  
-    const handlePress = () => {
-      console.log("Button pressed!");
-    };
 
-  return(
+    // Function to render content based on the selected tab
+  const renderContent = () => {
+    switch (selectedReportTab) {
+      case 'records':
+        return <RecordsContent />;
+      case 'budgets':
+        return <BudgetsContent />;
+      case 'accounts':
+        return <AccountsContent />;
+      default:
+        return <RecordsContent />; // Fallback
+    }
+  };
+
+  return  (
     <View className='bg-[#f0f0f0]'>
       <ReusableRoundedBoxComponent> 
         <View className='flex-col px-[32] pt-[8]'>
@@ -39,7 +55,7 @@ export default function Reports() {
               <SwitchSelector
                   options={options}
                   initial={0} // Index of the initially selected option (0 for Expense)
-                  onPress={value => setSelectedOption(value)} // Callback when an option is pressed
+                  onPress={value => setSelectedReportTab(value)}
                   textColor={'#000000'} // Color for the unselected text
                   selectedColor={'#ffffff'} // Color for the selected text
                   buttonColor={'#7a44cf'} // Color for the selected button background
@@ -58,70 +74,7 @@ export default function Reports() {
             </View>
           </View>
       </ReusableRoundedBoxComponent>
-
-        <View className='flex-row justify-end px-[32] pt-[16] pb-[8]'>
-          <SVG_ICONS.Search size={30}/>
-        </View>
-
-        {/* Records for April 17 */}
-
-        <View className='flex-col mx-8 gap-[16] my-4'>
-          <View className='gap-[8]'>
-            <Text className='font-medium'>April 17, Thursday</Text>
-            <View className="h-[2] bg-black rounded-full" />
-          </View>
-          <View className='flex-row gap-[16] items-center'>
-            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-            <View className='justify-center gap-[4]'>
-              <Text className='text-[16px] font-medium'>Gift</Text>
-              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-            </View>
-            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-              <Text className='text-[16px] font-bold'>-₱200.00</Text>
-            </View>
-          </View>
-
-          <View className='flex-row gap-[16] items-center'>
-            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-            <View className='justify-center gap-[4]'>
-              <Text className='text-[16px] font-medium'>Food</Text>
-              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-            </View>
-            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-              <Text className='text-[16px] font-bold'>-₱200.00</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Records for April 15 */}
-
-        <View className='flex-col mx-8 gap-[16] my-4'>
-          <View className='gap-[8]'>
-            <Text className='font-medium'>April 15, Tuesday</Text>
-            <View className="h-[2] bg-black rounded-full" />
-          </View>
-          <View className='flex-row gap-[16] items-center'>
-            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-            <View className='justify-center gap-[4]'>
-              <Text className='text-[16px] font-medium'>Salary</Text>
-              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-            </View>
-            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-              <Text className='text-[16px] font-bold text-[#8938E9]'>+₱1,300.00</Text>
-            </View>
-          </View>
-
-          <View className='flex-row gap-[16] items-center'>
-            <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-            <View className='justify-center gap-[4]'>
-              <Text className='text-[16px] font-medium'>Food</Text>
-              <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-            </View>
-            <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-              <Text className='text-[16px] font-bold'>-₱200.00</Text>
-            </View>
-          </View>
-        </View>
+      {renderContent()}
     </View>
   )
 }

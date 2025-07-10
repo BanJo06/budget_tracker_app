@@ -25,7 +25,7 @@ export default function Index() {
 
   return (
     // Main Header (Side menu, Logo and app name and Dashboard label)
-    <View className='bg-[#f0f0f0] items-center'>
+    <View className='items-center'>
             <ReusableRoundedBoxComponent>
               <View className='flex-col px-[32] pt-[8]'>
                 <View className='flex-row items-center gap-[4] pb-[16]'>
@@ -126,7 +126,7 @@ export default function Index() {
 
           {/* Planned Budgets Label */}
             <View className='w-full mt-[32] mb-[16] pl-[32]'> 
-              <Text className='font-medium'>
+              <Text className='font-medium text-[16px]'>
               Planned Budgets
               </Text>
             </View>
