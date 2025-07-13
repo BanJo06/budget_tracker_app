@@ -4,14 +4,15 @@ import '../app/globals.css'; // Keep this if it's essential for styling to avoid
 export default function RootLayout() {
   return (
     <Stack>
-      <Stack.Screen
-        name="index"
-        options={{ headerShown: false}}
-      />
 
       <Stack.Screen
         name="(sidemenu)"
         options={{ headerShown: false, animation: 'fade' }}
+      />
+      
+      <Stack.Screen
+        name="index"
+        options={{ headerShown: false}}
       />
 
       <Stack.Screen
