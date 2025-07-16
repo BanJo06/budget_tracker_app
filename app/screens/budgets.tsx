@@ -1,45 +1,36 @@
 import ProgressBar from '@/components/ProgressBar';
 import React, { useState } from 'react';
-import { Button, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import GeneralBudgetsModal from '../../components/GeneralBudgetsModal';
 
 export default function Budgets() {
-  const [isModalVisible, setModalVisible] = useState(false)
+  const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] = useState(false);
+
+  const toggleDailyBudgetModal = () => {
+    setDailyBudgetModalVisible(!isDailyBudgetModalVisible);
+  }
+
   const [currentProgress, setCurrentProgress] = useState(0.25); // State to manage progress
   
   return    (
     <View className='m-8'>
-      <Modal
-      transparent = {true}
-      visible={isModalVisible}
-      onRequestClose={() => {
-        setModalVisible(!isModalVisible)
-      }}
-      >
-        <View className='flex-1 justify-center items-center'>
-          <View className='w-[348] h-[160] bg-white items-center justify-center rounded-[10] px-5 py-4'>
-            <Text className='pb-4'>Set Daily Budget</Text>
+      {/* Modal for Daily Budget */}
+      <GeneralBudgetsModal 
+        isVisible={isDailyBudgetModalVisible}
+        onClose={toggleDailyBudgetModal}
+        title="Set Daily Budget" >
             <View className='flex-row items-center gap-2'>
               <Text>Limit</Text>
               <TextInput
                 className='flex-1 border rounded-[10]'
+                placeholder='0'
+                style={[
+                    { backgroundColor: '#D4BFED' },
+                  ]}
               />
             </View>
-
-            <View className='flex-row gap-2 pt-4'>
-              <Button 
-                title="Cancel"
-                color="green"
-                onPress={()=> setModalVisible(false)}>
-              </Button>
-              <Button 
-                title="Set"
-                color="green"
-                onPress={()=> setModalVisible(false)}>
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      </GeneralBudgetsModal>
+      
       <Text className='text-[14px] font-medium'>General Budgets</Text>
 
       {/* Budget Container */}
@@ -59,7 +50,7 @@ export default function Budgets() {
 
                 <TouchableOpacity
                   className="w-[60] h-[24] px-2 py-1 border rounded-[10] items-center"
-                  onPress={() => setModalVisible(true)}
+                  onPress={toggleDailyBudgetModal}
                 >
                   <Text className='text-[12px]'>Change</Text>
                 </TouchableOpacity>
