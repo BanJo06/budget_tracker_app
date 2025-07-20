@@ -36,11 +36,6 @@ const GeneralBudgetsModal: React.FC<GeneralBudgetsModalProps> = ({
                 color="green"
                 onPress={onClose}>
                 </Button>
-                <Button 
-                title="Set"
-                color="green"
-                onPress={onClose}>
-                </Button>
             </View>
             </View>
         </View>

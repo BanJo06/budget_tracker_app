@@ -12,7 +12,8 @@ export default function AppIndex(): React.ReactElement | null {
       router.replace('/(sidemenu)' as any);
     }
   }, [rootNavigationState?.key]);
-
   
   return null;
+
+  
 }

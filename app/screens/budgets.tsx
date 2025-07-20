@@ -1,16 +1,113 @@
 import ProgressBar from '@/components/ProgressBar';
-import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import GeneralBudgetsModal from '../../components/GeneralBudgetsModal';
+import { getDatabaseFilePath, initDatabase, saveAmountToDb } from '../../utils/database';
+
 
 export default function Budgets() {
+  console.log('Database path:', FileSystem.documentDirectory + 'SQLite/general_budgets_db.db');
+  // setVisible Modals for Change Button
   const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] = useState(false);
 
   const toggleDailyBudgetModal = () => {
     setDailyBudgetModalVisible(!isDailyBudgetModalVisible);
   }
 
+  const [amount, setAmount] = useState('');
+  const [dbInitialized, setDbInitialized] = useState(false);
+    // For Database for sharing
+  const [canShare, setCanShare] = useState(false);
+
+  // useEffect to initialize database and check sharing availability
+  useEffect(() => {
+    const initializeAppDatabase = async () => {
+      try {
+        await initDatabase();
+        setDbInitialized(true);
+
+        // Check if sharing is available on this device
+        const available = await Sharing.isAvailableAsync();
+        setCanShare(available);
+
+      } catch (error) {
+        console.error('App-level database initialization failed:', error);
+        Alert.alert('Initialization Error', error.message || 'Could not initialize the database.');
+      }
+    };
+
+    initializeAppDatabase();
+  }, []);
+
+  // Function to save the amount to the database
+  const saveAmount = async () => {
+    if (!dbInitialized) {
+      Alert.alert('Database Not Ready', 'Please wait while the database initializes.');
+      return;
+    }
+
+    if (amount.trim() === '') {
+      Alert.alert('Input Error', 'Please enter an amount.');
+      return;
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(amount)) {
+      Alert.alert('Input Error', 'Please enter a valid numerical amount (e.g., 1000 or 1000.50).');
+      return;
+    }
+
+    try {
+      await saveAmountToDb(amount); // Call the external save function
+      Alert.alert('Success', 'Amount saved to database!');
+      setAmount(''); // Clear the input field after saving
+    } catch (error) {
+      console.error('Error saving amount in App:', error);
+      Alert.alert('Database Error', error.message || 'Could not save the amount.');
+    }
+  };
+
+  const shareDatabaseFile = async () => {
+    // Prevent sharing if the database is not initialized or sharing is not available
+    if (!dbInitialized) {
+      Alert.alert('Database Not Ready', 'Please wait while the database initializes.');
+      return;
+    }
+    if (!canShare) {
+      Alert.alert('Sharing Not Available', 'File sharing is not supported on this device or platform.');
+      return;
+    }
+
+    try {
+      // Get the internal URI of the database file from utils/database.js
+      const dbUri = getDatabaseFilePath();
+      console.log("Attempting to share database from URI:", dbUri);
+
+      // Before sharing, check if the database file actually exists
+      const fileInfo = await FileSystem.getInfoAsync(dbUri);
+      if (!fileInfo.exists) {
+        Alert.alert('File Not Found', 'The database file does not exist yet. Please save some data first to create it.');
+        return;
+      }
+
+      // Use expo-sharing to open the native share sheet
+      await Sharing.shareAsync(dbUri, {
+        mimeType: 'application/x-sqlite3', // Standard MIME type for SQLite databases
+        dialogTitle: 'Share general_budgets.db', // Title for the share dialog (Android)
+        UTI: 'public.database', // Universal Type Identifier for iOS (helps iOS identify file type)
+      });
+      console.log('Database file shared successfully.');
+    } catch (error) {
+      // Log and alert if sharing fails
+      console.error('Error sharing database file:', error);
+      Alert.alert('Sharing Error', 'Could not share the database file. ' + error.message);
+    }
+  };
+
+
   const [currentProgress, setCurrentProgress] = useState(0.25); // State to manage progress
+  
   
   return    (
     <View className='m-8'>
@@ -24,9 +121,17 @@ export default function Budgets() {
               <TextInput
                 className='flex-1 border rounded-[10]'
                 placeholder='0'
+                keyboardType='numeric'
+                value={amount}
+                onChangeText={setAmount}
                 style={[
                     { backgroundColor: '#D4BFED' },
                   ]}
+              />
+              <Button 
+              title="Set"
+              color="green"
+              onPress={saveAmount}
               />
             </View>
       </GeneralBudgetsModal>
@@ -124,6 +229,14 @@ export default function Budgets() {
           </View>
         </View>
 
+      </View>
+      <View style={{ marginTop: 15 }}>
+        <Button
+          title="Share Database File"
+          onPress={shareDatabaseFile}
+          color="#6f42c1"
+          disabled={!dbInitialized || !canShare}
+        />
       </View>
     </View>
     )
