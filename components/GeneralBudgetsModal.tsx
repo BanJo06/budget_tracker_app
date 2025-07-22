@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 
 interface GeneralBudgetsModalProps {
     isVisible: boolean;
@@ -30,13 +30,6 @@ const GeneralBudgetsModal: React.FC<GeneralBudgetsModalProps> = ({
             <View className='w-[348] h-[160] bg-white items-center justify-center rounded-[10] px-5 py-4'>
             {title && <Text className='pb-4 font-medium'>{title}</Text>}
             {children}
-            <View className='flex-row gap-2 pt-4'>
-                <Button 
-                title="Cancel"
-                color="green"
-                onPress={onClose}>
-                </Button>
-            </View>
             </View>
         </View>
         </Modal>

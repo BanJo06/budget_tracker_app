@@ -119,7 +119,7 @@ export default function Budgets() {
             <View className='flex-row items-center gap-2'>
               <Text>Limit</Text>
               <TextInput
-                className='flex-1 border rounded-[10]'
+                className='flex-1 border-2 rounded-[10]'
                 placeholder='0'
                 keyboardType='numeric'
                 value={amount}
@@ -128,11 +128,27 @@ export default function Budgets() {
                     { backgroundColor: '#D4BFED' },
                   ]}
               />
-              <Button 
-              title="Set"
-              color="green"
-              onPress={saveAmount}
-              />
+            </View>
+            {/* Cancel and Set Buttons */}
+            <View className='flex-row pt-[14] gap-4'>
+                <TouchableOpacity
+                  className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
+                  onPress={toggleDailyBudgetModal}
+                >
+                  {/* Text beside the icon */}
+                  <Text className="uppercase">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
+                  onPress={saveAmount}
+                >
+                  {/* Text beside the icon */}
+                  <Text className="uppercase">
+                    Set
+                  </Text>
+                </TouchableOpacity>
             </View>
       </GeneralBudgetsModal>
       
