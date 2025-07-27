@@ -1,7 +1,7 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 
 // Add this export to configure the screen options
@@ -10,6 +10,57 @@ export const unstable_settings = {
 };
 
 export default function Add() {
+  const [firstValue, setFirstValue] = useState('');
+  const [displayValue, setDisplayValue] = useState('0');
+  const [operator, setOperator] = useState('');
+
+  const handleNumberInput = (num: string) =>  {
+    if ( displayValue == '0' )  {
+      setDisplayValue(num);
+    } else  {
+      setDisplayValue(displayValue + num);
+    }
+  }
+
+  const handleOperatorInput = (operator: string) => {
+    setOperator(operator);
+    setFirstValue(displayValue)
+    setDisplayValue('0');
+  }
+
+  const handleCalculation = () => {
+    const num1 = parseFloat(firstValue)
+    const num2 = parseFloat(displayValue)
+
+    if (operator === '+') {
+      setDisplayValue( (num1 + num2).toString())
+    } else if (operator === '-')  {
+      setDisplayValue( (num1 - num2).toString())
+    } else if (operator === '*')  {
+      setDisplayValue( (num1 * num2).toString())
+    } else if (operator === '/')  {
+      setDisplayValue( (num1 / num2).toString())
+    }
+
+    setOperator('')
+    setFirstValue('')
+  }
+
+  const handleClear = () => {
+    setDisplayValue('0');
+    setOperator('');
+    setFirstValue('');
+  }
+
+  const handleDelete = () =>  {
+    if (displayValue.length == 1) {
+      setDisplayValue('0')
+    } else  {
+    setDisplayValue(displayValue.slice(0, -1))
+    }
+  }
+
+  const [value, setValue] = useState('');
 
   const cancelButton = () => {
     router.replace('/(sidemenu)/(tabs)');
@@ -117,17 +168,24 @@ export default function Add() {
           </TouchableOpacity>
         </View>  
       </View>
-
+      
       <View className='mt-[24]'>
-          <View className='w-full h-[100] border-2 rounded-[10] p-4'>
-            <Text className='text-[14px]'>Notes</Text>
-          </View>
+        <TextInput
+          className="w-full h-[100] border-2 rounded-[10] p-4 text-[16px]"
+          placeholder="Notes"
+          multiline={true}
+          numberOfLines={3}
+          maxLength={100}
+          value={value}
+          onChangeText={setValue}
+          textAlignVertical="top"
+        />
       </View>
-
-      <View className='mt-[16]'>
+      
+      <View className='mt-4'>
         <View className='w-full h-[80] border-2 rounded-[10] p-2 flex items-end justify-center'>
         <Text className='text-[75px] text-right' style={{ lineHeight: 65, includeFontPadding: false}}>
-          0
+          {displayValue}
         </Text>
         </View>
       </View>
@@ -138,7 +196,7 @@ export default function Add() {
         {/* First Row */}
         <View className='flex-row mb-2 justify-between'>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={handleDelete}
             style={{
                 width: '49%',
                 flexGrow: 0,
@@ -150,7 +208,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={handleClear}
             style={{
                 width: '24%',
             }}
@@ -160,7 +218,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleOperatorInput('/')}
             style={{
                 width: '24%',
             }}
@@ -173,7 +231,7 @@ export default function Add() {
         {/* Second Row */}
         <View className='flex-row justify-between mb-2'>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('7')}
             style={{
                 width: '24%',
             }}
@@ -183,7 +241,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('8')}
             style={{
                 width: '24%',
             }}
@@ -193,7 +251,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('9')}
             style={{
                 width: '24%',
             }}
@@ -203,20 +261,20 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleOperatorInput('*')}
             style={{
                 width: '24%',
             }}
             className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
           >
-            <Text className='text-[30px] font-bold text-[#392F46]'>X</Text>
+            <Text className='text-[30px] font-bold text-[#392F46]'>x</Text>
           </TouchableOpacity>
         </View>
 
         {/* Third Row */}
         <View className='flex-row justify-between mb-2'>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('4')}
             style={{
                 width: '24%',
             }}
@@ -226,7 +284,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('5')}
             style={{
                 width: '24%',
             }}
@@ -236,7 +294,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('6')}
             style={{
                 width: '24%',
             }}
@@ -246,7 +304,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleOperatorInput('-')}
             style={{
                 width: '24%',
             }}
@@ -259,7 +317,7 @@ export default function Add() {
         {/* Fourth Row */}
         <View className='flex-row justify-between mb-2'>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('1')}
             style={{
                 width: '24%',
             }}
@@ -269,7 +327,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('2')}
             style={{
                 width: '24%',
             }}
@@ -279,7 +337,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('3')}
             style={{
                 width: '24%',
             }}
@@ -289,7 +347,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleOperatorInput('+')}
             style={{
                 width: '24%',
             }}
@@ -302,7 +360,7 @@ export default function Add() {
         {/* Fifth Row */}
         <View className='flex-row justify-between mb-2'>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('0')}
             style={{
                 width: '24%',
             }}
@@ -312,7 +370,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('00')}
             style={{
                 width: '24%',
             }}
@@ -322,7 +380,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => handleNumberInput('.')}
             style={{
                 width: '24%',
             }}
@@ -332,7 +390,7 @@ export default function Add() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={handleCalculation}
             style={{
                 width: '24%',
             }}
