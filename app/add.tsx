@@ -1,8 +1,9 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Button, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
+import AccountsModal from '../components/AccountsModal';
 
 // Add this export to configure the screen options
 export const unstable_settings = {
@@ -80,8 +81,57 @@ export default function Add() {
           { label: 'Transfer', value: 'transfer' }
         ];
 
+  // State for AccountsModal Visibility
+  const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
+
+  const toggleAccountsModal = () => {
+    setAccountsModalVisible(!isAccountsModalVisible);
+  }
+
+  // State for CategoryModal Visibility
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+
   return  (
     <View className='m-[32]'>
+      <AccountsModal
+      isVisible={isAccountsModalVisible}
+      onClose={toggleAccountsModal}
+      >
+        <View className="flex-col gap-4 items-center">
+          <View className='w-full h-[50] px-4 flex-row justify-between'>
+            <View className='flex-row gap-2'>
+              <View className='w-[50] h-[50] bg-[#8938E9]'></View>        
+              <View className='flex-col gap-4 justify-center'>
+                <Text>Card</Text>
+              </View>
+            </View>
+          
+            <View className='justify-center'>
+              <Text className='text-[#8938E9]'>₱0.00</Text>
+            </View>
+          </View>
+
+          <View className='w-full h-[50] px-4 flex-row justify-between'>
+            <View className='flex-row gap-2'>
+              <View className='w-[50] h-[50] bg-[#8938E9]'></View>        
+              <View className='flex-col gap-4 justify-center'>
+                <Text>Pocket Money</Text>
+              </View>
+            </View>
+          
+            <View className='justify-center'>
+              <Text className='text-[#8938E9]'>₱3,500.00</Text>
+            </View>
+          </View>
+          
+          {/* Button Container */}
+          <View className="flex-row gap-2">
+            <Button title="Cancel" onPress={toggleAccountsModal}/>
+            <Button title="ADD NEW ACCOUNT" onPress={handlePress}/>
+          </View>
+        </View>
+      </AccountsModal>
+
       <StatusBar
                 backgroundColor={'white'}
                 barStyle={'dark-content'}
@@ -137,7 +187,7 @@ export default function Add() {
         <View className='items-center gap-[8]'>
           <Text className='text-[14px]'>Account</Text>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => setAccountsModalVisible(true)}
             className="w-[152px] h-[51px] flex-row gap-4 justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
           >
 
@@ -147,8 +197,6 @@ export default function Add() {
             <Text className="text-white text-[16px]">
               Account
             </Text>
-
-            
           </TouchableOpacity>
         </View>
 
