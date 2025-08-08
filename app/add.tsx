@@ -5,6 +5,7 @@ import { StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native
 import SwitchSelector from 'react-native-switch-selector';
 import AccountsModal from '../components/AccountsModal';
 import CategoryModal from '../components/CategoryModal';
+import NewAccountModal from '../components/NewAccountModal';
 
 // Add this export to configure the screen options
 export const unstable_settings = {
@@ -96,6 +97,14 @@ export default function Add() {
     setCategoryModalVisible(!isCategoryModalVisible);
   }
 
+  // State for NewAccountModal Visibility
+
+  const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
+
+  const toggleNewAccountModal = () => {
+    setNewAccountModalVisible(!isNewAccountModalVisible);
+  }
+
   return  (
     <View className='m-[32]'>
       <AccountsModal
@@ -132,7 +141,7 @@ export default function Add() {
           {/* Button Container */}
           <View className="flex-row gap-2">
             <TouchableOpacity 
-            onPress={handlePress}
+            onPress={() => setNewAccountModalVisible(true)}
             className="w-[184] h-[33] justify-center items-center border-2 rounded-[10]"
             >
               <View className='flex-row items-center justify-center gap-2'>
@@ -144,6 +153,38 @@ export default function Add() {
           </View>
         </View>
       </AccountsModal>
+
+      <NewAccountModal
+      isVisible={isNewAccountModalVisible}
+      onClose={toggleNewAccountModal}
+      title="Add new account"
+      >
+        <View className="flex-col">
+          <View className="w-full flex-row gap-2 items-center">
+            <Text>Initial Amount</Text>
+            <TextInput
+              className='flex-1 h-[25] border-2 rounded-[10] pl-2 p-0'
+              placeholder='0'
+              keyboardType='numeric'
+              // value={inputValue} // Bind to local modal state
+              // onChangeText={setInputValue} // Update local modal state
+              style={{ backgroundColor: '#D4BFED' }}
+            />
+          </View>
+
+          <View className="w-full flex-row gap-2 items-center pt-9">
+            <Text>Name</Text>
+            <TextInput
+              className='flex-1 h-[25] border-2 rounded-[10] pl-2 p-0'
+              placeholder='Untitled'
+              // value={inputValue} // Bind to local modal state
+              // onChangeText={setInputValue} // Update local modal state
+              style={{ backgroundColor: '#D4BFED' }}
+            />
+          </View>
+          
+        </View>
+      </NewAccountModal>
 
       <CategoryModal
       isVisible={isCategoryModalVisible}
