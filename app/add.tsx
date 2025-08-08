@@ -1,9 +1,10 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Button, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 import AccountsModal from '../components/AccountsModal';
+import CategoryModal from '../components/CategoryModal';
 
 // Add this export to configure the screen options
 export const unstable_settings = {
@@ -91,6 +92,10 @@ export default function Add() {
   // State for CategoryModal Visibility
   const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
 
+  const toggleCategoryModal = () => {
+    setCategoryModalVisible(!isCategoryModalVisible);
+  }
+
   return  (
     <View className='m-[32]'>
       <AccountsModal
@@ -126,11 +131,107 @@ export default function Add() {
           
           {/* Button Container */}
           <View className="flex-row gap-2">
-            <Button title="Cancel" onPress={toggleAccountsModal}/>
-            <Button title="ADD NEW ACCOUNT" onPress={handlePress}/>
+            <TouchableOpacity 
+            onPress={handlePress}
+            className="w-[184] h-[33] justify-center items-center border-2 rounded-[10]"
+            >
+              <View className='flex-row items-center justify-center gap-2'>
+                <View className="w-[14] h-[14] rounded-full bg-black"/>
+                <Text className="text-medium text-[14px]">ADD NEW ACCOUNT</Text>
+              </View>
+              
+            </TouchableOpacity>
           </View>
         </View>
       </AccountsModal>
+
+      <CategoryModal
+      isVisible={isCategoryModalVisible}
+      onClose={toggleCategoryModal}
+      >
+        {/* Row 1 */}
+        <View className="flex-col items-center">
+          <View className='w-full flex-row gap-[35px] pb-4'>
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Transportation</Text>
+            </View>
+            
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Car</Text>
+            </View>
+
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Travel</Text>
+            </View>
+
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Entertainment</Text>
+            </View>
+          </View>
+
+          {/* Row 2 */}
+          <View className='w-full flex-row gap-[35px] pb-4'>
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Gifts</Text>
+            </View>
+            
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Sport</Text>
+            </View>
+
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Food</Text>
+            </View>
+
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Shopping</Text>
+            </View>
+          </View>
+
+          {/* Row 3 */}
+          <View className='w-full flex-row gap-[35px] pb-4'>
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Education</Text>
+            </View>
+            
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Bills</Text>
+            </View>
+
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Clothing</Text>
+            </View>
+
+            <View className="flex-col items-center">
+              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
+              <Text className='text-[10px]'>Beauty</Text>
+            </View>
+          </View>
+          
+          {/* Button Container */}
+          <View className="flex-row gap-2">
+            <TouchableOpacity 
+            onPress={handlePress}
+            className="w-[184] h-[33] justify-center items-center border-2 rounded-[10]"
+            >
+              <View className="w-[14] h-[14] rounded-full bg-black"></View>
+              <Text className="text-medium text-[14px]">ADD NEW CATEGORY</Text>
+              
+            </TouchableOpacity>
+          </View>
+        </View>
+      </CategoryModal>
 
       <StatusBar
                 backgroundColor={'white'}
@@ -203,7 +304,7 @@ export default function Add() {
         <View className='items-center gap-[8]'>
           <Text className='text-[14px]'>Category</Text>
           <TouchableOpacity
-            onPress={handlePress}
+            onPress={() => setCategoryModalVisible(true)}
             className="w-[152px] h-[51px] flex-row gap-4 justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
           >
 
