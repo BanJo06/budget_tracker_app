@@ -1,11 +1,80 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
+import NewAccountModal from "@/components/NewAccountModal";
+import {
+  FontAwesome,
+  Ionicons,
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 import AccountsModal from '../components/AccountsModal';
 import CategoryModal from '../components/CategoryModal';
-import NewAccountModal from '../components/NewAccountModal';
+
+// A simple hook to get the window dimensions and update on change.
+const useWindowDimensions = () => {
+  const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
+
+  React.useEffect(() => {
+    const onChange = ({ window }) => {
+      setWindowDimensions(window);
+    };
+    const subscription = Dimensions.addEventListener('change', onChange);
+    return () => subscription.remove();
+  }, []);
+
+  return windowDimensions;
+};
+
+// --- Icon Selector Component ---
+const IconSelector = ({ selectedIcon, onIconSelect }) => {
+  const { width } = useWindowDimensions();
+
+  const icons = [
+    // MaterialCommunityIcons
+    { name: 'bank', library: 'MaterialCommunityIcons' },
+    { name: 'credit-card', library: 'MaterialCommunityIcons' },
+    { name: 'wallet', library: 'MaterialCommunityIcons' },
+    // Ionicons
+    { name: 'briefcase', library: 'Ionicons' },
+    // FontAwesome
+    { name: 'shopping-bag', library: 'FontAwesome' },
+  ];
+
+  const renderIcon = (item) => {
+    const isSelected = selectedIcon && selectedIcon.name === item.name;
+    const IconComponent =
+      item.library === 'MaterialCommunityIcons'
+        ? MaterialCommunityIcons
+        : item.library === 'Ionicons'
+        ? Ionicons
+        : FontAwesome;
+
+    return (
+      <TouchableOpacity
+        key={item.name}
+        className={`w-[36] h-[36] justify-center items-center m-[5] rounded-[10] bg-gray-200 border border-purple-300 ${isSelected ? 'bg-purple-600 shadow-md' : ''}`}
+        onPress={() => onIconSelect(item)}
+      >
+        <IconComponent
+          name={item.name}
+          size={24}
+          color={isSelected ? 'white' : '#666'}
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View className="flex-col gap-2 pt-7">
+      <Text className="mb-2 text-gray-700">Icon</Text>
+      <View className="border-2 rounded-[10] bg-[#D4BFED] w-full h-[48] flex-row items-center justify-center">
+        {icons.map(renderIcon)}
+      </View>
+    </View>
+  );
+};
 
 // Add this export to configure the screen options
 export const unstable_settings = {
@@ -105,6 +174,8 @@ export default function Add() {
     setNewAccountModalVisible(!isNewAccountModalVisible);
   }
 
+  const [selectedIcon, setSelectedIcon] = useState(null);
+
   return  (
     <View className='m-[32]'>
       <AccountsModal
@@ -183,32 +254,26 @@ export default function Add() {
             />
           </View>
 
-          <View className="flex-col gap-2 pt-7">
-            <Text>Icon</Text>
-            <TextInput
-              className='w-full h-[25] border-2 rounded-[10] pl-2 p-0'
-              placeholder='Untitled'
-              // value={inputValue} // Bind to local modal state
-              // onChangeText={setInputValue} // Update local modal state
-              style={{ backgroundColor: '#D4BFED' }}
+            <IconSelector
+              selectedIcon={selectedIcon}
+              onIconSelect={setSelectedIcon}
             />
-          </View>
           
           {/* Cancel and Set Buttons */}
-                <View className='flex-row pt-[14] gap-4 justify-center'>
-                  <TouchableOpacity
-                    className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
-                    onPress={toggleNewAccountModal}
-                  >
-                    <Text className="uppercase">Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
-                    onPress={handlePress} // Call local handleSave
-                  >
-                    <Text className="uppercase">Save</Text>
-                  </TouchableOpacity>
-                </View>
+          <View className='flex-row pt-[14] gap-4 justify-center'>
+            <TouchableOpacity
+              className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
+              onPress={toggleNewAccountModal}
+            >
+              <Text className="uppercase">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
+              onPress={handlePress} // Call local handleSave
+            >
+              <Text className="uppercase">Save</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </NewAccountModal>
 
