@@ -160,7 +160,7 @@ export default function Add() {
       title="Add new account"
       >
         <View className="flex-col">
-          <View className="w-full flex-row gap-2 items-center">
+          <View className="w-full flex-row gap-2 items-center pt-7">
             <Text>Initial Amount</Text>
             <TextInput
               className='flex-1 h-[25] border-2 rounded-[10] pl-2 p-0'
@@ -182,7 +182,33 @@ export default function Add() {
               style={{ backgroundColor: '#D4BFED' }}
             />
           </View>
+
+          <View className="flex-col gap-2 pt-7">
+            <Text>Icon</Text>
+            <TextInput
+              className='w-full h-[25] border-2 rounded-[10] pl-2 p-0'
+              placeholder='Untitled'
+              // value={inputValue} // Bind to local modal state
+              // onChangeText={setInputValue} // Update local modal state
+              style={{ backgroundColor: '#D4BFED' }}
+            />
+          </View>
           
+          {/* Cancel and Set Buttons */}
+                <View className='flex-row pt-[14] gap-4 justify-center'>
+                  <TouchableOpacity
+                    className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
+                    onPress={toggleNewAccountModal}
+                  >
+                    <Text className="uppercase">Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
+                    onPress={handlePress} // Call local handleSave
+                  >
+                    <Text className="uppercase">Save</Text>
+                  </TouchableOpacity>
+                </View>
         </View>
       </NewAccountModal>
 

@@ -7,6 +7,7 @@ import BackspaceIcon from '../icons/BackspaceIcon';
 import ButtonArrowDownIcon from '../icons/ButtonArrowDownIcon';
 import CategoryIcon from '../icons/CategoryIcon';
 import CategoryIconSidemenu from '../icons/CategoryIconSidemenu';
+import CloseIcon from '../icons/CloseIcon';
 import DailyRewardIcon from '../icons/DailyRewardIcon';
 import DashboardActiveIcon from '../icons/DashboardActiveIcon';
 import DashboardIcon from '../icons/DashboardIcon';
@@ -57,5 +58,6 @@ export const SVG_ICONS: SvgIconMap = {
   ShopBackButton: ShopBackButtonIcon,
   ExportRecords: ExportRecordsIcon,
   CategorySidemenu: CategoryIconSidemenu,
-  Settings: SettingsIcon
+  Settings: SettingsIcon,
+  Close: CloseIcon
 };
