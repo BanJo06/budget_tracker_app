@@ -24,6 +24,7 @@ import SettingsIcon from '../icons/SettingsIcon';
 import ShopBackButtonIcon from '../icons/ShopBackButtonIcon';
 import ShopIcon from '../icons/ShopIcon';
 import SideMenuIcon from '../icons/SideMenuIcon';
+import SmallAddIcon from '../icons/SmallAddIcon';
 
 
 // Define an interface for your icon map for better type safety
@@ -59,5 +60,6 @@ export const SVG_ICONS: SvgIconMap = {
   ExportRecords: ExportRecordsIcon,
   CategorySidemenu: CategoryIconSidemenu,
   Settings: SettingsIcon,
-  Close: CloseIcon
+  Close: CloseIcon,
+  SmallAdd: SmallAddIcon
 };

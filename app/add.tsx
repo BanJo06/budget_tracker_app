@@ -1,688 +1,360 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
-import NewAccountModal from "@/components/NewAccountModal";
-import {
-  FontAwesome,
-  Ionicons,
-  MaterialCommunityIcons,
-} from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
-import AccountsModal from '../components/AccountsModal';
-import CategoryModal from '../components/CategoryModal';
 
-// A simple hook to get the window dimensions and update on change.
-const useWindowDimensions = () => {
-  const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
-
-  React.useEffect(() => {
-    const onChange = ({ window }) => {
-      setWindowDimensions(window);
-    };
-    const subscription = Dimensions.addEventListener('change', onChange);
-    return () => subscription.remove();
-  }, []);
-
-  return windowDimensions;
+// This hides the header for the screen
+export const unstable_settings = {
+  headerShown: false,
 };
 
-// --- Icon Selector Component ---
-const IconSelector = ({ selectedIcon, onIconSelect }) => {
-  const { width } = useWindowDimensions();
+// A simplified AccountsModal component
+const AccountsModal = ({ isVisible, onClose }) => {
+  // State for a new account modal within this modal
+  const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
 
-  const icons = [
-    // MaterialCommunityIcons
-    { name: 'bank', library: 'MaterialCommunityIcons' },
-    { name: 'credit-card', library: 'MaterialCommunityIcons' },
-    { name: 'wallet', library: 'MaterialCommunityIcons' },
-    // Ionicons
-    { name: 'briefcase', library: 'Ionicons' },
-    // FontAwesome
-    { name: 'shopping-bag', library: 'FontAwesome' },
-  ];
-
-  const renderIcon = (item) => {
-    const isSelected = selectedIcon && selectedIcon.name === item.name;
-    const IconComponent =
-      item.library === 'MaterialCommunityIcons'
-        ? MaterialCommunityIcons
-        : item.library === 'Ionicons'
-        ? Ionicons
-        : FontAwesome;
-
-    return (
-      <TouchableOpacity
-        key={item.name}
-        className={`w-[36] h-[36] justify-center items-center m-[5] rounded-[10] bg-gray-200 border border-purple-300 ${isSelected ? 'bg-purple-600 shadow-md' : ''}`}
-        onPress={() => onIconSelect(item)}
-      >
-        <IconComponent
-          name={item.name}
-          size={24}
-          color={isSelected ? 'white' : '#666'}
-        />
-      </TouchableOpacity>
-    );
+  const toggleNewAccountModal = () => {
+    setNewAccountModalVisible(!isNewAccountModalVisible);
   };
 
   return (
-    <View className="flex-col gap-2 pt-7">
-      <Text className="mb-2 text-gray-700">Icon</Text>
-      <View className="border-2 rounded-[10] bg-[#D4BFED] w-full h-[48] flex-row items-center justify-center">
-        {icons.map(renderIcon)}
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="bg-white p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4">Select Account</Text>
+          {/* Account List */}
+          <View className='w-full h-[50] px-4 flex-row justify-between items-center mb-2'>
+            <View className='flex-row gap-2 items-center'>
+              <View className='w-[40] h-[40] bg-[#8938E9] rounded-full'></View>
+              <Text className='text-lg'>Card</Text>
+            </View>
+            <Text className='text-[#8938E9] text-lg'>₱0.00</Text>
+          </View>
+          <View className='w-full h-[50] px-4 flex-row justify-between items-center'>
+            <View className='flex-row gap-2 items-center'>
+              <View className='w-[40] h-[40] bg-[#8938E9] rounded-full'></View>
+              <Text className='text-lg'>Pocket Money</Text>
+            </View>
+            <Text className='text-[#8938E9] text-lg'>₱3,500.00</Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={toggleNewAccountModal}
+            className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg mt-4"
+          >
+            <View className='flex-row items-center justify-center gap-2'>
+              <SVG_ICONS.SmallAdd size={15} color="#8938E9" />
+              <Text className="font-medium text-purple-600">ADD NEW ACCOUNT</Text>
+            </View>
+          </TouchableOpacity>
+
+          <NewAccountModal
+            isVisible={isNewAccountModalVisible}
+            onClose={toggleNewAccountModal} 
+            onSave={undefined}          
+          />
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 };
 
-// Add this export to configure the screen options
-export const unstable_settings = {
-  headerShown: false, // This will hide the header for this specific screen
+// A simplified NewAccountModal component
+const NewAccountModal = ({ isVisible, onClose, onSave }) => {
+  const [initialAmount, setInitialAmount] = useState('');
+  const [accountName, setAccountName] = useState('');
+
+  const handleSave = () => {
+    // You would typically save the new account here
+    console.log("Saving new account:", { name: accountName, amount: initialAmount });
+    onClose();
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="bg-white p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4">Add new account</Text>
+
+          <View className="w-full flex-row gap-2 items-center mb-4">
+            <Text>Initial Amount</Text>
+            <TextInput
+              className='flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100'
+              placeholder='0'
+              keyboardType='numeric'
+              value={initialAmount}
+              onChangeText={setInitialAmount}
+            />
+          </View>
+
+          <View className="w-full flex-row gap-2 items-center mb-6">
+            <Text>Name</Text>
+            <TextInput
+              className='flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100'
+              placeholder='Untitled'
+              value={accountName}
+              onChangeText={setAccountName}
+            />
+          </View>
+
+          <View className='flex-row justify-end gap-4'>
+            <TouchableOpacity
+              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              onPress={onClose}
+            >
+              <Text className="uppercase text-purple-600">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
+              onPress={handleSave}
+            >
+              <Text className="uppercase text-white">Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
+// Main Add screen component
 export default function Add() {
+  // Calculator state
   const [firstValue, setFirstValue] = useState('');
   const [displayValue, setDisplayValue] = useState('0');
   const [operator, setOperator] = useState('');
 
-  const handleNumberInput = (num: string) =>  {
-    if ( displayValue == '0' )  {
-      setDisplayValue(num);
-    } else  {
-      setDisplayValue(displayValue + num);
-    }
-  }
+  // Other state
+  const [notes, setNotes] = useState('');
+  const [selectedOption, setSelectedOption] = useState('expense');
+  const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
+  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
 
-  const handleOperatorInput = (operator: string) => {
-    setOperator(operator);
-    setFirstValue(displayValue)
+  // Calculator Logic
+  const handleNumberInput = (num) => {
+    setDisplayValue(prev => (prev === '0' ? num : prev + num));
+  };
+
+  const handleOperatorInput = (op) => {
+    setOperator(op);
+    setFirstValue(displayValue);
     setDisplayValue('0');
-  }
+  };
 
   const handleCalculation = () => {
-    const num1 = parseFloat(firstValue)
-    const num2 = parseFloat(displayValue)
+    const num1 = parseFloat(firstValue);
+    const num2 = parseFloat(displayValue);
 
-    if (operator === '+') {
-      setDisplayValue( (num1 + num2).toString())
-    } else if (operator === '-')  {
-      setDisplayValue( (num1 - num2).toString())
-    } else if (operator === '*')  {
-      setDisplayValue( (num1 * num2).toString())
-    } else if (operator === '/')  {
-      setDisplayValue( (num1 / num2).toString())
+    if (isNaN(num1) || isNaN(num2)) {
+      return;
     }
 
-    setOperator('')
-    setFirstValue('')
-  }
+    let result;
+    switch (operator) {
+      case '+':
+        result = num1 + num2;
+        break;
+      case '-':
+        result = num1 - num2;
+        break;
+      case '*':
+        result = num1 * num2;
+        break;
+      case '/':
+        result = num1 / num2;
+        break;
+      default:
+        return;
+    }
+    setDisplayValue(result.toString());
+    setOperator('');
+    setFirstValue('');
+  };
 
   const handleClear = () => {
     setDisplayValue('0');
     setOperator('');
     setFirstValue('');
-  }
+  };
 
-  const handleDelete = () =>  {
-    if (displayValue.length == 1) {
-      setDisplayValue('0')
-    } else  {
-    setDisplayValue(displayValue.slice(0, -1))
-    }
-  }
+  const handleDelete = () => {
+    setDisplayValue(prev => (prev.length === 1 ? '0' : prev.slice(0, -1)));
+  };
 
-  const [value, setValue] = useState('');
-
-  const cancelButton = () => {
+  // UI Event Handlers
+  const handleCancel = () => {
     router.replace('/(sidemenu)/(tabs)');
   };
 
-  const handlePress = () => {
-        console.log("Completed quest!");
-      };
-
-  // State to hold the currently selected value ('expense' or 'income')
-        const [selectedOption, setSelectedOption] = useState('expense');
-      
-        // Options for the SwitchSelector
-        const options = [
-          { label: 'Income', value: 'income' },
-          { label: 'Expense', value: 'expense' },
-          { label: 'Transfer', value: 'transfer' }
-        ];
-
-  // State for AccountsModal Visibility
-  const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
+  const handleSave = () => {
+    console.log("Transaction saved!");
+    // Logic to save the transaction goes here
+  };
 
   const toggleAccountsModal = () => {
     setAccountsModalVisible(!isAccountsModalVisible);
-  }
-
-  // State for CategoryModal Visibility
-  const [isCategoryModalVisible, setCategoryModalVisible] = useState(false);
+  };
 
   const toggleCategoryModal = () => {
     setCategoryModalVisible(!isCategoryModalVisible);
-  }
+  };
 
-  // State for NewAccountModal Visibility
+  // SwitchSelector options
+  const options = [
+    { label: 'Income', value: 'income' },
+    { label: 'Expense', value: 'expense' },
+    { label: 'Transfer', value: 'transfer' }
+  ];
 
-  const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
+  return (
+    <View className='p-8 flex-1 bg-white'>
+      <StatusBar barStyle={'dark-content'} />
 
-  const toggleNewAccountModal = () => {
-    setNewAccountModalVisible(!isNewAccountModalVisible);
-  }
+      <AccountsModal isVisible={isAccountsModalVisible} onClose={toggleAccountsModal} />
+      {/* CategoryModal is not included in the provided code */}
 
-  const [selectedIcon, setSelectedIcon] = useState(null);
-
-  return  (
-    <View className='m-[32]'>
-      <AccountsModal
-      isVisible={isAccountsModalVisible}
-      onClose={toggleAccountsModal}
-      >
-        <View className="flex-col gap-4 items-center">
-          <View className='w-full h-[50] px-4 flex-row justify-between'>
-            <View className='flex-row gap-2'>
-              <View className='w-[50] h-[50] bg-[#8938E9]'></View>        
-              <View className='flex-col gap-4 justify-center'>
-                <Text>Card</Text>
-              </View>
-            </View>
-          
-            <View className='justify-center'>
-              <Text className='text-[#8938E9]'>₱0.00</Text>
-            </View>
-          </View>
-
-          <View className='w-full h-[50] px-4 flex-row justify-between'>
-            <View className='flex-row gap-2'>
-              <View className='w-[50] h-[50] bg-[#8938E9]'></View>        
-              <View className='flex-col gap-4 justify-center'>
-                <Text>Pocket Money</Text>
-              </View>
-            </View>
-          
-            <View className='justify-center'>
-              <Text className='text-[#8938E9]'>₱3,500.00</Text>
-            </View>
-          </View>
-          
-          {/* Button Container */}
-          <View className="flex-row gap-2">
-            <TouchableOpacity 
-            onPress={() => setNewAccountModalVisible(true)}
-            className="w-[184] h-[33] justify-center items-center border-2 rounded-[10]"
-            >
-              <View className='flex-row items-center justify-center gap-2'>
-                <View className="w-[14] h-[14] rounded-full bg-black"/>
-                <Text className="text-medium text-[14px]">ADD NEW ACCOUNT</Text>
-              </View>
-              
-            </TouchableOpacity>
-          </View>
-        </View>
-      </AccountsModal>
-
-      <NewAccountModal
-      isVisible={isNewAccountModalVisible}
-      onClose={toggleNewAccountModal}
-      title="Add new account"
-      >
-        <View className="flex-col">
-          <View className="w-full flex-row gap-2 items-center pt-7">
-            <Text>Initial Amount</Text>
-            <TextInput
-              className='flex-1 h-[25] border-2 rounded-[10] pl-2 p-0'
-              placeholder='0'
-              keyboardType='numeric'
-              // value={inputValue} // Bind to local modal state
-              // onChangeText={setInputValue} // Update local modal state
-              style={{ backgroundColor: '#D4BFED' }}
-            />
-          </View>
-
-          <View className="w-full flex-row gap-2 items-center pt-9">
-            <Text>Name</Text>
-            <TextInput
-              className='flex-1 h-[25] border-2 rounded-[10] pl-2 p-0'
-              placeholder='Untitled'
-              // value={inputValue} // Bind to local modal state
-              // onChangeText={setInputValue} // Update local modal state
-              style={{ backgroundColor: '#D4BFED' }}
-            />
-          </View>
-
-            <IconSelector
-              selectedIcon={selectedIcon}
-              onIconSelect={setSelectedIcon}
-            />
-          
-          {/* Cancel and Set Buttons */}
-          <View className='flex-row pt-[14] gap-4 justify-center'>
-            <TouchableOpacity
-              className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
-              onPress={toggleNewAccountModal}
-            >
-              <Text className="uppercase">Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
-              onPress={handlePress} // Call local handleSave
-            >
-              <Text className="uppercase">Save</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </NewAccountModal>
-
-      <CategoryModal
-      isVisible={isCategoryModalVisible}
-      onClose={toggleCategoryModal}
-      >
-        {/* Row 1 */}
-        <View className="flex-col items-center">
-          <View className='w-full flex-row gap-[35px] pb-4'>
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Transportation</Text>
-            </View>
-            
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Car</Text>
-            </View>
-
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Travel</Text>
-            </View>
-
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Entertainment</Text>
-            </View>
-          </View>
-
-          {/* Row 2 */}
-          <View className='w-full flex-row gap-[35px] pb-4'>
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Gifts</Text>
-            </View>
-            
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Sport</Text>
-            </View>
-
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Food</Text>
-            </View>
-
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Shopping</Text>
-            </View>
-          </View>
-
-          {/* Row 3 */}
-          <View className='w-full flex-row gap-[35px] pb-4'>
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Education</Text>
-            </View>
-            
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Bills</Text>
-            </View>
-
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Clothing</Text>
-            </View>
-
-            <View className="flex-col items-center">
-              <View className='w-[52] h-[50] bg-[#8938E9] rounded-full'/>
-              <Text className='text-[10px]'>Beauty</Text>
-            </View>
-          </View>
-          
-          {/* Button Container */}
-          <View className="flex-row gap-2">
-            <TouchableOpacity 
-            onPress={handlePress}
-            className="w-[184] h-[33] justify-center items-center border-2 rounded-[10]"
-            >
-              <View className="w-[14] h-[14] rounded-full bg-black"></View>
-              <Text className="text-medium text-[14px]">ADD NEW CATEGORY</Text>
-              
-            </TouchableOpacity>
-          </View>
-        </View>
-      </CategoryModal>
-
-      <StatusBar
-                backgroundColor={'white'}
-                barStyle={'dark-content'}
-                translucent={true}
-      />
-
-      <View className='mt-[16] flex-row justify-between'>
+      <View className='flex-row justify-between mt-4'>
         <TouchableOpacity
-          onPress={cancelButton}
-          className="w-[128px] h-[35px] justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
+          onPress={handleCancel}
+          className="w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg"
         >
-          {/* Text beside the icon */}
-          <Text className="text-white text-[16px] font-medium">
-            CANCEL
-          </Text>
+          <Text className="text-white text-base font-medium">CANCEL</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
-          onPress={handlePress}
-          className="w-[128px] h-[35px] justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
+          onPress={handleSave}
+          className="w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg"
         >
-          {/* Text beside the icon */}
-          <Text className="text-white text-[16px] font-medium">
-            SAVE
-          </Text>
+          <Text className="text-white text-base font-medium">SAVE</Text>
         </TouchableOpacity>
       </View>
-
-      <View className="flex-row items-center w-full mt-8">
+      <View className="mt-10">
         <SwitchSelector
-            options={options}
-            initial={0} // Index of the initially selected option (0 for Expense)
-            onPress={value => setSelectedOption(value)} // Callback when an option is pressed
-            backgroundColor={'#F0E4FF'}
-            textColor={'#000000'} // Color for the unselected text
-            selectedColor={'#ffffff'} // Color for the selected text
-            buttonColor={'#7a44cf'} // Color for the selected button background
-            hasPadding={true}
-            borderRadius={30}
-            borderColor={'#F0E4FF'}
-            valuePadding={2}
-            height={40}
-            width={168}
-            // Removed fixed width here to allow flexbox to manage layout (This comment is misleading if width is present)
-            style={{ flex: 1 }} // Use flex:1 to take available space, add margin to separate from button
-            // --- Styles for medium font weight ---
-            textStyle={{ fontSize: 12, fontWeight: '500' }} // Style for unselected text (medium font weight)
-            selectedTextStyle={{ fontSize: 12, fontWeight: '500' }} // Style for selected text (medium font weight)
+          options={options}
+          initial={1}
+          onPress={setSelectedOption}
+          backgroundColor={'#F0E4FF'}
+          textColor={'#000000'}
+          selectedColor={'#ffffff'}
+          buttonColor={'#7a44cf'}
+          hasPadding={true}
+          borderRadius={30}
+          borderColor={'#F0E4FF'}
+          height={40}
+          textStyle={{ fontSize: 12, fontWeight: '500' }}
+          selectedTextStyle={{ fontSize: 12, fontWeight: '500' }}
         />
       </View>
 
-      <View className='mt-[16] flex-row justify-between'>
-        <View className='items-center gap-[8]'>
-          <Text className='text-[14px]'>Account</Text>
+      <View className='flex-row justify-between mt-8'>
+        <View className='items-center flex-1 mr-2'>
+          <Text className='text-sm mb-2'>Account</Text>
           <TouchableOpacity
-            onPress={() => setAccountsModalVisible(true)}
-            className="w-[152px] h-[51px] flex-row gap-4 justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
+            onPress={toggleAccountsModal}
+            className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
-
-            <SVG_ICONS.Account size={16} />
-
-            {/* Text beside the icon */}
-            <Text className="text-white text-[16px]">
-              Account
-            </Text>
+            <SVG_ICONS.Account size={16} color="white" />
+            <Text className="text-white text-base">Account</Text>
           </TouchableOpacity>
         </View>
 
-        <View className='items-center gap-[8]'>
-          <Text className='text-[14px]'>Category</Text>
+        <View className='items-center flex-1 ml-2'>
+          <Text className='text-sm mb-2'>Category</Text>
           <TouchableOpacity
-            onPress={() => setCategoryModalVisible(true)}
-            className="w-[152px] h-[51px] flex-row gap-4 justify-center items-center bg-[#8938E9] px-[8] py-[6] rounded-[10] active:bg-[#F0E4FF]"
+            onPress={toggleCategoryModal}
+            className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
-
-            <SVG_ICONS.Category size={16} />
-
-            {/* Text beside the icon */}
-            <Text className="text-white text-[16px]">
-              Category
-            </Text>
+            <SVG_ICONS.Category size={16} color="white" />
+            <Text className="text-white text-base">Category</Text>
           </TouchableOpacity>
-        </View>  
+        </View>
       </View>
-      
-      <View className='mt-[24]'>
+
+      <View className='mt-6'>
         <TextInput
-          className="w-full h-[100] border-2 rounded-[10] p-4 text-[16px]"
+          className="w-full h-24 border-2 rounded-lg p-4 text-base"
           placeholder="Notes"
           multiline={true}
           numberOfLines={3}
           maxLength={100}
-          value={value}
-          onChangeText={setValue}
+          value={notes}
+          onChangeText={setNotes}
           textAlignVertical="top"
         />
       </View>
-      
+
       <View className='mt-4'>
-        <View className='w-full h-[80] border-2 rounded-[10] p-2 flex items-end justify-center'>
-        <Text className='text-[75px] text-right' style={{ lineHeight: 65, includeFontPadding: false}}>
-          {displayValue}
-        </Text>
+        <View className='w-full h-[80] border-2 rounded-lg p-2 flex items-end justify-center'>
+          <Text className='text-7xl text-right' style={{ lineHeight: 65, includeFontPadding: false }}>
+            {displayValue}
+          </Text>
         </View>
       </View>
 
       {/* Calculator Body */}
-      <View className='mt-[16] flex-col'>
-
-        {/* First Row */}
+      <View className='mt-4'>
+        {/* Row 1 */}
         <View className='flex-row mb-2 justify-between'>
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={{
-                width: '49%',
-                flexGrow: 0,
-                flexShrink: 0,
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]" // No flex here yet
-          >
-            <SVG_ICONS.Backspace size={36} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleClear}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>C</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleOperatorInput('/')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>÷</Text>
-          </TouchableOpacity>
+          <CalculatorButton label="←" onPress={handleDelete} isLarge={true} />
+          <CalculatorButton label="C" onPress={handleClear} />
+          <CalculatorButton label="÷" onPress={() => handleOperatorInput('/')} />
         </View>
-
-        {/* Second Row */}
-        <View className='flex-row justify-between mb-2'>
-          <TouchableOpacity
-            onPress={() => handleNumberInput('7')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>7</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('8')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>8</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('9')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>9</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleOperatorInput('*')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>x</Text>
-          </TouchableOpacity>
+        {/* Row 2 */}
+        <View className='flex-row mb-2 justify-between'>
+          <CalculatorButton label="7" onPress={() => handleNumberInput('7')} />
+          <CalculatorButton label="8" onPress={() => handleNumberInput('8')} />
+          <CalculatorButton label="9" onPress={() => handleNumberInput('9')} />
+          <CalculatorButton label="x" onPress={() => handleOperatorInput('*')} />
         </View>
-
-        {/* Third Row */}
-        <View className='flex-row justify-between mb-2'>
-          <TouchableOpacity
-            onPress={() => handleNumberInput('4')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>4</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('5')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>5</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('6')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>6</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleOperatorInput('-')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>-</Text>
-          </TouchableOpacity>
+        {/* Row 3 */}
+        <View className='flex-row mb-2 justify-between'>
+          <CalculatorButton label="4" onPress={() => handleNumberInput('4')} />
+          <CalculatorButton label="5" onPress={() => handleNumberInput('5')} />
+          <CalculatorButton label="6" onPress={() => handleNumberInput('6')} />
+          <CalculatorButton label="-" onPress={() => handleOperatorInput('-')} />
         </View>
-
-        {/* Fourth Row */}
-        <View className='flex-row justify-between mb-2'>
-          <TouchableOpacity
-            onPress={() => handleNumberInput('1')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>1</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('2')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>2</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('3')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>3</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleOperatorInput('+')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>+</Text>
-          </TouchableOpacity>
+        {/* Row 4 */}
+        <View className='flex-row mb-2 justify-between'>
+          <CalculatorButton label="1" onPress={() => handleNumberInput('1')} />
+          <CalculatorButton label="2" onPress={() => handleNumberInput('2')} />
+          <CalculatorButton label="3" onPress={() => handleNumberInput('3')} />
+          <CalculatorButton label="+" onPress={() => handleOperatorInput('+')} />
         </View>
-
-        {/* Fifth Row */}
-        <View className='flex-row justify-between mb-2'>
-          <TouchableOpacity
-            onPress={() => handleNumberInput('0')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>0</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('00')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>00</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => handleNumberInput('.')}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>.</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleCalculation}
-            style={{
-                width: '24%',
-            }}
-            className="h-[60] border-2 rounded-[10] justify-center items-center active:bg-[#8938E9]"
-          >
-            <Text className='text-[30px] font-bold text-[#392F46]'>=</Text>
-          </TouchableOpacity>
+        {/* Row 5 */}
+        <View className='flex-row justify-between'>
+          <CalculatorButton label="0" onPress={() => handleNumberInput('0')} />
+          <CalculatorButton label="00" onPress={() => handleNumberInput('00')} />
+          <CalculatorButton label="." onPress={() => handleNumberInput('.')} />
+          <CalculatorButton label="=" onPress={handleCalculation} />
         </View>
       </View>
-
-      
     </View>
-  )
+  );
 }
+
+// A reusable component for calculator buttons
+const CalculatorButton = ({ label, onPress, isLarge = false }) => {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className={`h-[60] border-2 rounded-lg justify-center items-center active:bg-[#8938E9] ${isLarge ? 'w-[49%]' : 'w-[24%]'}`}
+      style={isLarge ? { width: '49%' } : { width: '24%' }}
+    >
+      {label === "←" ? (
+        <SVG_ICONS.Backspace size={36} />
+      ) : (
+        <Text className='text-3xl font-bold text-gray-700'>{label}</Text>
+      )}
+    </TouchableOpacity>
+  );
+};
