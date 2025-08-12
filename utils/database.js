@@ -1,44 +1,36 @@
 import * as FileSystem from 'expo-file-system';
-import { openDatabaseAsync } from 'expo-sqlite';
+import * as SQLite from 'expo-sqlite';
+
+// Define the correct, new database filename
+const DB_NAME = 'budget_tracker_db.db';
 
 // Private variable to hold the database instance
 let _db = null;
 
-// Define a constant ID for our single record in each budget table
-const SINGLE_RECORD_ID = 1;
-
 // Define the target database version for migrations
-// Increment this if you make future schema changes that require data migration
-const DATABASE_VERSION = 3; // Increased version to trigger migration for schema change (removing accounts)
+// We are increasing this to 1 to signify our first version of this new schema.
+const DATABASE_VERSION = 1;
 
 /**
  * Initializes the SQLite database.
- * Opens the database connection and creates the necessary tables if they don't exist.
- * Also performs database migrations to ensure schema consistency and single-record logic.
+ * Opens the database connection and creates the necessary table if it doesn't exist.
+ * Also performs database migrations to ensure schema consistency.
  * @returns {Promise<void>} A promise that resolves when the database is initialized.
  */
 export async function initDatabase() {
   try {
+    // Check and create the SQLite directory if it doesn't exist
+    const dbDir = FileSystem.documentDirectory + 'SQLite/';
+    if (!(await FileSystem.getInfoAsync(dbDir)).exists) {
+      await FileSystem.makeDirectoryAsync(dbDir);
+    }
+    
     // Open the database with the new name
-    const openedDb = await openDatabaseAsync('general_budgets_db.db');
-    _db = openedDb;
+    _db = await SQLite.openDatabaseAsync(DB_NAME);
     console.log('Database instance after openDatabaseAsync:', _db);
 
-    // Ensure all required tables exist (daily, weekly, monthly budgets)
-    await _db.execAsync(
-      `CREATE TABLE IF NOT EXISTS daily_budget (id INTEGER PRIMARY KEY, value TEXT);`
-    );
-    await _db.execAsync(
-      `CREATE TABLE IF NOT EXISTS weekly_budget (id INTEGER PRIMARY KEY, value TEXT);`
-    );
-    await _db.execAsync(
-      `CREATE TABLE IF NOT EXISTS monthly_budget (id INTEGER PRIMARY KEY, value TEXT);`
-    );
-    // Removed 'accounts' table creation
-    console.log('Daily, Weekly, Monthly budget tables created successfully or already exist.');
-
     // --- Database Migration Logic ---
-    // This ensures that the database schema is up-to-date and cleans up old data.
+    // This ensures that the database schema is up-to-date.
     const result = await _db.getFirstAsync('PRAGMA user_version;');
     const currentDbVersion = result ? result.user_version : 0;
     console.log('Current database user_version:', currentDbVersion);
@@ -46,21 +38,25 @@ export async function initDatabase() {
     if (currentDbVersion < DATABASE_VERSION) {
       console.log('Performing database migration to version', DATABASE_VERSION);
 
-      // For this migration (version 3), we'll ensure only the desired tables are clean.
-      // If 'accounts' table existed from a previous version, this migration will effectively
-      // ignore it for future operations, and new data will not be written to it.
-      // To explicitly remove the table, you would use DROP TABLE IF EXISTS,
-      // but for simplicity and to avoid potential data loss if you intended to keep it
-      // but just not use it, we'll just remove it from the active schema.
-      // If you want to permanently remove the table, you would add:
-      // await _db.execAsync('DROP TABLE IF EXISTS accounts;');
+      // Drop any old tables to ensure a clean slate for the new schema.
+      await _db.execAsync(`
+        DROP TABLE IF EXISTS daily_budget;
+        DROP TABLE IF EXISTS weekly_budget;
+        DROP TABLE IF EXISTS monthly_budget;
+      `);
+      console.log('Dropped old budget tables during migration.');
 
-      await _db.runAsync('DELETE FROM daily_budget;');
-      await _db.runAsync('DELETE FROM weekly_budget;');
-      await _db.runAsync('DELETE FROM monthly_budget;');
-      // Removed DELETE FROM accounts;
-      console.log('Cleared all existing rows from daily, weekly, monthly budget tables during migration.');
-
+      // Create the single general_budgets table
+      await _db.execAsync(
+        `CREATE TABLE IF NOT EXISTS general_budgets (
+          id INTEGER PRIMARY KEY NOT NULL,
+          type TEXT NOT NULL,
+          value REAL NOT NULL,
+          timestamp TEXT NOT NULL
+        );`
+      );
+      console.log('general_budgets table created successfully.');
+      
       // Update the user_version to mark migration as complete
       await _db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION};`);
       console.log('Database user_version updated to', DATABASE_VERSION);
@@ -68,7 +64,6 @@ export async function initDatabase() {
     } else {
       console.log('No database migration needed. Current version is up to date.');
     }
-
   } catch (error) {
     console.error('Error initializing database or during migration:', error);
     throw new Error('Failed to initialize the database: ' + error.message);
@@ -76,72 +71,62 @@ export async function initDatabase() {
 }
 
 /**
- * Saves or updates a single budget value in the specified table.
- * Uses INSERT OR REPLACE to ensure only one record (with ID 1) exists in that table.
- * @param {string} tableName The name of the table (e.g., 'daily_budget', 'weekly_budget', 'monthly_budget').
- * @param {string} value The budget value to save.
+ * Saves or updates a budget value for a specific type (e.g., 'daily_budget').
+ * Uses a single table to store all budget types.
+ * @param {string} type The type of budget to save ('daily_budget', 'weekly_budget', 'monthly_budget').
+ * @param {string} value The budget value as a string.
  * @returns {Promise<void>} A promise that resolves when the value is saved/updated.
  */
-export async function saveBudgetValue(tableName, value) {
+export async function saveBudgetValue(type, value) {
   if (!_db) {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
-  // Updated valid table names
-  if (!['daily_budget', 'weekly_budget', 'monthly_budget'].includes(tableName)) {
-    throw new Error(`Invalid table name: ${tableName}`);
-  }
 
   try {
-    // INSERT OR REPLACE will insert if ID 1 doesn't exist, or replace the existing row with ID 1.
-    const result = await _db.runAsync(
-      `INSERT OR REPLACE INTO ${tableName} (id, value) VALUES (?, ?)`,
-      [SINGLE_RECORD_ID, value] // Always use the constant ID for the single record
+    const timestamp = new Date().toISOString();
+    // Use INSERT OR REPLACE to handle both new insertions and updates for a given type.
+    await _db.runAsync(
+      `INSERT OR REPLACE INTO general_budgets (id, type, value, timestamp)
+       VALUES ((SELECT id FROM general_budgets WHERE type = ?), ?, ?, ?);`,
+      [type, type, parseFloat(value), timestamp]
     );
-    console.log(`Value saved/updated successfully in ${tableName}:`, value);
-    console.log(`Insert/Update result for ${tableName}:`, result);
+    console.log(`Value saved/updated successfully for type '${type}':`, value);
   } catch (error) {
-    console.error(`Error saving/updating value in ${tableName}:`, error);
-    throw new Error(`Failed to save/update the value in ${tableName}: ` + error.message);
+    console.error(`Error saving/updating value for type '${type}':`, error);
+    throw new Error(`Failed to save/update the value for type '${type}': ` + error.message);
   }
 }
 
 /**
- * Retrieves a single budget value from the specified table.
- * @param {string} tableName The name of the table (e.g., 'daily_budget', 'weekly_budget', 'monthly_budget').
+ * Retrieves a budget value for a given type.
+ * @param {string} type The type of budget to retrieve.
  * @returns {Promise<string|null>} A promise that resolves with the value string or null if not found.
  */
-export async function getBudgetValue(tableName) {
+export async function getBudgetValue(type) {
   if (!_db) {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
-  // Updated valid table names
-  if (!['daily_budget', 'weekly_budget', 'monthly_budget'].includes(tableName)) {
-    throw new Error(`Invalid table name: ${tableName}`);
-  }
 
   try {
-    // Select the single record by its ID
-    const result = await _db.getFirstAsync(`SELECT value FROM ${tableName} WHERE id = ?`, [SINGLE_RECORD_ID]);
-    console.log(`Retrieved value result from ${tableName}:`, result);
+    const result = await _db.getFirstAsync('SELECT value FROM general_budgets WHERE type = ?', [type]);
+    console.log(`Retrieved value result for type '${type}':`, result);
 
     if (result && result.value !== undefined) {
-      return result.value;
+      return result.value.toFixed(2); // Ensure two decimal places for currency display
     }
-    return null; // Return null if no record is found
+    return null;
   } catch (error) {
-    console.error(`Error retrieving value from ${tableName}:`, error);
-    throw new Error(`Failed to retrieve the value from ${tableName}: ` + error.message);
+    console.error(`Error retrieving value for type '${type}':`, error);
+    throw new Error(`Failed to retrieve the value for type '${type}': ` + error.message);
   }
 }
 
 /**
  * Returns the full local URI path to the SQLite database file.
- * This path is within the app's sandboxed document directory.
  * @returns {string} The URI path to the database file.
  */
 export function getDatabaseFilePath() {
-  // Ensure this matches the database name used in openDatabaseAsync
-  const dbPath = `${FileSystem.documentDirectory}SQLite/general_budgets_db.db`;
+  const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
   console.log('Calculated database file path for sharing:', dbPath);
   return dbPath;
 }

@@ -11,7 +11,8 @@ import GeneralBudgetsModal from '../../components/GeneralBudgetsModal';
 import { getBudgetValue, getDatabaseFilePath, initDatabase, saveBudgetValue } from '../../utils/database';
 
 export default function Budgets() {
-  console.log('Database path:', FileSystem.documentDirectory + 'SQLite/general_budgets_db.db');
+  // Updated console log to reflect the new database name
+  console.log('Database path:', FileSystem.documentDirectory + 'SQLite/budget_tracker_db.db');
   const [currentProgress, setCurrentProgress] = useState(0.25);
 
   // States for displaying current saved budgets
@@ -22,12 +23,12 @@ export default function Budgets() {
   // States for modal visibility
   const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] = useState(false);
   const [isWeeklyBudgetModalVisible, setWeeklyBudgetModalVisible] = useState(false);
-  const [isMonthlyBudgetModalVisible, setMonthlyBudgetModalVisible] = useState(false); // Added monthly modal state
+  const [isMonthlyBudgetModalVisible, setMonthlyBudgetModalVisible] = useState(false);
 
   // General app states
   const [dbInitialized, setDbInitialized] = useState(false);
   const [canShare, setCanShare] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Initial loading state for the whole screen
+  const [isLoading, setIsLoading] = useState(true);
 
   // Function to load all budget values from the database
   const loadAllBudgets = useCallback(async () => {
@@ -36,14 +37,14 @@ export default function Budgets() {
       const weekly = await getBudgetValue('weekly_budget');
       const monthly = await getBudgetValue('monthly_budget');
 
-      setDailyBudget(daily || '0.00'); // Default to '0.00' if null
+      setDailyBudget(daily || '0.00');
       setWeeklyBudget(weekly || '0.00');
       setMonthlyBudget(monthly || '0.00');
     } catch (error) {
       console.error('Error loading budgets from DB:', error);
       Alert.alert('Load Error', error.message || 'Could not load budgets.');
     }
-  }, []); // No dependencies needed for this useCallback, as it just fetches and sets
+  }, []);
 
   // useEffect to initialize the database and load initial budgets
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function Budgets() {
       try {
         await initDatabase();
         setDbInitialized(true);
-        await loadAllBudgets(); // Load all budgets after DB is initialized
+        await loadAllBudgets();
 
         const available = await Sharing.isAvailableAsync();
         setCanShare(available);
@@ -60,26 +61,24 @@ export default function Budgets() {
         console.error('App-level database initialization failed:', error);
         Alert.alert('Initialization Error', error.message || 'Could not initialize the database.');
       } finally {
-        setIsLoading(false); // Set loading to false once initialization and initial load are done
+        setIsLoading(false);
       }
     };
 
     initializeAppDatabase();
-  }, [loadAllBudgets]); // Depend on loadAllBudgets to ensure it's called
+  }, [loadAllBudgets]);
 
   // Generic function to handle saving/updating a budget value for a specific type
-  // This function is passed down to the modal components
   const handleSaveBudget = async (budgetType, value) => {
     if (!dbInitialized) {
       Alert.alert('Database Not Ready', 'Please wait while the database initializes.');
       return;
     }
-    // Basic numerical validation - moved here from modal to ensure consistency
     if (value.trim() === '') {
       Alert.alert('Input Error', 'Please enter a budget amount.');
       return;
     }
-    if (!/^\d+(\.\d{1,2})?$/.test(value)) { // Allows integers or two decimal places
+    if (!/^\d+(\.\d{1,2})?$/.test(value)) {
       Alert.alert('Input Error', 'Please enter a valid numerical amount (e.g., 1000 or 1000.50).');
       return;
     }
@@ -87,7 +86,7 @@ export default function Budgets() {
     try {
       await saveBudgetValue(budgetType, value);
       Alert.alert('Success', `${budgetType.replace('_budget', '').charAt(0).toUpperCase() + budgetType.replace('_budget', '').slice(1)} Budget updated!`);
-      await loadAllBudgets(); // Reload all budgets to update display
+      await loadAllBudgets();
     } catch (error) {
       console.error(`Error saving ${budgetType} budget:`, error);
       Alert.alert('Database Error', error.message || `Could not save ${budgetType.replace('_budget', '').charAt(0).toUpperCase() + budgetType.replace('_budget', '').slice(1)} Budget.`);
@@ -117,7 +116,7 @@ export default function Budgets() {
 
       await Sharing.shareAsync(dbUri, {
         mimeType: 'application/x-sqlite3',
-        dialogTitle: 'Share general_budgets_db.db', // Corrected filename in dialog title
+        dialogTitle: 'Share budget_tracker_db.db', // Updated dialog title
         UTI: 'public.database',
       });
       console.log('Database file shared successfully.');
@@ -223,7 +222,7 @@ export default function Budgets() {
           </View>
           <TouchableOpacity
             className="w-[60] h-[24] px-2 py-1 border rounded-[10] items-center"
-            onPress={() => setMonthlyBudgetModalVisible(true)} // Added onPress for monthly
+            onPress={() => setMonthlyBudgetModalVisible(true)}
           >
             <Text className='text-[12px]'>Change</Text>
           </TouchableOpacity>
@@ -273,24 +272,21 @@ export default function Budgets() {
   );
 }
 
-// Reusable Modal Component for Budget Editing - now directly in this file for simplicity
-// This component wraps your GeneralBudgetsModal and provides the input/save logic
+// Reusable Modal Component for Budget Editing
 const BudgetEditModalContent = ({ isVisible, onClose, title, budgetType, currentBudget, onSave }) => {
   const [inputValue, setInputValue] = useState(currentBudget === '0.00' ? '' : currentBudget);
 
-  // Update inputValue when currentBudget prop changes (e.g., when modal is opened for a new budget type)
   useEffect(() => {
     setInputValue(currentBudget === '0.00' ? '' : currentBudget);
   }, [currentBudget]);
 
   const handleSave = async () => {
-    // Validation is now handled in handleSaveBudget in parent, but basic check here is good
     if (inputValue.trim() === '') {
       Alert.alert('Input Error', 'Please enter a budget amount.');
       return;
     }
-    await onSave(budgetType, inputValue); // Call the parent's save function
-    onClose(); // Close the modal after saving
+    await onSave(budgetType, inputValue);
+    onClose();
   };
 
   return (
@@ -305,8 +301,8 @@ const BudgetEditModalContent = ({ isVisible, onClose, title, budgetType, current
           className='flex-1 border-2 rounded-[10]'
           placeholder='0'
           keyboardType='numeric'
-          value={inputValue} // Bind to local modal state
-          onChangeText={setInputValue} // Update local modal state
+          value={inputValue}
+          onChangeText={setInputValue}
           style={{ backgroundColor: '#D4BFED' }}
         />
       </View>
@@ -320,7 +316,7 @@ const BudgetEditModalContent = ({ isVisible, onClose, title, budgetType, current
         </TouchableOpacity>
         <TouchableOpacity
           className="w-[74] h-[33] rounded-[10] border-2 justify-center items-center"
-          onPress={handleSave} // Call local handleSave
+          onPress={handleSave}
         >
           <Text className="uppercase">Set</Text>
         </TouchableOpacity>
@@ -364,7 +360,6 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: '#fff',
     borderRadius: 10,
-    // Shadow styles moved to a reusable style object
   },
   label: {
     fontSize: 18,
@@ -391,7 +386,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ffc107',
   },
-  shadowStyle: { // Reusable shadow style
+  shadowStyle: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -399,4 +394,3 @@ const styles = StyleSheet.create({
     elevation: 3,
   }
 });
-
