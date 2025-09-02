@@ -1,10 +1,8 @@
-import { SVG_ICONS } from '@/assets/constants/icons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { router } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 // Place this at the top of your file or in a global types file (e.g., types/navigation.ts)
 export type DrawerParamList = {
@@ -32,46 +30,41 @@ const CustomDrawerContent = (props) => {
 
       {/* Custom Drawer Items */}
       {/* Settings */}
-        <DrawerItem
-          label={'Settings'}
-          icon={({ size }) => (
-            <SVG_ICONS.Settings
-              width={size}
-              height={size}
-            />
-          )}
-          onPress={() => {
-            router.push('/settings');
-          }}
-        />
+      <DrawerItem
+        label={'Settings'}
+        icon={({ size }) => (
+          // Note: SVG_ICONS is not provided, this would need to be a component you've defined elsewhere
+          // For demonstration purposes, this is a placeholder.
+          <Text style={{ fontSize: size }}>⚙️</Text>
+        )}
+        onPress={() => {
+          router.push('/settings');
+        }}
+      />
 
       {/* Categories */}
-        <DrawerItem
-          label={'Categories'}
-          icon={({ size }) => (
-            <SVG_ICONS.CategorySidemenu
-              width={size}
-              height={size}
-            />
-          )}
-          onPress={() => {
-            router.push('/categories');
-          }}
-        />
+      <DrawerItem
+        label={'Categories'}
+        icon={({ size }) => (
+          // Placeholder for SVG_ICONS.CategorySidemenu
+          <Text style={{ fontSize: size }}>🗂️</Text>
+        )}
+        onPress={() => {
+          router.push('/categories');
+        }}
+      />
 
       {/* Export Records */}
-        <DrawerItem
-          label={'Export Records'}
-          icon={({ size }) => (
-            <SVG_ICONS.ExportRecords
-              width={size}
-              height={size}
-            />
-          )}
-          onPress={() => {
-            router.push('/exportrecords');
-          }}
-        />
+      <DrawerItem
+        label={'Export Records'}
+        icon={({ size }) => (
+          // Placeholder for SVG_ICONS.ExportRecords
+          <Text style={{ fontSize: size }}>📄</Text>
+        )}
+        onPress={() => {
+          router.push('/exportrecords');
+        }}
+      />
       {/* Add more custom DrawerItems as needed */}
     </DrawerContentScrollView>
   );
@@ -93,33 +86,53 @@ export default function Layout() {
         options={{
           drawerLabel: 'Main Dashboard',
           title: 'App Dashboard',
-          headerShown: false,
+          headerShown: false
         }}
       />
       <Drawer.Screen
         name="settings"
-        options={{
+        options={({ navigation }) => ({
           drawerLabel: 'Settings',
-          title: 'App Settings',
-        }}
+          title: 'Settings',
+          headerShown: true, // Show header for this screen
+          // Conditionally render the back button
+          headerLeft: () => (
+            <Pressable onPress={() => navigation.goBack()} style={{ paddingHorizontal: 15 }}>
+              <Text style={{ fontSize: 24 }}>⬅️</Text>
+            </Pressable>
+          ),
+        })}
       />
       <Drawer.Screen
         name="categories"
-        options={{
+        options={({ navigation }) => ({
           drawerLabel: 'Categories',
           title: 'Categories',
-        }}
+          headerShown: true, // Show header for this screen
+          // Conditionally render the back button
+          headerLeft: () => (
+            <Pressable onPress={() => navigation.goBack()} style={{ paddingHorizontal: 15 }}>
+              <Text style={{ fontSize: 24 }}>⬅️</Text>
+            </Pressable>
+          ),
+        })}
       />
       <Drawer.Screen
         name="exportrecords"
-        options={{
+        options={({ navigation }) => ({
           drawerLabel: 'Export Records',
           title: 'Export Records',
-          }}
+          headerShown: true, // Show header for this screen
+          // Conditionally render the back button
+          headerLeft: () => (
+            <Pressable onPress={() => navigation.goBack()} style={{ paddingHorizontal: 15 }}>
+              <Text style={{ fontSize: 24 }}>⬅️</Text>
+            </Pressable>
+          ),
+        })}
       />
 
       {/* Add any other screens you want to be part of your drawer navigator */}
-
     </Drawer>
   );
 }

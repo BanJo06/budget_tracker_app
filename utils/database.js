@@ -1,132 +1,133 @@
 import * as FileSystem from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 
-// Define the correct, new database filename
-const DB_NAME = 'budget_tracker_db.db';
-
-// Private variable to hold the database instance
-let _db = null;
-
-// Define the target database version for migrations
-// We are increasing this to 1 to signify our first version of this new schema.
-const DATABASE_VERSION = 1;
+// Use the synchronous API to open the database and create a shared reference.
+const db = SQLite.openDatabaseSync('budget_tracker.db');
 
 /**
- * Initializes the SQLite database.
- * Opens the database connection and creates the necessary table if it doesn't exist.
- * Also performs database migrations to ensure schema consistency.
- * @returns {Promise<void>} A promise that resolves when the database is initialized.
+ * Gets the full file path for the database.
+ * @returns {string} The full path to the database file.
  */
-export async function initDatabase() {
-  try {
-    // Check and create the SQLite directory if it doesn't exist
-    const dbDir = FileSystem.documentDirectory + 'SQLite/';
-    if (!(await FileSystem.getInfoAsync(dbDir)).exists) {
-      await FileSystem.makeDirectoryAsync(dbDir);
-    }
-    
-    // Open the database with the new name
-    _db = await SQLite.openDatabaseAsync(DB_NAME);
-    console.log('Database instance after openDatabaseAsync:', _db);
+export const getDatabaseFilePath = () => {
+    // Expo.FileSystem stores SQLite databases in a specific directory.
+    const dbName = 'budget_tracker.db';
+    const dbPath = `${FileSystem.documentDirectory}SQLite/${dbName}`;
+    return dbPath;
+};
 
-    // --- Database Migration Logic ---
-    // This ensures that the database schema is up-to-date.
-    const result = await _db.getFirstAsync('PRAGMA user_version;');
-    const currentDbVersion = result ? result.user_version : 0;
-    console.log('Current database user_version:', currentDbVersion);
+/**
+ * Initializes the database tables and migrates schemas if necessary.
+ */
+export const initDatabase = async () => {
+    try {
+        console.log("Initializing database schema...");
 
-    if (currentDbVersion < DATABASE_VERSION) {
-      console.log('Performing database migration to version', DATABASE_VERSION);
-
-      // Drop any old tables to ensure a clean slate for the new schema.
-      await _db.execAsync(`
-        DROP TABLE IF EXISTS daily_budget;
-        DROP TABLE IF EXISTS weekly_budget;
-        DROP TABLE IF EXISTS monthly_budget;
-      `);
-      console.log('Dropped old budget tables during migration.');
-
-      // Create the single general_budgets table
-      await _db.execAsync(
-        `CREATE TABLE IF NOT EXISTS general_budgets (
+        // Start a transaction for safety
+        db.withTransactionSync(() => {
+            // First, create the table if it doesn't exist.
+            // Note: This won't run if the table already exists, even if the schema is old.
+            db.execSync(`
+        PRAGMA journal_mode = WAL;
+        CREATE TABLE IF NOT EXISTS accounts (
           id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
           type TEXT NOT NULL,
-          value REAL NOT NULL,
-          timestamp TEXT NOT NULL
-        );`
-      );
-      console.log('general_budgets table created successfully.');
-      
-      // Update the user_version to mark migration as complete
-      await _db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION};`);
-      console.log('Database user_version updated to', DATABASE_VERSION);
-      console.log('Database migration completed successfully.');
-    } else {
-      console.log('No database migration needed. Current version is up to date.');
+          balance REAL NOT NULL,
+          icon_name TEXT
+        );
+        CREATE TABLE IF NOT EXISTS budgets (
+          id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
+          balance REAL NOT NULL
+        );
+      `);
+
+            // --- Database Migrations ---
+            // We need to add a UNIQUE constraint to the 'name' column in both tables.
+            // We check for the constraint first to avoid errors on a correct schema.
+
+            // Migration for the 'accounts' table
+            const accountTableInfo = db.getFirstSync("PRAGMA table_info(accounts);");
+            if (accountTableInfo && !accountTableInfo.name.includes('UNIQUE')) {
+                console.log("Migrating 'accounts' table: Adding UNIQUE constraint...");
+                db.execSync(`
+          CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_name ON accounts(name);
+        `);
+            }
+
+            // Migration for the 'budgets' table
+            const budgetTableInfo = db.getFirstSync("PRAGMA table_info(budgets);");
+            if (budgetTableInfo && !budgetTableInfo.name.includes('UNIQUE')) {
+                console.log("Migrating 'budgets' table: Adding UNIQUE constraint...");
+                db.execSync(`
+          CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_name ON budgets(name);
+        `);
+            }
+        });
+
+        console.log('Database tables created/migrated successfully.');
+    } catch (error) {
+        console.error('Error initializing database tables:', error);
     }
-  } catch (error) {
-    console.error('Error initializing database or during migration:', error);
-    throw new Error('Failed to initialize the database: ' + error.message);
-  }
-}
+};
 
 /**
- * Saves or updates a budget value for a specific type (e.g., 'daily_budget').
- * Uses a single table to store all budget types.
- * @param {string} type The type of budget to save ('daily_budget', 'weekly_budget', 'monthly_budget').
- * @param {string} value The budget value as a string.
- * @returns {Promise<void>} A promise that resolves when the value is saved/updated.
+ * Gets the singleton database instance.
+ * @returns {SQLite.SQLiteDatabase} The database instance.
  */
-export async function saveBudgetValue(type, value) {
-  if (!_db) {
-    throw new Error('Database not initialized. Call initDatabase() first.');
-  }
-
-  try {
-    const timestamp = new Date().toISOString();
-    // Use INSERT OR REPLACE to handle both new insertions and updates for a given type.
-    await _db.runAsync(
-      `INSERT OR REPLACE INTO general_budgets (id, type, value, timestamp)
-       VALUES ((SELECT id FROM general_budgets WHERE type = ?), ?, ?, ?);`,
-      [type, type, parseFloat(value), timestamp]
-    );
-    console.log(`Value saved/updated successfully for type '${type}':`, value);
-  } catch (error) {
-    console.error(`Error saving/updating value for type '${type}':`, error);
-    throw new Error(`Failed to save/update the value for type '${type}': ` + error.message);
-  }
-}
+export const getDb = () => db;
 
 /**
- * Retrieves a budget value for a given type.
- * @param {string} type The type of budget to retrieve.
- * @returns {Promise<string|null>} A promise that resolves with the value string or null if not found.
+ * Gets all budgets from the database.
+ * @returns {Array<Object>} An array of budget objects.
  */
-export async function getBudgetValue(type) {
-  if (!_db) {
-    throw new Error('Database not initialized. Call initDatabase() first.');
-  }
-
-  try {
-    const result = await _db.getFirstAsync('SELECT value FROM general_budgets WHERE type = ?', [type]);
-    console.log(`Retrieved value result for type '${type}':`, result);
-
-    if (result && result.value !== undefined) {
-      return result.value.toFixed(2); // Ensure two decimal places for currency display
+export const getBudgets = () => {
+    try {
+        const allRows = db.getAllSync('SELECT * FROM budgets;');
+        return allRows;
+    } catch (error) {
+        console.error('Error getting budgets:', error);
+        throw new Error('Failed to retrieve budgets from the database.');
     }
-    return null;
-  } catch (error) {
-    console.error(`Error retrieving value for type '${type}':`, error);
-    throw new Error(`Failed to retrieve the value for type '${type}': ` + error.message);
-  }
-}
+};
 
 /**
- * Returns the full local URI path to the SQLite database file.
- * @returns {string} The URI path to the database file.
+ * Gets a single budget from the database by name.
+ * @param {string} name The name of the budget to retrieve.
+ * @returns {Object | undefined} The budget object, or undefined if not found.
  */
-export function getDatabaseFilePath() {
-  const dbPath = `${FileSystem.documentDirectory}SQLite/${DB_NAME}`;
-  console.log('Calculated database file path for sharing:', dbPath);
-  return dbPath;
-}
+export const getBudget = (name) => {
+    try {
+        const row = db.getFirstSync('SELECT * FROM budgets WHERE name = ?;', [name]);
+        // Return a default object if the row is not found
+        if (!row) {
+            return { name, balance: 0 };
+        }
+        return row;
+    } catch (error) {
+        console.error(`Error getting budget '${name}':`, error);
+        throw new Error(`Failed to retrieve budget '${name}' from the database.`);
+    }
+};
+
+/**
+ * Saves a new budget or updates an existing one.
+ * @param {string} name The name of the budget.
+ * @param {string | number} balance The balance of the budget.
+ * @returns {void}
+ */
+export const saveBudget = (name, balance) => {
+    try {
+        const balanceNum = parseFloat(balance);
+        const finalBalance = isNaN(balanceNum) ? 0 : balanceNum;
+        db.runSync(`
+      INSERT INTO budgets (name, balance)
+      VALUES (?, ?)
+      ON CONFLICT(name) DO UPDATE SET balance = excluded.balance;
+    `, [name, finalBalance]);
+        console.log(`Budget '${name}' saved/updated successfully.`);
+    } catch (error) {
+        console.error(`Error saving budget '${name}':`, error);
+        throw new Error(`Failed to save/update the budget '${name}': ${error.message}`);
+    }
+};

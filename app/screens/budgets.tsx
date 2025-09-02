@@ -1,130 +1,143 @@
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 // Assuming ProgressBar is a component you have
 import ProgressBar from '@/components/ProgressBar';
 // Assuming GeneralBudgetsModal is a component you have that provides the basic modal structure
-import GeneralBudgetsModal from '../../components/GeneralBudgetsModal';
+import GeneralBudgetsModal from '@/components/GeneralBudgetsModal';
 // Import the database utility functions
-import { getBudgetValue, getDatabaseFilePath, initDatabase, saveBudgetValue } from '../../utils/database';
+import { getBudget as getBudgetDb, getDatabaseFilePath, initDatabase, saveBudget as saveBudgetDb } from "@/utils/database";
 
 export default function Budgets() {
-  // Updated console log to reflect the new database name
   console.log('Database path:', FileSystem.documentDirectory + 'SQLite/budget_tracker_db.db');
   const [currentProgress, setCurrentProgress] = useState(0.25);
 
-  // States for displaying current saved budgets
+  // State to manage current budget values
   const [dailyBudget, setDailyBudget] = useState('0.00');
   const [weeklyBudget, setWeeklyBudget] = useState('0.00');
   const [monthlyBudget, setMonthlyBudget] = useState('0.00');
 
-  // States for modal visibility
+  // State to control the visibility of budget modals
   const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] = useState(false);
   const [isWeeklyBudgetModalVisible, setWeeklyBudgetModalVisible] = useState(false);
   const [isMonthlyBudgetModalVisible, setMonthlyBudgetModalVisible] = useState(false);
+
+  // State for the custom alert modal
+  const [isAlertModalVisible, setAlertModalVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertTitle, setAlertTitle] = useState('');
 
   // General app states
   const [dbInitialized, setDbInitialized] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Function to load all budget values from the database
-  const loadAllBudgets = useCallback(async () => {
+  // Function to show a custom alert modal
+  const showAlert = (title, message) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertModalVisible(true);
+  };
+
+  // Helper function to get a budget value from the database
+  const getBudgetValue = (name) => {
     try {
-      const daily = await getBudgetValue('daily_budget');
-      const weekly = await getBudgetValue('weekly_budget');
-      const monthly = await getBudgetValue('monthly_budget');
-
-      setDailyBudget(daily || '0.00');
-      setWeeklyBudget(weekly || '0.00');
-      setMonthlyBudget(monthly || '0.00');
+      const budget = getBudgetDb(name);
+      return budget ? budget.balance : null;
     } catch (error) {
-      console.error('Error loading budgets from DB:', error);
-      Alert.alert('Load Error', error.message || 'Could not load budgets.');
+      console.error(`Error getting value for ${name}:`, error);
+      throw error;
     }
-  }, []);
+  };
 
-  // useEffect to initialize the database and load initial budgets
+  // Helper function to save a budget value to the database
+  const saveBudgetValue = (name, value) => {
+    try {
+      const parsedValue = parseFloat(value);
+      if (isNaN(parsedValue)) {
+        throw new Error("Invalid budget value.");
+      }
+      saveBudgetDb(name, parsedValue);
+    } catch (error) {
+      console.error(`Error saving value for ${name}:`, error);
+      throw error;
+    }
+  };
+
+  // Reusable helper to get and set a budget value to a state hook
+  const getAndSetBudgetValue = useCallback((name, setter) => {
+    try {
+      const budget = getBudgetValue(name);
+      setter(budget !== null ? budget.toFixed(2) : '0.00');
+    } catch (error) {
+      console.error(`Error loading ${name}, setting to default.`, error);
+      setter('0.00');
+    }
+  }, [getBudgetValue]);
+
+  // Function to load all budget values from the database
+  const loadAllBudgets = useCallback(() => {
+    getAndSetBudgetValue('daily_budget', setDailyBudget);
+    getAndSetBudgetValue('weekly_budget', setWeeklyBudget);
+    getAndSetBudgetValue('monthly_budget', setMonthlyBudget);
+  }, [getAndSetBudgetValue]);
+
+  // Effect hook to initialize the database and load initial budgets on app start
   useEffect(() => {
     const initializeAppDatabase = async () => {
       try {
         await initDatabase();
         setDbInitialized(true);
-        await loadAllBudgets();
-
+        loadAllBudgets();
         const available = await Sharing.isAvailableAsync();
         setCanShare(available);
-
       } catch (error) {
         console.error('App-level database initialization failed:', error);
-        Alert.alert('Initialization Error', error.message || 'Could not initialize the database.');
+        showAlert('Initialization Error', error.message || 'Could not initialize the database.');
       } finally {
         setIsLoading(false);
       }
     };
-
     initializeAppDatabase();
   }, [loadAllBudgets]);
 
-  // Generic function to handle saving/updating a budget value for a specific type
+  // Generic function to handle saving a budget value for a specific type
   const handleSaveBudget = async (budgetType, value) => {
     if (!dbInitialized) {
-      Alert.alert('Database Not Ready', 'Please wait while the database initializes.');
+      showAlert('Database Not Ready', 'Please wait while the database initializes.');
       return;
     }
     if (value.trim() === '') {
-      Alert.alert('Input Error', 'Please enter a budget amount.');
+      showAlert('Input Error', 'Please enter a budget amount.');
       return;
     }
     if (!/^\d+(\.\d{1,2})?$/.test(value)) {
-      Alert.alert('Input Error', 'Please enter a valid numerical amount (e.g., 1000 or 1000.50).');
+      showAlert('Input Error', 'Please enter a valid numerical amount (e.g., 1000 or 1000.50).');
       return;
     }
-
     try {
-      await saveBudgetValue(budgetType, value);
-      Alert.alert('Success', `${budgetType.replace('_budget', '').charAt(0).toUpperCase() + budgetType.replace('_budget', '').slice(1)} Budget updated!`);
-      await loadAllBudgets();
+      saveBudgetValue(budgetType, value);
+      const formattedBudgetType = budgetType.replace('_budget', '').charAt(0).toUpperCase() + budgetType.replace('_budget', '').slice(1);
+      showAlert('Success', `${formattedBudgetType} Budget updated!`);
+      loadAllBudgets();
     } catch (error) {
       console.error(`Error saving ${budgetType} budget:`, error);
-      Alert.alert('Database Error', error.message || `Could not save ${budgetType.replace('_budget', '').charAt(0).toUpperCase() + budgetType.replace('_budget', '').slice(1)} Budget.`);
+      showAlert('Database Error', error.message || `Could not save budget.`);
     }
   };
 
-  // Function to share the database file
-  const shareDatabaseFile = async () => {
-    if (!dbInitialized) {
-      Alert.alert('Database Not Ready', 'Please wait while the database initializes.');
-      return;
-    }
-    if (!canShare) {
-      Alert.alert('Sharing Not Available', 'File sharing is not supported on this device or platform.');
-      return;
-    }
-
+  // Function to get the database file path and share it with other apps
+  const shareDatabaseFile = useCallback(async () => {
     try {
-      const dbUri = getDatabaseFilePath();
-      console.log("Attempting to share database from URI:", dbUri);
-
-      const fileInfo = await FileSystem.getInfoAsync(dbUri);
-      if (!fileInfo.exists) {
-        Alert.alert('File Not Found', 'The database file does not exist yet. Please save some data first to create it.');
-        return;
-      }
-
-      await Sharing.shareAsync(dbUri, {
-        mimeType: 'application/x-sqlite3',
-        dialogTitle: 'Share budget_tracker_db.db', // Updated dialog title
-        UTI: 'public.database',
-      });
-      console.log('Database file shared successfully.');
+      const dbPath = await getDatabaseFilePath();
+      await Sharing.shareAsync(dbPath, { mimeType: 'application/octet-stream', dialogTitle: 'Share your budget database' });
     } catch (error) {
-      console.error('Error sharing database file:', error);
-      Alert.alert('Sharing Error', 'Could not share the database file. ' + error.message);
+      console.error("Failed to share the database file:", error);
+      showAlert('Share Error', 'Could not share the database file.');
     }
-  };
+  }, []);
 
   // Display loading indicator while app initializes
   if (isLoading) {
@@ -138,6 +151,20 @@ export default function Budgets() {
 
   return (
     <View className='m-8'>
+      {/* Custom Alert Modal */}
+      <GeneralBudgetsModal
+        isVisible={isAlertModalVisible}
+        onClose={() => setAlertModalVisible(false)}
+        title={alertTitle}
+      >
+        <Text>{alertMessage}</Text>
+        <TouchableOpacity
+          className="w-full h-[33] rounded-[10] border-2 mt-4 justify-center items-center"
+          onPress={() => setAlertModalVisible(false)}
+        >
+          <Text className="uppercase">OK</Text>
+        </TouchableOpacity>
+      </GeneralBudgetsModal>
       {/* Modal for Daily Budget */}
       <BudgetEditModalContent
         isVisible={isDailyBudgetModalVisible}
@@ -252,12 +279,15 @@ export default function Budgets() {
         </View>
 
         {/* Add Budget Plan */}
-        <View className='w-[137] h-[136] p-2 border-[#8938E9] rounded-[10] border justify-center'>
+        <TouchableOpacity
+          className='w-[137] h-[136] p-2 border-[#8938E9] rounded-[10] border justify-center'
+          onPress={() => console.log('Add New Budget button pressed!')}
+        >
           <View className='flex-col items-center gap-[18]'>
             <View className='w-[30] h-[30] rounded-full border border-[#8938E9]'></View>
             <Text className='text-[#8938E9]'>Add New Budget</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
       </View>
       <View style={{ marginTop: 15 }}>
@@ -276,16 +306,18 @@ export default function Budgets() {
 const BudgetEditModalContent = ({ isVisible, onClose, title, budgetType, currentBudget, onSave }) => {
   const [inputValue, setInputValue] = useState(currentBudget === '0.00' ? '' : currentBudget);
 
+  // This effect ensures the input field is updated when the currentBudget prop changes
   useEffect(() => {
     setInputValue(currentBudget === '0.00' ? '' : currentBudget);
-  }, [currentBudget]);
+  }, [currentBudget, isVisible]); // isVisible is added to trigger on modal open
 
-  const handleSave = async () => {
+  const handleSave = () => { // Removed async
     if (inputValue.trim() === '') {
-      Alert.alert('Input Error', 'Please enter a budget amount.');
+      // Logic for showing a custom alert if needed, instead of a system alert
+      // But for simplicity, we'll let the onSave function handle error messages.
       return;
     }
-    await onSave(budgetType, inputValue);
+    onSave(budgetType, inputValue); // Removed await
     onClose();
   };
 

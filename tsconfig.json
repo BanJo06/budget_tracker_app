@@ -23,7 +23,7 @@
     "**/*.js",  // Make sure your JS files are included
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts",  ],
+    "nativewind-env.d.ts", "app/(sidemenu)/settings/settings.jsx", "app/(sidemenu)/settings/_layout.jsx",  ],
 
   "exclude": [
     "node_modules",
