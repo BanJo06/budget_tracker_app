@@ -11,6 +11,7 @@ import CloseIcon from '../icons/CloseIcon';
 import DailyRewardIcon from '../icons/DailyRewardIcon';
 import DashboardActiveIcon from '../icons/DashboardActiveIcon';
 import DashboardIcon from '../icons/DashboardIcon';
+import EllipsisIcon from '../icons/EllipsisIcon';
 import ExportRecordsIcon from '../icons/ExportRecordsIcon';
 import GraphsActiveIcon from '../icons/GraphsActiveIcon';
 import GraphsIcon from '../icons/GraphsIcon';
@@ -61,5 +62,6 @@ export const SVG_ICONS: SvgIconMap = {
   CategorySidemenu: CategoryIconSidemenu,
   Settings: SettingsIcon,
   Close: CloseIcon,
-  SmallAdd: SmallAddIcon
+  SmallAdd: SmallAddIcon,
+  Ellipsis: EllipsisIcon
 };
