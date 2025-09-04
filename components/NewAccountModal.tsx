@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 import { ACCOUNTS_SVG_ICONS } from "../assets/constants/accounts_icons";
-import { saveAccount } from "../utils/accounts";
+import { addAccount } from "../utils/accounts";
 
 const NewAccountModal = ({ isVisible, onClose }) => {
   const [initialAmount, setInitialAmount] = useState("");
@@ -16,7 +16,7 @@ const NewAccountModal = ({ isVisible, onClose }) => {
 
   const handleSave = () => {
     // The saveAccount function is now synchronous, so no await is needed
-    saveAccount(
+    addAccount(
       accountName,
       "Cash",
       parseFloat(initialAmount) || 0,

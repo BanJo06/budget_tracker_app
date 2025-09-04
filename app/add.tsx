@@ -1,6 +1,6 @@
 import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
-import { getAccounts, saveAccount } from "@/utils/accounts";
+import { addAccount, getAccounts } from "@/utils/accounts";
 import { initDatabase } from "@/utils/database";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -24,9 +24,8 @@ const CalculatorButton = ({ label, onPress, isLarge = false }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`h-[60] border-2 rounded-lg justify-center items-center active:bg-[#8938E9] ${
-        isLarge ? "w-[49%]" : "w-[24%]"
-      }`}
+      className={`h-[60] border-2 rounded-lg justify-center items-center active:bg-[#8938E9] ${isLarge ? "w-[49%]" : "w-[24%]"
+        }`}
       style={isLarge ? { width: "49%" } : { width: "24%" }}
     >
       {label === "←" ? (
@@ -102,11 +101,10 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
                   <TouchableOpacity
                     key={key}
                     onPress={() => setSelectedIcon(key)}
-                    className={`p-2 rounded-full border-2 ${
-                      selectedIcon === key
+                    className={`p-2 rounded-full border-2 ${selectedIcon === key
                         ? "border-purple-600"
                         : "border-gray-300"
-                    }`}
+                      }`}
                   >
                     <IconComponent
                       size={24}
@@ -230,10 +228,10 @@ export default function Add() {
   // Function to add a new account to the database and update state
   const handleAddNewAccount = async (newAccountData) => {
     try {
-      await saveAccount(
-        newAccountData.name, 
-        'Default Type', 
-        newAccountData.balance, 
+      await addAccount(
+        newAccountData.name,
+        'Default Type',
+        newAccountData.balance,
         newAccountData.icon_name
       );
       const updatedAccounts = await getAccounts();
@@ -393,7 +391,7 @@ export default function Add() {
             className="text-7xl text-right"
             style={{ lineHeight: 65, includeFontPadding: false }}
           >
-          {displayValue}
+            {displayValue}
           </Text>
         </View>
       </View>
@@ -441,7 +439,7 @@ export default function Add() {
         {/* Row 5 */}
         <View className="flex-row justify-between">
           <CalculatorButton label="0" onPress={() => handleNumberInput("0")} />
-          <CalculatorButton label="00"onPress={() => handleNumberInput("00")} />
+          <CalculatorButton label="00" onPress={() => handleNumberInput("00")} />
           <CalculatorButton label="." onPress={() => handleNumberInput(".")} />
           <CalculatorButton label="=" onPress={handleCalculation} />
         </View>
