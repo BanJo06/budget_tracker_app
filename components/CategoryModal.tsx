@@ -16,26 +16,26 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
     children,
     animationType = 'fade',
     transparent = true,
-})  => {
+}) => {
     return (
         <Modal
             animationType={animationType}
-              transparent = {transparent}
-              visible={isVisible}
-              onRequestClose={onClose}
-              >
-        <View className='flex-1 justify-end' style={styles.modalOverlay}>
-            <View className='w-full h-[370] bg-white items-center rounded-t-[10] px-5 py-4'>
-                <Text className='pb-[60px] font-medium'>Select an category</Text>
-                {children}
+            transparent={transparent}
+            visible={isVisible}
+            onRequestClose={onClose}
+        >
+            <View className='flex-1 justify-end' style={styles.modalOverlay}>
+                <View className='w-full h-[370] bg-white items-center rounded-t-[10] px-5 py-4'>
+                    <Text className='font-medium'>Select an category</Text>
+                    {children}
+                </View>
             </View>
-        </View>
         </Modal>
     );
 };
 
 const styles = StyleSheet.create({
-    modalOverlay:   {
+    modalOverlay: {
         backgroundColor: 'rgba(0, 0, 0, 0.5)'
     }
 });

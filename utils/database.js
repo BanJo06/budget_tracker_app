@@ -22,10 +22,8 @@ export const initDatabase = async () => {
     try {
         console.log("Initializing database schema...");
 
-        // Start a transaction for safety
         db.withTransactionSync(() => {
             // First, create the table if it doesn't exist.
-            // Note: This won't run if the table already exists, even if the schema is old.
             db.execSync(`
         PRAGMA journal_mode = WAL;
         CREATE TABLE IF NOT EXISTS accounts (
@@ -39,6 +37,16 @@ export const initDatabase = async () => {
           id INTEGER PRIMARY KEY NOT NULL,
           name TEXT NOT NULL,
           balance REAL NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS expense_categories (
+          id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL UNIQUE,
+          icon_name TEXT
+        );
+        CREATE TABLE IF NOT EXISTS income_categories (
+          id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL UNIQUE,
+          icon_name TEXT
         );
       `);
 
@@ -62,7 +70,7 @@ export const initDatabase = async () => {
                 db.execSync(`
           CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_name ON budgets(name);
         `);
-            }
+            };
         });
 
         console.log('Database tables created/migrated successfully.');
@@ -76,6 +84,7 @@ export const initDatabase = async () => {
  * @returns {SQLite.SQLiteDatabase} The database instance.
  */
 export const getDb = () => db;
+
 
 /**
  * Gets all budgets from the database.

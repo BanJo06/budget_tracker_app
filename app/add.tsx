@@ -1,7 +1,9 @@
 import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
+import CategoryModal from '@/components/CategoryModal';
+import CategorySelection from '@/components/CategorySelection';
 import { addAccount, getAccounts } from "@/utils/accounts";
-import { initDatabase } from "@/utils/database";
+import { getDb, initDatabase } from "@/utils/database";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -13,6 +15,7 @@ import {
   View,
 } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
+import { seedDefaultCategories } from "../database/categoryDefaultSelection";
 
 // This hides the header for the screen
 export const unstable_settings = {
@@ -102,8 +105,8 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
                     key={key}
                     onPress={() => setSelectedIcon(key)}
                     className={`p-2 rounded-full border-2 ${selectedIcon === key
-                        ? "border-purple-600"
-                        : "border-gray-300"
+                      ? "border-purple-600"
+                      : "border-gray-300"
                       }`}
                   >
                     <IconComponent
@@ -204,15 +207,34 @@ export default function Add() {
   const [operator, setOperator] = useState("");
   // Other state
   const [notes, setNotes] = useState("");
-  const [selectedOption, setSelectedOption] = useState("expense");
+  const [selectedOption, setSelectedOption] = useState<'expense' | 'income' | 'transfer'>("expense");
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
   const [accounts, setAccounts] = useState([]);
+
+  // NEW: State for Category Modal
+  const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // ... (existing useEffect for accounts)
+
+  // NEW: Function to toggle the Category Modal's visibility
+  const toggleCategoriesModal = () => {
+    setCategoriesModalVisible(!isCategoriesModalVisible);
+  };
+
+  // NEW: Function to handle a selected category
+  const handleSelectCategory = (category) => {
+    setSelectedCategory(category);
+    toggleCategoriesModal(); // Close the modal after selecting
+  };
 
   // Database-related state and effects
   useEffect(() => {
     async function setupDatabaseAndLoadAccounts() {
       try {
         await initDatabase();
+        const dbInstance = getDb();
+        seedDefaultCategories(dbInstance);
         const initialAccounts = await getAccounts();
         setAccounts(initialAccounts);
       } catch (error) {
@@ -240,6 +262,13 @@ export default function Add() {
     } catch (error) {
       console.error("Error saving new account:", error);
     }
+  };
+
+  // NEW: Update the onPress for SwitchSelector to handle categories
+  const handleSwitchChange = (value) => {
+    setSelectedOption(value);
+    // You might want to reset the selected category when the type changes
+    setSelectedCategory(null);
   };
 
   // Calculator Logic
@@ -320,6 +349,20 @@ export default function Add() {
         accounts={accounts}
         onAddNewAccount={handleAddNewAccount}
       />
+
+      {/* Category Modal */}
+      <CategoryModal
+        isVisible={isCategoriesModalVisible}
+        onClose={toggleCategoriesModal}
+      >
+        {/* Pass the 'type' prop based on the selected option */}
+        <CategorySelection
+          onSelectCategory={handleSelectCategory}
+          isVisible={isCategoriesModalVisible}
+          type={selectedOption === 'expense' ? 'expense' : 'income'}
+        />
+      </CategoryModal>
+
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity
           onPress={handleCancel}
@@ -338,7 +381,7 @@ export default function Add() {
         <SwitchSelector
           options={options}
           initial={1}
-          onPress={setSelectedOption}
+          onPress={handleSwitchChange}
           backgroundColor={"#F0E4FF"}
           textColor={"#000000"}
           selectedColor={"#ffffff"}
@@ -365,11 +408,14 @@ export default function Add() {
         <View className="items-center flex-1 ml-2">
           <Text className="text-sm mb-2">Category</Text>
           <TouchableOpacity
-            onPress={toggleAccountsModal}
+            onPress={toggleCategoriesModal}
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
             <SVG_ICONS.Category size={16} color="white" />
-            <Text className="text-white text-base">Category</Text>
+            {/* <Text className="text-white text-base">Category</Text> */}
+            <Text className="text-white text-base">
+              {selectedCategory ? selectedCategory.name : "Category"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
