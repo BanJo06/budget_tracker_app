@@ -140,13 +140,14 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
 };
 
 // A simplified AccountsModal component
-const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount }) => {
+const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount, onSelectAccount }) => {
   // State for a new account modal within this modal
   const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
 
   const toggleNewAccountModal = () => {
     setNewAccountModalVisible(!isNewAccountModalVisible);
   };
+
   return (
     <Modal
       animationType="slide"
@@ -161,9 +162,13 @@ const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount }) => {
           {accounts.map((account, index) => {
             const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
             return (
-              <View
+              <TouchableOpacity
                 key={index}
                 className="w-full h-[50] px-4 flex-row justify-between items-center mb-2"
+                onPress={() => {
+                  onSelectAccount(account);
+                  onClose(); // Close the modal after selecting
+                }}
               >
                 <View className="flex-row gap-2 items-center">
                   <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
@@ -174,7 +179,7 @@ const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount }) => {
                 <Text className="text-[#8938E9] text-lg">
                   ₱{account.balance.toFixed(2)}
                 </Text>
-              </View>
+              </TouchableOpacity>
             );
           })}
           <TouchableOpacity
@@ -210,6 +215,7 @@ export default function Add() {
   const [selectedOption, setSelectedOption] = useState<'expense' | 'income' | 'transfer'>("expense");
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
   const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
   // NEW: State for Category Modal
   const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
@@ -220,6 +226,12 @@ export default function Add() {
   // NEW: Function to toggle the Category Modal's visibility
   const toggleCategoriesModal = () => {
     setCategoriesModalVisible(!isCategoriesModalVisible);
+  };
+
+  // Function to handle selecting an account from the modal
+  const handleSelectAccount = (account) => {
+    setSelectedAccount(account);
+    toggleAccountsModal(); // Close the modal after selection
   };
 
   // NEW: Function to handle a selected category
@@ -343,11 +355,14 @@ export default function Add() {
   return (
     <View className="p-8 flex-1 bg-white">
       <StatusBar barStyle={"dark-content"} />
+
+      {/* Account Modal */}
       <AccountsModal
         isVisible={isAccountsModalVisible}
         onClose={toggleAccountsModal}
         accounts={accounts}
         onAddNewAccount={handleAddNewAccount}
+        onSelectAccount={handleSelectAccount}
       />
 
       {/* Category Modal */}
@@ -402,7 +417,9 @@ export default function Add() {
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
             <SVG_ICONS.Account size={16} color="white" />
-            <Text className="text-white text-base">Account</Text>
+            <Text className="text-white text-base">
+              {selectedAccount ? selectedAccount.name : "Account"}
+            </Text>
           </TouchableOpacity>
         </View>
         <View className="items-center flex-1 ml-2">
