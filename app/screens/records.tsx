@@ -57,6 +57,7 @@ export default function Records() {
     <View style={styles.container}>
       <View style={styles.header}>
         <SVG_ICONS.Search size={30} />
+        <SVG_ICONS.Transfer size={24} />
       </View>
       <SectionList
         sections={sections}

@@ -173,3 +173,24 @@ export const addSampleTransactions = () => {
         console.error("Error adding sample transactions:", error);
     }
 };
+
+export const saveTransferTransaction = (fromAccountId, toAccountId, amount, notes) => {
+    const db = getDb();
+    const date = new Date().toISOString();
+    const type = 'transfer'; // Explicitly set the type for a transfer
+
+    try {
+        console.log("Attempting to save transfer transaction with these parameters:");
+        console.log({ fromAccountId, toAccountId, amount, type, description: notes, date });
+
+        // Add a new column 'to_account_id' in your transactions table to store the destination account ID
+        db.runSync(
+            `INSERT INTO transactions (account_id, to_account_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+            [fromAccountId, toAccountId, amount, type, notes, date]
+        );
+        console.log('Transfer transaction saved successfully.');
+    } catch (error) {
+        console.error("Error saving transfer transaction:", error);
+        throw new Error("Failed to save transfer transaction.");
+    }
+};

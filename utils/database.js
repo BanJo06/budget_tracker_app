@@ -53,8 +53,10 @@ export const initDatabase = async () => {
                   date TEXT NOT NULL,
                   account_id INTEGER,
                   category_id INTEGER,
+                  to_account_id INTEGER, -- Added for transfers
                   FOREIGN KEY (account_id) REFERENCES accounts(id),
-                  FOREIGN KEY (category_id) REFERENCES categories(id)
+                  FOREIGN KEY (category_id) REFERENCES categories(id),
+                  FOREIGN KEY (to_account_id) REFERENCES accounts(id)
                 );
             `);
 

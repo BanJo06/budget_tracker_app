@@ -4,7 +4,7 @@ import CategoryModal from '@/components/CategoryModal';
 import CategorySelection from '@/components/CategorySelection';
 import { addAccount, getAccounts, updateAccountBalance } from "@/utils/accounts";
 import { initDatabase } from "@/utils/database";
-import { saveTransaction } from "@/utils/transactions";
+import { saveTransaction, saveTransferTransaction } from "@/utils/transactions";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -204,8 +204,10 @@ export default function Add() {
   const [notes, setNotes] = useState("");
   const [selectedOption, setSelectedOption] = useState<'expense' | 'income' | 'transfer'>("expense");
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
+  const [isToAccountsModalVisible, setToAccountsModalVisible] = useState(false); // New state for 'To' account modal
   const [accounts, setAccounts] = useState([]);
-  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null); // 'From' account
+  const [toAccount, setToAccount] = useState(null); // New state for 'To' account
   const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [dbReady, setDbReady] = useState(false); // NEW state variable
@@ -214,9 +216,13 @@ export default function Add() {
     setCategoriesModalVisible(!isCategoriesModalVisible);
   };
 
-  const handleSelectAccount = (account) => {
-    setSelectedAccount(account);
-    toggleAccountsModal();
+  // Modified handleSelectAccount to handle both 'From' and 'To' accounts
+  const handleSelectAccount = (account, type) => {
+    if (type === 'from') {
+      setSelectedAccount(account);
+    } else if (type === 'to') {
+      setToAccount(account);
+    }
   };
 
   const handleSelectCategory = (category) => {
@@ -261,6 +267,8 @@ export default function Add() {
   const handleSwitchChange = (value) => {
     setSelectedOption(value);
     setSelectedCategory(null);
+    setSelectedAccount(null); // Reset accounts to prevent wrong transfers
+    setToAccount(null);
   };
 
   const handleNumberInput = (num) => {
@@ -317,47 +325,72 @@ export default function Add() {
 
   const handleSaveTransaction = async () => {
     const amount = parseFloat(displayValue);
-    const accountId = selectedAccount?.id;
+    const fromAccountId = selectedAccount?.id;
+    const toAccountId = toAccount?.id;
     const categoryId = selectedCategory?.id;
     const transactionType = selectedOption;
     const transactionNotes = notes;
-
-    // Add this console.log to see the value just before saving
-    console.log("Saving transaction with type:", transactionType);
-    console.log("Category selected:", selectedCategory?.name);
 
     if (isNaN(amount) || amount <= 0) {
       console.error("Invalid amount.");
       return;
     }
-    if (!accountId) {
-      console.error("Please select an account.");
-      return;
-    }
-    if (!categoryId && selectedOption !== 'transfer') {
-      console.error("Please select a category.");
-      return;
-    }
 
-    try {
-      // Step 1: Update the account balance based on transaction type
-      if (transactionType === 'income' || transactionType === 'expense') {
-        await updateAccountBalance(accountId, amount, transactionType);
+    if (transactionType === 'transfer') {
+      if (!fromAccountId || !toAccountId) {
+        console.error("Please select both 'From' and 'To' accounts.");
+        return;
+      }
+      if (fromAccountId === toAccountId) {
+        console.error("Cannot transfer to the same account.");
+        return;
       }
 
-      // Step 2: Save the transaction record
-      await saveTransaction(accountId, categoryId, amount, transactionType, transactionNotes);
+      try {
+        // Deduct from the 'From' account
+        await updateAccountBalance(fromAccountId, amount, 'expense');
 
-      console.log("Transaction saved successfully!");
-      router.replace("/(sidemenu)/(tabs)");
-    } catch (error) {
-      console.error("Failed to save transaction:", error.message);
+        // Add to the 'To' account
+        await updateAccountBalance(toAccountId, amount, 'income');
+
+        // Save the transfer record in the transactions table
+        await saveTransferTransaction(fromAccountId, toAccountId, amount, transactionNotes);
+
+        console.log("Transfer saved successfully!");
+        router.replace("/(sidemenu)/(tabs)");
+      } catch (error) {
+        console.error("Failed to save transfer:", error.message);
+      }
+
+    } else { // Expense or Income
+      if (!fromAccountId) {
+        console.error("Please select an account.");
+        return;
+      }
+      if (!categoryId) {
+        console.error("Please select a category.");
+        return;
+      }
+
+      try {
+        await updateAccountBalance(fromAccountId, amount, transactionType);
+        await saveTransaction(fromAccountId, categoryId, amount, transactionType, transactionNotes);
+
+        console.log("Transaction saved successfully!");
+        router.replace("/(sidemenu)/(tabs)");
+      } catch (error) {
+        console.error("Failed to save transaction:", error.message);
+      }
     }
   };
 
 
   const toggleAccountsModal = () => {
     setAccountsModalVisible(!isAccountsModalVisible);
+  };
+
+  const toggleToAccountsModal = () => {
+    setToAccountsModalVisible(!isToAccountsModalVisible);
   };
 
   const options = [
@@ -374,7 +407,14 @@ export default function Add() {
         onClose={toggleAccountsModal}
         accounts={accounts}
         onAddNewAccount={handleAddNewAccount}
-        onSelectAccount={handleSelectAccount}
+        onSelectAccount={(account) => handleSelectAccount(account, 'from')}
+      />
+      <AccountsModal
+        isVisible={isToAccountsModalVisible}
+        onClose={toggleToAccountsModal}
+        accounts={accounts}
+        onAddNewAccount={handleAddNewAccount}
+        onSelectAccount={(account) => handleSelectAccount(account, 'to')}
       />
       <CategoryModal
         isVisible={isCategoriesModalVisible}
@@ -420,7 +460,9 @@ export default function Add() {
       </View>
       <View className="flex-row justify-between mt-8">
         <View className="items-center flex-1 mr-2">
-          <Text className="text-sm mb-2">Account</Text>
+          <Text className="text-sm mb-2">
+            {selectedOption === 'transfer' ? 'From' : 'Account'}
+          </Text>
           <TouchableOpacity
             onPress={toggleAccountsModal}
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
@@ -432,14 +474,22 @@ export default function Add() {
           </TouchableOpacity>
         </View>
         <View className="items-center flex-1 ml-2">
-          <Text className="text-sm mb-2">Category</Text>
+          <Text className="text-sm mb-2">
+            {selectedOption === 'transfer' ? 'To' : 'Category'}
+          </Text>
           <TouchableOpacity
-            onPress={toggleCategoriesModal}
+            onPress={selectedOption === 'transfer' ? toggleToAccountsModal : toggleCategoriesModal}
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
-            <SVG_ICONS.Category size={16} color="white" />
+            {selectedOption === 'transfer' ? (
+              <SVG_ICONS.Account size={16} color="white" />
+            ) : (
+              <SVG_ICONS.Category size={16} color="white" />
+            )}
             <Text className="text-white text-base">
-              {selectedCategory ? selectedCategory.name : "Category"}
+              {selectedOption === 'transfer'
+                ? toAccount ? toAccount.name : "Account"
+                : selectedCategory ? selectedCategory.name : "Category"}
             </Text>
           </TouchableOpacity>
         </View>

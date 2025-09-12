@@ -26,6 +26,7 @@ import ShopBackButtonIcon from '../icons/ShopBackButtonIcon';
 import ShopIcon from '../icons/ShopIcon';
 import SideMenuIcon from '../icons/SideMenuIcon';
 import SmallAddIcon from '../icons/SmallAddIcon';
+import TransferIcon from '../icons/TransferIcon';
 
 
 // Define an interface for your icon map for better type safety
@@ -63,5 +64,6 @@ export const SVG_ICONS: SvgIconMap = {
   Settings: SettingsIcon,
   Close: CloseIcon,
   SmallAdd: SmallAddIcon,
-  Ellipsis: EllipsisIcon
+  Ellipsis: EllipsisIcon,
+  Transfer: TransferIcon,
 };
