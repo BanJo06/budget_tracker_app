@@ -1,60 +1,38 @@
-import { getDb } from './database.js';
+import { getDb } from '@/utils/database';
 
 /**
  * Gets all accounts from the database.
- * @returns {Array<Object>} An array of account objects.
  */
 export const getAccounts = () => {
-    const db = getDb();
-    if (!db) {
-        throw new Error('Database not initialized.');
-    }
     try {
+        const db = getDb();
         const allRows = db.getAllSync('SELECT * FROM accounts;');
         return allRows;
     } catch (error) {
-        console.error('Error getting accounts:', error);
-        throw new Error('Failed to retrieve accounts from the database.');
+        console.error("Error getting accounts:", error);
+        throw new Error("Failed to retrieve accounts from the database.");
     }
 };
 
 /**
  * Adds a new account to the database.
- * @param {string} accountName The name of the account.
- * @param {string} accountType The type of the account.
- * @param {string | number} initialBalance The initial balance.
- * @param {string} selectedIcon The name of the selected icon.
- * @returns {void}
  */
-export const addAccount = (accountName, accountType, initialBalance, selectedIcon) => {
-    const db = getDb();
-    if (!db) {
-        throw new Error('Database not initialized.');
-    }
+export const addAccount = (name, type, initialBalance, icon_name) => {
     try {
-        const balanceNum = parseFloat(initialBalance);
-        const finalBalance = isNaN(balanceNum) ? 0 : balanceNum;
-
-        db.runSync(`
-            INSERT INTO accounts (name, type, balance, icon_name)
-            VALUES (?, ?, ?, ?);
-        `, [accountName, accountType, finalBalance, selectedIcon]);
-        console.log(`Account '${accountName}' added successfully.`);
-
+        const db = getDb();
+        db.runSync(
+            `INSERT INTO accounts (name, type, balance, icon_name) VALUES (?, ?, ?, ?);`,
+            [name, type, initialBalance, icon_name]
+        );
+        console.log(`Account '${name}' added successfully.`);
     } catch (error) {
-        console.error(`Error adding account '${accountName}':`, error);
-        throw new Error(`Failed to add the account '${accountName}': ${error.message}`);
+        console.error("Error adding account:", error);
+        throw new Error("Failed to add new account.");
     }
 };
 
 /**
  * Updates an existing account in the database.
- * @param {number} accountId The ID of the account to update.
- * @param {string} accountName The new name of the account.
- * @param {string} accountType The new type of the account.
- * @param {string | number} newBalance The new balance of the account.
- * @param {string} selectedIcon The new name of the selected icon.
- * @returns {void}
  */
 export const updateAccount = (accountId, accountName, accountType, newBalance, selectedIcon) => {
     const db = getDb();
@@ -80,19 +58,32 @@ export const updateAccount = (accountId, accountName, accountType, newBalance, s
 
 /**
  * Deletes an account from the database by its ID.
- * @param {number} accountId The ID of the account to delete.
- * @returns {void}
  */
 export const deleteAccount = (accountId) => {
-    const db = getDb();
-    if (!db) {
-        throw new Error('Database not initialized.');
-    }
     try {
-        db.runSync('DELETE FROM accounts WHERE id = ?;', [accountId]);
-        console.log(`Account with ID ${accountId} deleted successfully.`);
+        const db = getDb();
+        db.runSync(`DELETE FROM accounts WHERE id = ?;`, [accountId]);
+        console.log(`Account ${accountId} deleted successfully.`);
     } catch (error) {
-        console.error(`Error deleting account with ID ${accountId}:`, error);
-        throw new Error(`Failed to delete account with ID ${accountId}: ${error.message}`);
+        console.error("Error deleting account:", error);
+        throw new Error("Failed to delete account.");
+    }
+};
+/**
+ * Updates the balance of a specific account.
+ */
+export const updateAccountBalance = (accountId, amount, transactionType) => {
+    try {
+        const db = getDb();
+        const updateQuery =
+            transactionType === 'income'
+                ? `UPDATE accounts SET balance = balance + ? WHERE id = ?;`
+                : `UPDATE accounts SET balance = balance - ? WHERE id = ?;`;
+
+        db.runSync(updateQuery, [amount, accountId]);
+        console.log(`Account ${accountId} balance updated successfully.`);
+    } catch (error) {
+        console.error("Error updating account balance:", error);
+        throw new Error("Failed to update account balance.");
     }
 };

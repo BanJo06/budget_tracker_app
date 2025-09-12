@@ -2,8 +2,9 @@ import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
 import CategoryModal from '@/components/CategoryModal';
 import CategorySelection from '@/components/CategorySelection';
-import { addAccount, getAccounts } from "@/utils/accounts";
-import { getDb, initDatabase } from "@/utils/database";
+import { addAccount, getAccounts, updateAccountBalance } from "@/utils/accounts";
+import { initDatabase } from "@/utils/database";
+import { saveTransaction } from "@/utils/transactions";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -47,17 +48,14 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
   const [selectedIcon, setSelectedIcon] = useState(null);
 
   const handleSave = () => {
-    // Create an object with the new account's data
     const newAccountData = {
       name: accountName,
       balance: parseFloat(initialAmount) || 0,
       icon_name: selectedIcon,
     };
-    // Call the onSave function passed from the parent with the new data
     if (onSave) {
       onSave(newAccountData);
     }
-    // Close the modal and reset state
     onClose();
     setInitialAmount("");
     setAccountName("");
@@ -74,7 +72,6 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="bg-white p-6 rounded-lg w-11/12">
           <Text className="text-xl font-bold mb-4">Add new account</Text>
-          {/* Initial Amount Input */}
           <View className="w-full flex-row gap-2 items-center mb-4">
             <Text>Initial Amount</Text>
             <TextInput
@@ -85,7 +82,6 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
               onChangeText={setInitialAmount}
             />
           </View>
-          {/* Account Name Input */}
           <View className="w-full flex-row gap-2 items-center mb-6">
             <Text>Name</Text>
             <TextInput
@@ -95,7 +91,6 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
               onChangeText={setAccountName}
             />
           </View>
-          {/* Icon Selector */}
           <View className="mb-6">
             <Text className="text-sm mb-2">Select Icon</Text>
             <View className="flex-row flex-wrap justify-start gap-4">
@@ -118,7 +113,6 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
               )}
             </View>
           </View>
-          {/* Action Buttons */}
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
               className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
@@ -141,7 +135,6 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
 
 // A simplified AccountsModal component
 const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount, onSelectAccount }) => {
-  // State for a new account modal within this modal
   const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
 
   const toggleNewAccountModal = () => {
@@ -158,7 +151,6 @@ const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount, onSelect
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="bg-white p-6 rounded-lg w-11/12">
           <Text className="text-xl font-bold mb-4">Select Account</Text>
-          {/* Account List */}
           {accounts.map((account, index) => {
             const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
             return (
@@ -167,7 +159,7 @@ const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount, onSelect
                 className="w-full h-[50] px-4 flex-row justify-between items-center mb-2"
                 onPress={() => {
                   onSelectAccount(account);
-                  onClose(); // Close the modal after selecting
+                  onClose();
                 }}
               >
                 <View className="flex-row gap-2 items-center">
@@ -206,49 +198,40 @@ const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount, onSelect
 
 // Main Add screen component
 export default function Add() {
-  // Calculator state
   const [firstValue, setFirstValue] = useState("");
   const [displayValue, setDisplayValue] = useState("0");
   const [operator, setOperator] = useState("");
-  // Other state
   const [notes, setNotes] = useState("");
   const [selectedOption, setSelectedOption] = useState<'expense' | 'income' | 'transfer'>("expense");
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
-
-  // NEW: State for Category Modal
   const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [dbReady, setDbReady] = useState(false); // NEW state variable
 
-  // ... (existing useEffect for accounts)
-
-  // NEW: Function to toggle the Category Modal's visibility
   const toggleCategoriesModal = () => {
     setCategoriesModalVisible(!isCategoriesModalVisible);
   };
 
-  // Function to handle selecting an account from the modal
   const handleSelectAccount = (account) => {
     setSelectedAccount(account);
-    toggleAccountsModal(); // Close the modal after selection
+    toggleAccountsModal();
   };
 
-  // NEW: Function to handle a selected category
   const handleSelectCategory = (category) => {
     setSelectedCategory(category);
-    toggleCategoriesModal(); // Close the modal after selecting
+    toggleCategoriesModal();
   };
 
-  // Database-related state and effects
   useEffect(() => {
     async function setupDatabaseAndLoadAccounts() {
       try {
         await initDatabase();
-        const dbInstance = getDb();
-        seedDefaultCategories(dbInstance);
+        seedDefaultCategories(); // This is the corrected line
         const initialAccounts = await getAccounts();
         setAccounts(initialAccounts);
+        setDbReady(true); // Set to true after initialization is complete
       } catch (error) {
         console.error(
           "Error initializing database or loading accounts:",
@@ -259,7 +242,6 @@ export default function Add() {
     setupDatabaseAndLoadAccounts();
   }, []);
 
-  // Function to add a new account to the database and update state
   const handleAddNewAccount = async (newAccountData) => {
     try {
       await addAccount(
@@ -276,14 +258,11 @@ export default function Add() {
     }
   };
 
-  // NEW: Update the onPress for SwitchSelector to handle categories
   const handleSwitchChange = (value) => {
     setSelectedOption(value);
-    // You might want to reset the selected category when the type changes
     setSelectedCategory(null);
   };
 
-  // Calculator Logic
   const handleNumberInput = (num) => {
     setDisplayValue((prev) => (prev === "0" ? num : prev + num));
   };
@@ -332,20 +311,55 @@ export default function Add() {
     setDisplayValue((prev) => (prev.length === 1 ? "0" : prev.slice(0, -1)));
   };
 
-  // UI Event Handlers
   const handleCancel = () => {
     router.replace("/(sidemenu)/(tabs)");
   };
 
-  const handleSave = () => {
-    console.log("Transaction saved!");
+  const handleSaveTransaction = async () => {
+    const amount = parseFloat(displayValue);
+    const accountId = selectedAccount?.id;
+    const categoryId = selectedCategory?.id;
+    const transactionType = selectedOption;
+    const transactionNotes = notes;
+
+    // Add this console.log to see the value just before saving
+    console.log("Saving transaction with type:", transactionType);
+    console.log("Category selected:", selectedCategory?.name);
+
+    if (isNaN(amount) || amount <= 0) {
+      console.error("Invalid amount.");
+      return;
+    }
+    if (!accountId) {
+      console.error("Please select an account.");
+      return;
+    }
+    if (!categoryId && selectedOption !== 'transfer') {
+      console.error("Please select a category.");
+      return;
+    }
+
+    try {
+      // Step 1: Update the account balance based on transaction type
+      if (transactionType === 'income' || transactionType === 'expense') {
+        await updateAccountBalance(accountId, amount, transactionType);
+      }
+
+      // Step 2: Save the transaction record
+      await saveTransaction(accountId, categoryId, amount, transactionType, transactionNotes);
+
+      console.log("Transaction saved successfully!");
+      router.replace("/(sidemenu)/(tabs)");
+    } catch (error) {
+      console.error("Failed to save transaction:", error.message);
+    }
   };
+
 
   const toggleAccountsModal = () => {
     setAccountsModalVisible(!isAccountsModalVisible);
   };
 
-  // SwitchSelector options
   const options = [
     { label: "Income", value: "income" },
     { label: "Expense", value: "expense" },
@@ -355,8 +369,6 @@ export default function Add() {
   return (
     <View className="p-8 flex-1 bg-white">
       <StatusBar barStyle={"dark-content"} />
-
-      {/* Account Modal */}
       <AccountsModal
         isVisible={isAccountsModalVisible}
         onClose={toggleAccountsModal}
@@ -364,20 +376,16 @@ export default function Add() {
         onAddNewAccount={handleAddNewAccount}
         onSelectAccount={handleSelectAccount}
       />
-
-      {/* Category Modal */}
       <CategoryModal
         isVisible={isCategoriesModalVisible}
         onClose={toggleCategoriesModal}
       >
-        {/* Pass the 'type' prop based on the selected option */}
         <CategorySelection
           onSelectCategory={handleSelectCategory}
           isVisible={isCategoriesModalVisible}
           type={selectedOption === 'expense' ? 'expense' : 'income'}
         />
       </CategoryModal>
-
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity
           onPress={handleCancel}
@@ -386,8 +394,9 @@ export default function Add() {
           <Text className="text-white text-base font-medium">CANCEL</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={handleSave}
-          className="w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg"
+          onPress={handleSaveTransaction}
+          className={`w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg ${!dbReady && 'opacity-50'}`} // Conditional styling for opacity
+          disabled={!dbReady} // Disable button if DB is not ready
         >
           <Text className="text-white text-base font-medium">SAVE</Text>
         </TouchableOpacity>
@@ -429,7 +438,6 @@ export default function Add() {
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
             <SVG_ICONS.Category size={16} color="white" />
-            {/* <Text className="text-white text-base">Category</Text> */}
             <Text className="text-white text-base">
               {selectedCategory ? selectedCategory.name : "Category"}
             </Text>
@@ -458,9 +466,7 @@ export default function Add() {
           </Text>
         </View>
       </View>
-      {/* Calculator Body */}
       <View className="mt-4">
-        {/* Row 1 */}
         <View className="flex-row mb-2 justify-between">
           <CalculatorButton label="←" onPress={handleDelete} isLarge={true} />
           <CalculatorButton label="C" onPress={handleClear} />
@@ -469,7 +475,6 @@ export default function Add() {
             onPress={() => handleOperatorInput("/")}
           />
         </View>
-        {/* Row 2 */}
         <View className="flex-row mb-2 justify-between">
           <CalculatorButton label="7" onPress={() => handleNumberInput("7")} />
           <CalculatorButton label="8" onPress={() => handleNumberInput("8")} />
@@ -479,7 +484,6 @@ export default function Add() {
             onPress={() => handleOperatorInput("*")}
           />
         </View>
-        {/* Row 3 */}
         <View className="flex-row mb-2 justify-between">
           <CalculatorButton label="4" onPress={() => handleNumberInput("4")} />
           <CalculatorButton label="5" onPress={() => handleNumberInput("5")} />
@@ -489,7 +493,6 @@ export default function Add() {
             onPress={() => handleOperatorInput("-")}
           />
         </View>
-        {/* Row 4 */}
         <View className="flex-row mb-2 justify-between">
           <CalculatorButton label="1" onPress={() => handleNumberInput("1")} />
           <CalculatorButton label="2" onPress={() => handleNumberInput("2")} />
@@ -499,7 +502,6 @@ export default function Add() {
             onPress={() => handleOperatorInput("+")}
           />
         </View>
-        {/* Row 5 */}
         <View className="flex-row justify-between">
           <CalculatorButton label="0" onPress={() => handleNumberInput("0")} />
           <CalculatorButton label="00" onPress={() => handleNumberInput("00")} />
@@ -510,4 +512,3 @@ export default function Add() {
     </View>
   );
 }
-

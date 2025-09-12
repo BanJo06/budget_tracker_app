@@ -3,7 +3,7 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 // Adjust imports for both icon maps
 import { CATEGORIES_EXPENSES_SVG_ICONS } from '@/assets/constants/categories_expenses_icons';
 import { CATEGORIES_INCOME_SVG_ICONS } from '@/assets/constants/categories_income_icons';
-// Adjust imports for both query functions
+// Correct import path for query functions
 import { getExpenseCategories, getIncomeCategories } from '@/database/categoryQueries';
 
 interface CategorySelectionProps {

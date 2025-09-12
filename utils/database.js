@@ -22,60 +22,69 @@ export const initDatabase = async () => {
     try {
         console.log("Initializing database schema...");
 
+        db.execSync('PRAGMA journal_mode = WAL;');
+
         db.withTransactionSync(() => {
-            // First, create the table if it doesn't exist.
             db.execSync(`
-        PRAGMA journal_mode = WAL;
-        CREATE TABLE IF NOT EXISTS accounts (
-          id INTEGER PRIMARY KEY NOT NULL,
-          name TEXT NOT NULL,
-          type TEXT NOT NULL,
-          balance REAL NOT NULL,
-          icon_name TEXT
-        );
-        CREATE TABLE IF NOT EXISTS budgets (
-          id INTEGER PRIMARY KEY NOT NULL,
-          name TEXT NOT NULL,
-          balance REAL NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS expense_categories (
-          id INTEGER PRIMARY KEY NOT NULL,
-          name TEXT NOT NULL UNIQUE,
-          icon_name TEXT
-        );
-        CREATE TABLE IF NOT EXISTS income_categories (
-          id INTEGER PRIMARY KEY NOT NULL,
-          name TEXT NOT NULL UNIQUE,
-          icon_name TEXT
-        );
-      `);
+                CREATE TABLE IF NOT EXISTS accounts (
+                  id INTEGER PRIMARY KEY NOT NULL,
+                  name TEXT NOT NULL,
+                  type TEXT NOT NULL,
+                  balance REAL NOT NULL,
+                  icon_name TEXT
+                );
+                CREATE TABLE IF NOT EXISTS budgets (
+                  id INTEGER PRIMARY KEY NOT NULL,
+                  name TEXT NOT NULL,
+                  balance REAL NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS categories (
+                  id INTEGER PRIMARY KEY NOT NULL,
+                  name TEXT NOT NULL UNIQUE,
+                  type TEXT NOT NULL,
+                  icon_name TEXT
+                );
+                -- NEW: Create the transactions table
+                CREATE TABLE IF NOT EXISTS transactions (
+                  id INTEGER PRIMARY KEY NOT NULL,
+                  amount REAL NOT NULL,
+                  type TEXT NOT NULL,
+                  description TEXT,
+                  date TEXT NOT NULL,
+                  account_id INTEGER,
+                  category_id INTEGER,
+                  FOREIGN KEY (account_id) REFERENCES accounts(id),
+                  FOREIGN KEY (category_id) REFERENCES categories(id)
+                );
+            `);
 
             // --- Database Migrations ---
             // We need to add a UNIQUE constraint to the 'name' column in both tables.
-            // We check for the constraint first to avoid errors on a correct schema.
+            // We check for the constraint by looking for an existing index.
 
             // Migration for the 'accounts' table
-            const accountTableInfo = db.getFirstSync("PRAGMA table_info(accounts);");
-            if (accountTableInfo && !accountTableInfo.name.includes('UNIQUE')) {
+            const accountIndex = db.getFirstSync("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_accounts_name';");
+            if (!accountIndex) {
                 console.log("Migrating 'accounts' table: Adding UNIQUE constraint...");
                 db.execSync(`
-          CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_name ON accounts(name);
-        `);
+                    CREATE UNIQUE INDEX idx_accounts_name ON accounts(name);
+                `);
             }
 
             // Migration for the 'budgets' table
-            const budgetTableInfo = db.getFirstSync("PRAGMA table_info(budgets);");
-            if (budgetTableInfo && !budgetTableInfo.name.includes('UNIQUE')) {
+            const budgetIndex = db.getFirstSync("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_budgets_name';");
+            if (!budgetIndex) {
                 console.log("Migrating 'budgets' table: Adding UNIQUE constraint...");
                 db.execSync(`
-          CREATE UNIQUE INDEX IF NOT EXISTS idx_budgets_name ON budgets(name);
-        `);
-            };
+                    CREATE UNIQUE INDEX idx_budgets_name ON budgets(name);
+                `);
+            }
         });
 
         console.log('Database tables created/migrated successfully.');
     } catch (error) {
         console.error('Error initializing database tables:', error);
+        throw error; // Re-throw to propagate the error if needed
     }
 };
 
@@ -83,7 +92,12 @@ export const initDatabase = async () => {
  * Gets the singleton database instance.
  * @returns {SQLite.SQLiteDatabase} The database instance.
  */
-export const getDb = () => db;
+export const getDb = () => {
+    if (!db) {
+        throw new Error("Database not initialized. Call initDatabase() first.");
+    }
+    return db;
+};
 
 
 /**
@@ -130,10 +144,10 @@ export const saveBudget = (name, balance) => {
         const balanceNum = parseFloat(balance);
         const finalBalance = isNaN(balanceNum) ? 0 : balanceNum;
         db.runSync(`
-      INSERT INTO budgets (name, balance)
-      VALUES (?, ?)
-      ON CONFLICT(name) DO UPDATE SET balance = excluded.balance;
-    `, [name, finalBalance]);
+            INSERT INTO budgets (name, balance)
+            VALUES (?, ?)
+            ON CONFLICT(name) DO UPDATE SET balance = excluded.balance;
+        `, [name, finalBalance]);
         console.log(`Budget '${name}' saved/updated successfully.`);
     } catch (error) {
         console.error(`Error saving budget '${name}':`, error);
