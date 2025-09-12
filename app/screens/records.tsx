@@ -69,28 +69,42 @@ export default function Records() {
           </View>
         )}
         renderItem={({ item }) => {
-          const categoryName = item.category_name || (item.type === 'expense' ? 'Other Expenses' : 'Other Income');
-          const categoryIconName = item.category_icon_name || (item.type === 'expense' ? 'OtherExpenses' : 'OtherIncome');
-
           let IconComponent;
           let iconBgColor;
+          let mainText;
           let amountText;
           let amountColor;
 
           // Use the `item.type` field to set the display properties
           if (item.type === 'income') {
+            const categoryIconName = item.category_icon_name || 'OtherIncome';
+            const categoryName = item.category_name || 'Other Income';
             IconComponent = CATEGORIES_INCOME_SVG_ICONS?.[categoryIconName] || SVG_ICONS.Category;
             iconBgColor = '#8938E9'; // A distinct color for income
+            mainText = categoryName;
             amountText = `+₱${item.amount.toFixed(2)}`;
             amountColor = '#8938E9';
+
           } else if (item.type === 'expense') {
+            const categoryIconName = item.category_icon_name || 'OtherExpenses';
+            const categoryName = item.category_name || 'Other Expenses';
             IconComponent = CATEGORIES_EXPENSES_SVG_ICONS?.[categoryIconName] || SVG_ICONS.Category;
             iconBgColor = '#000000'; // A distinct color for expense
+            mainText = categoryName;
             amountText = `-₱${item.amount.toFixed(2)}`;
             amountColor = '#000000';
-          } else { // This handles 'transfer' or any other types
+
+          } else if (item.type === 'transfer') { // New logic for transfers
+            IconComponent = SVG_ICONS.Transfer;
+            iconBgColor = '#6b7280';
+            mainText = `Transfer from ${item.account_name} to ${item.to_account_name}`;
+            amountText = `${item.amount.toFixed(2)}`;
+            amountColor = '#6b7280';
+
+          } else { // Fallback for any other types
             IconComponent = SVG_ICONS.Category;
             iconBgColor = '#6b7280';
+            mainText = 'Unknown Transaction';
             amountText = `${item.amount.toFixed(2)}`;
             amountColor = '#6b7280';
           }
@@ -102,9 +116,11 @@ export default function Records() {
               </View>
               <View style={styles.transactionDetails}>
                 <View style={styles.detailRow}>
-                  <Text style={styles.categoryName}>{categoryName}</Text>
+                  <Text style={styles.categoryName}>{mainText}</Text>
                   <Text style={[styles.amount, { color: amountColor }]}>{amountText}</Text>
                 </View>
+                {/* Optional: Add a second line for notes or account names if needed for clarity */}
+                <Text style={styles.subText}>{item.description}</Text>
               </View>
             </View>
           );
@@ -178,4 +194,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  subText: {
+    fontSize: 14,
+    color: 'gray',
+  }
 });

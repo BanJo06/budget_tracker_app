@@ -44,22 +44,25 @@ export const getAllTransactions = () => {
                 T.date, 
                 T.account_id, 
                 T.category_id,
+                T.to_account_id, -- NEW: Include the 'to' account ID
                 C.name AS category_name, 
                 C.icon_name AS category_icon_name,
                 A.name AS account_name,
-                A.icon_name AS account_icon_name
+                A.icon_name AS account_icon_name,
+                AT.name AS to_account_name, -- NEW: Alias for the destination account's name
+                AT.icon_name AS to_account_icon_name -- NEW: Alias for the destination account's icon
             FROM transactions AS T
-            INNER JOIN categories AS C ON T.category_id = C.id
+            LEFT JOIN categories AS C ON T.category_id = C.id
             LEFT JOIN accounts AS A ON T.account_id = A.id
+            LEFT JOIN accounts AS AT ON T.to_account_id = AT.id -- NEW: Join accounts a second time for the destination account
             ORDER BY T.date DESC;
         `;
         const transactions = db.getAllSync(query);
 
-        // This is the log we need. It shows what is actually in the database.
         console.log("Fetched transactions from database:");
         console.log(JSON.stringify(transactions, null, 2));
 
-        console.log("Transactions fetched successfully with category details.");
+        console.log("Transactions fetched successfully with category and transfer details.");
         return transactions;
     } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -85,13 +88,17 @@ export const getTransactionById = (id) => {
                 T.date, 
                 T.account_id, 
                 T.category_id,
+                T.to_account_id, -- NEW: Include the 'to' account ID
                 C.name AS category_name, 
                 C.icon_name AS category_icon_name,
                 A.name AS account_name,
-                A.icon_name AS account_icon_name
+                A.icon_name AS account_icon_name,
+                AT.name AS to_account_name, -- NEW: Alias for the destination account's name
+                AT.icon_name AS to_account_icon_name -- NEW: Alias for the destination account's icon
             FROM transactions AS T
             LEFT JOIN categories AS C ON T.category_id = C.id
             LEFT JOIN accounts AS A ON T.account_id = A.id
+            LEFT JOIN accounts AS AT ON T.to_account_id = AT.id -- NEW: Join accounts a second time
             WHERE T.id = ?;
         `;
         const transaction = db.getFirstSync(query, [id]);
@@ -101,6 +108,7 @@ export const getTransactionById = (id) => {
         throw new Error(`Failed to fetch transaction with ID ${id}.`);
     }
 };
+
 
 /**
  * Deletes a transaction by its ID.
