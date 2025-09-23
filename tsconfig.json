@@ -3,28 +3,29 @@
   "compilerOptions": {
     "strict": false,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     // JavaScript Config
-    "allowJs": true,       // Must be true to include JS files
-    "checkJs": false,      // <--- THIS IS THE KEY: Disable type checking for JS files
-    "noEmit": true,        // Don't emit compiled JS
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "module": "esnext" // Add this line to fix the error
   },
-  
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "**/*.js",  // Make sure your JS files are included
+    "**/*.js",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts", "app/(sidemenu)/settings/settings.jsx", "app/(sidemenu)/settings/_layout.jsx",  ],
-
+    "nativewind-env.d.ts",
+    "app/(sidemenu)/settings/settings.jsx",
+    "app/(sidemenu)/settings/_layout.jsx"
+  ],
   "exclude": [
     "node_modules",
     "babel.config.js",
