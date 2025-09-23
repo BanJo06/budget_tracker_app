@@ -1,9 +1,9 @@
-import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { Tabs, router } from 'expo-router'; // Import 'router' here
-import React from 'react';
-import { Pressable, View } from 'react-native';
-import '../../../app/globals.css';
-import { SVG_ICONS } from '../../../assets/constants/icons';
+import { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
+import { router, Tabs } from "expo-router"; // Import 'router' here
+import React from "react";
+import { Pressable, View } from "react-native";
+import "../../../app/globals.css";
+import { SVG_ICONS } from "../../../assets/constants/icons";
 
 // A generic custom button to disable highlight/ripple for any tab
 const NoHighlightTabBarButton: React.FC<BottomTabBarButtonProps> = (props) => {
@@ -16,10 +16,10 @@ const NoHighlightTabBarButton: React.FC<BottomTabBarButtonProps> = (props) => {
       style={{
         flex: 1, // Ensures the button takes its full allocated space
         // These styles are crucial to allow its children (icon/label) to be centered
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
         opacity: 1, // No dimming
-        backgroundColor: 'transparent', // No background flash
+        backgroundColor: "transparent", // No background flash
       }}
       android_ripple={null} // Disables ripple on Android
     >
@@ -36,14 +36,17 @@ interface AddButtonProps extends BottomTabBarButtonProps {
 }
 
 // Custom TabBarButton for the 'Add' tab
-const AddTabBarButton: React.FC<AddButtonProps> = ({ onPress, accessibilityState }) => {
+const AddTabBarButton: React.FC<AddButtonProps> = ({
+  onPress,
+  accessibilityState,
+}) => {
   // `focused` indicates if this tab is currently selected, though for a navigation button, it might always be false
   const focused = accessibilityState?.selected;
 
   return (
     <Pressable
       // CRUCIAL: This onPress navigates to the actual add.tsx screen outside the tabs
-      onPress={() => router.push('/add')} // Navigate to app/add.tsx
+      onPress={() => router.push("/add")} // Navigate to app/add.tsx
       android_ripple={null}
       // Tailwind classes for the Pressable itself, to position the floating button
       className="flex-1 justify-center items-center relative -mt-6" // -mt-6 lifts it up
@@ -70,23 +73,23 @@ const _Layout = () => {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#8938E9', // Example: Tomato Red for active
-        tabBarInactiveTintColor: '#000000', // Example: Gray for inactive
+        tabBarActiveTintColor: "#8938E9", // Example: Tomato Red for active
+        tabBarInactiveTintColor: "#000000", // Example: Gray for inactive
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 10,
         },
         tabBarStyle: {
-          backgroundColor: '#FFFFFF', // Example background for the tab bar itself
+          backgroundColor: "#FFFFFF", // Example background for the tab bar itself
           borderTopWidth: 1,
-          borderTopColor: '#EEEEEE',
-        }
+          borderTopColor: "#EEEEEE",
+        },
       }}
     >
       <Tabs.Screen
-        name='index'
+        name="index"
         options={{
-          title: 'Dashboard',
+          title: "Dashboard",
           headerShown: false,
           tabBarIcon: ({ color, size, focused }) => {
             const IconComponent = focused
@@ -98,13 +101,13 @@ const _Layout = () => {
               </View>
             );
           },
-          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />
+          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />,
         }}
       />
       <Tabs.Screen
-        name='graphs'
+        name="graphs"
         options={{
-          title: 'Graphs',
+          title: "Graphs",
           headerShown: false,
           tabBarIcon: ({ color, size, focused }) => {
             const IconComponent = focused
@@ -116,15 +119,15 @@ const _Layout = () => {
               </View>
             );
           },
-          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />
+          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />,
         }}
       />
       {/* This is the entry for your custom Add Button in the tab bar */}
       <Tabs.Screen
-        name='_add-button' // CRUCIAL: Use the name of your dummy file
+        name="_add-button" // CRUCIAL: Use the name of your dummy file
         options={{
-          title: '', // Hide default title
-          tabBarLabel: '', // Hide default label
+          title: "", // Hide default title
+          tabBarLabel: "", // Hide default label
           headerShown: false,
           tabBarButton: (props: BottomTabBarButtonProps) => (
             <AddTabBarButton {...props} /> // Use your custom button component
@@ -133,9 +136,9 @@ const _Layout = () => {
         }}
       />
       <Tabs.Screen
-        name='reports'
+        name="reports"
         options={{
-          title: 'Reports',
+          title: "Reports",
           headerShown: false,
           tabBarIcon: ({ color, size, focused }) => {
             const IconComponent = focused
@@ -147,13 +150,13 @@ const _Layout = () => {
               </View>
             );
           },
-          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />
+          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />,
         }}
       />
       <Tabs.Screen
-        name='quests'
+        name="quests"
         options={{
-          title: 'Quests',
+          title: "Quests",
           headerShown: false,
           tabBarIcon: ({ color, size, focused }) => {
             const IconComponent = focused
@@ -165,7 +168,7 @@ const _Layout = () => {
               </View>
             );
           },
-          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />
+          tabBarButton: (props) => <NoHighlightTabBarButton {...props} />,
         }}
       />
     </Tabs>

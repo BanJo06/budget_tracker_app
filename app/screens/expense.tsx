@@ -1,144 +1,8 @@
-// import ProgressRing from '@/components/ProgressRing';
-// import React, { useState } from 'react';
-// import { Text, View } from 'react-native';
-
-// export default function expense() {
-//     const [currentProgress, setCurrentProgress] = useState(0.25); // State to manage progress
-//     return (
-//         <View className="items-center">
-//             {/* Graph Overview */}
-//             <View className='w-[330] h-[220] p-[20] mt-[18] mb-[16] bg-white rounded-[20]'
-//                 style={[
-//                     { elevation: 5 },
-//                 ]}>
-//                 <View className='pb-[20] flex-row justify-between'>
-//                     <Text>Expense</Text>
-//                 </View>
-
-//                 {/* Graph Menu Pie Chart */}
-//                 <View className='flex-row justify-between'>
-//                     <ProgressRing
-//                         progress={currentProgress}
-//                         radius={70}
-//                         strokeWidth={15}
-//                         progressColor="#8938E9"
-//                         backgroundColor="#EDE1FB"
-//                         duration={500}
-//                         showPercentage={true}
-//                     />
-
-//                     {/* Graph Menu Category and Percent */}
-//                     <View className='flex-1 flex-col items-start justify-start pl-[32] pr-[10] pb-[6] gap-[8]'>
-//                         {/* Food */}
-//                         <View className='flex-row gap-[8] w-full items-center'>
-//                             <View className='w-[15] h-[15] bg-[#8938E9] rounded-full'></View>
-//                             <View className='flex-row flex-1 justify-between items-center'>
-//                                 <Text className='text-[10px] font-medium'>Food</Text>
-//                                 <Text className='text-[10px]'>60%</Text>
-//                             </View>
-//                         </View>
-
-//                         {/* Shopping */}
-//                         <View className='flex-row gap-[8] w-full items-center'>
-//                             <View className='w-[15] h-[15] bg-yellow-400 rounded-full'></View>
-//                             <View className='flex-row flex-1 justify-between items-center'>
-//                                 <Text className='text-[10px] font-medium'>Shopping</Text>
-//                                 <Text className='text-[10px]'>32%</Text>
-//                             </View>
-//                         </View>
-
-//                         {/* Gifts */}
-//                         <View className='flex-row gap-[8] w-full items-center'>
-//                             <View className='w-[15] h-[15] bg-green-500 rounded-full'></View>
-//                             <View className='flex-row flex-1 justify-between items-center'>
-//                                 <Text className='text-[10px] font-medium'>Gifts</Text>
-//                                 <Text className='text-[10px]'>8%</Text>
-//                             </View>
-//                         </View>
-//                     </View>
-//                 </View>
-//             </View>
-
-//             {/* Day, Week, Month */}
-//             <View className='flex-row gap-[8]'>
-//                 <View className='w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]'
-//                     style={[
-//                         { elevation: 5 },
-//                     ]}>
-//                     <View className='flex-col justify-center items-center gap-[8]'>
-//                         <Text className='text-[16px] text-[#392F46] opacity-65'>Day</Text>
-//                         <Text className='text-[16px] font-bold text-[#8938E9]'>₱500.00</Text>
-//                     </View>
-//                 </View>
-
-//                 <View className='w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]'
-//                     style={[
-//                         { elevation: 5 },
-//                     ]}>
-//                     <View className='flex-col justify-center items-center gap-[8]'>
-//                         <Text className='text-[16px] text-[#392F46] opacity-65'>Week</Text>
-//                         <Text className='text-[16px] font-bold text-[#8938E9]'>₱800.00</Text>
-//                     </View>
-//                 </View>
-
-//                 <View className='w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]'
-//                     style={[
-//                         { elevation: 5 },
-//                     ]}>
-//                     <View className='flex-col justify-center items-center gap-[8]'>
-//                         <Text className='text-[16px] text-[#392F46] opacity-65'>Month</Text>
-//                         <Text className='text-[16px] font-bold text-[#8938E9]'>₱2500.00</Text>
-//                     </View>
-//                 </View>
-//             </View>
-
-//             {/* Total Balance based on category */}
-//             <View className='flex-col mt-[32] gap-[16]'>
-//                 <View className='flex-row gap-[16] w-full items-center'>
-//                     <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-//                     <View className='justify-center gap-[4]'>
-//                         <Text className='text-[16px] font-medium'>Shopping</Text>
-//                         <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-//                     </View>
-//                     <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-//                         <Text className='text-[16px] font-medium'>₱800.00</Text>
-//                         <Text className='text-[12px] text-[#392F46] opacity-65'>32%</Text>
-//                     </View>
-//                 </View>
-
-//                 <View className='flex-row gap-[16] w-full items-center'>
-//                     <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-//                     <View className='justify-center gap-[4]'>
-//                         <Text className='text-[16px] font-medium'>Food</Text>
-//                         <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-//                     </View>
-//                     <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-//                         <Text className='text-[16px] font-medium'>₱1500.00</Text>
-//                         <Text className='text-[12px] text-[#392F46] opacity-65'>60%</Text>
-//                     </View>
-//                 </View>
-
-//                 <View className='flex-row gap-[16] w-full items-center'>
-//                     <View className='w-[50] h-[50] bg-[#8938E9] rounded-full'></View>
-//                     <View className='justify-center gap-[4]'>
-//                         <Text className='text-[16px] font-medium'>Gifts</Text>
-//                         <Text className='text-[12px] text-[#392F46] opacity-65'>Cash</Text>
-//                     </View>
-//                     <View className='flex-1 flex-col justify-end items-end gap-[4]'>
-//                         <Text className='text-[16px] font-medium'>₱200.00</Text>
-//                         <Text className='text-[12px] text-[#392F46] opacity-65'>8%</Text>
-//                     </View>
-//                 </View>
-//             </View>
-//         </View>
-//     )
-// }
-
-// expense.tsx
 import { getDb } from "@/utils/database";
 import { Picker } from "@react-native-picker/picker";
 import React, { useEffect, useState } from "react";
 import {
+  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -146,7 +10,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { PieChart } from "react-native-gifted-charts";
+import { PieChart } from "react-native-chart-kit";
+
+const screenWidth = Dimensions.get("window").width;
 
 // Define the type for the transaction data from your query
 interface ExpenseTransaction {
@@ -154,7 +20,6 @@ interface ExpenseTransaction {
   type: string;
   date: string;
   category_name: string;
-  category_icon_name: string;
 }
 
 // Helper function to get transactions from the database with explicit typing
@@ -241,7 +106,6 @@ export default function ExpenseScreen() {
     filteredCategories: {
       name: string;
       amount: number;
-      icon_name: string;
       percentage: number;
     }[];
     totalFiltered: number;
@@ -251,13 +115,6 @@ export default function ExpenseScreen() {
     totalMonth: 0,
     filteredCategories: [],
     totalFiltered: 0,
-  });
-
-  // New state to track if the chart container's layout is ready
-  const [isLayoutReady, setIsLayoutReady] = useState(false);
-  const [chartDimensions, setChartDimensions] = useState({
-    width: 0,
-    height: 0,
   });
 
   const months = getMonths();
@@ -322,7 +179,6 @@ export default function ExpenseScreen() {
         [key: string]: {
           name: string;
           amount: number;
-          icon_name: string | null;
         };
       } = {};
 
@@ -332,7 +188,6 @@ export default function ExpenseScreen() {
           categoryMap[categoryName] = {
             name: categoryName,
             amount: 0,
-            icon_name: exp.category_icon_name,
           };
         }
         categoryMap[categoryName].amount += exp.amount;
@@ -361,22 +216,39 @@ export default function ExpenseScreen() {
       (category) => typeof category.amount === "number" && category.amount > 0
     )
     .map((category) => ({
-      value: category.amount,
+      name: category.name,
+      population: category.amount,
       color: getCategoryColor(category.name),
+      legendFontColor: "#7F7F7F",
+      legendFontSize: 12,
     }));
 
   const getCurrencyFormatted = (amount: number) => `₱${amount.toFixed(2)}`;
 
+  // Chart configuration for react-native-chart-kit
+  const chartConfig = {
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    propsForLabels: {
+      fontSize: 12,
+    },
+  };
+
   console.log("Total filtered expenses:", expensesData.totalFiltered);
 
   return (
-    <ScrollView contentContainerStyle={{ alignItems: "center" }}>
+    <ScrollView
+      contentContainerStyle={{
+        alignItems: "center",
+        paddingHorizontal: 20,
+      }}
+    >
       {/* Graph Overview */}
       <View
         className="w-[330] h-[220] p-[20] mt-[18] mb-[16] bg-white rounded-[20]"
         style={[{ elevation: 5 }]}
       >
-        <View className="pb-[20] flex-row justify-between">
+        <View className="flex-row justify-between">
           <Text>Expense</Text>
           <Pressable onPress={() => setIsModalVisible(true)}>
             <Text className="text-[12px] font-medium text-[#7E8085]">
@@ -386,68 +258,40 @@ export default function ExpenseScreen() {
         </View>
         {/* Pie Chart and Details Container */}
         <View className="flex-row justify-between items-center">
-          {/* Pie Chart from gifted-charts */}
-          <View
-            style={{ width: 160, height: 160 }}
-            onLayout={(event) => {
-              const { width, height } = event.nativeEvent.layout;
-              setChartDimensions({ width, height });
-            }}
-          >
-            {chartDimensions.width > 0 &&
-            chartDimensions.height > 0 &&
-            expensesData.totalFiltered > 0 &&
-            pieData.length > 0 ? (
-              <PieChart
-                donut
-                data={pieData}
-                radius={80} // Must be a valid number, like 80
-                innerRadius={50}
-                initialAngle={-180}
-                strokeWidth={0}
-                paddingHorizontal={0}
-              />
-            ) : (
-              <View
-                style={{
-                  width: 160,
-                  height: 160,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onLayout={() => setIsLayoutReady(true)}
-              >
-                <Text>No data for this period</Text>
-              </View>
-            )}
-          </View>
+          {/* Pie Chart directly here */}
+          <PieChart
+            data={pieData}
+            width={screenWidth * 0.5}
+            height={150}
+            chartConfig={chartConfig}
+            accessor={"population"}
+            backgroundColor={"transparent"}
+            paddingLeft={"16"}
+            hasLegend={false}
+          />
           {/* Manual legend/details on the right */}
-          <View className="flex-1 flex-col items-start justify-start pl-[32] pr-[10] pb-[6] gap-[8]">
-            {expensesData.filteredCategories
-              .slice(0, 3)
-              .map((category, index) => (
+          <View>
+            {expensesData.filteredCategories.map((category, index) => (
+              <View key={index} className="flex-row items-center mb-1">
                 <View
-                  key={index}
-                  className="flex-row gap-[8] w-full items-center"
-                >
-                  <View
-                    className="w-[15] h-[15] rounded-full"
-                    style={{ backgroundColor: getCategoryColor(category.name) }}
-                  ></View>
-                  <View className="flex-row flex-1 justify-between items-center">
-                    <Text className="text-[10px] font-medium">
-                      {category.name}
-                    </Text>
-                    <Text className="text-[10px]">
-                      {category.percentage.toFixed(0)}%
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: getCategoryColor(category.name),
+                    marginRight: 4,
+                  }}
+                />
+                <Text className="text-[12px]">
+                  {category.name} ({category.percentage.toFixed(0)}%)
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
       </View>
-      <View className="flex-row gap-[8]">
+
+      <View className="flex-row justify-center gap-[8] mx-5">
         <View
           className={"w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]"}
           style={[{ elevation: 5 }]}
@@ -506,7 +350,6 @@ export default function ExpenseScreen() {
           </View>
         ))}
       </View>
-
       {/* The Modal */}
       <Modal
         animationType="slide"
