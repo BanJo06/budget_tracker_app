@@ -4,8 +4,7 @@
     "strict": false,
     "paths": {
       "@/*": ["./*"]
-    },
-    // JavaScript Config
+    }, // JavaScript Config
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
@@ -13,8 +12,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "module": "esnext" // Add this line to fix the error
+    "moduleResolution": "node"
   },
   "include": [
     "**/*.ts",
