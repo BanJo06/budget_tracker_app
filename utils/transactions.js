@@ -1,4 +1,4 @@
-import { getDb } from '@/utils/database';
+import { getDb } from "@/utils/database";
 
 /**
  * Saves a new transaction record to the database.
@@ -8,24 +8,56 @@ import { getDb } from '@/utils/database';
  * @param {string} type The transaction type ('expense', 'income', 'transfer').
  * @param {string} notes The transaction description.
  */
-export const saveTransaction = (accountId, categoryId, amount, type, notes) => {
-    const db = getDb();
-    const date = new Date().toISOString();
+// export const saveTransaction = (accountId, categoryId, amount, type, notes) => {
+//     const db = getDb();
+//     const date = new Date().toISOString();
 
-    try {
-        // Log the data *just before* saving it
-        console.log("Attempting to save transaction with these parameters:");
-        console.log({ accountId, categoryId, amount, type, description: notes, date });
+//     try {
+//         // Log the data *just before* saving it
+//         console.log("Attempting to save transaction with these parameters:");
+//         console.log({ accountId, categoryId, amount, type, description: notes, date });
 
-        db.runSync(
-            `INSERT INTO transactions (account_id, category_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
-            [accountId, categoryId, amount, type, notes, date]
-        );
-        console.log('Transaction saved successfully.');
-    } catch (error) {
-        console.error("Error saving transaction:", error);
-        throw new Error("Failed to save transaction.");
-    }
+//         db.runSync(
+//             `INSERT INTO transactions (account_id, category_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+//             [accountId, categoryId, amount, type, notes, date]
+//         );
+//         console.log('Transaction saved successfully.');
+//     } catch (error) {
+//         console.error("Error saving transaction:", error);
+//         throw new Error("Failed to save transaction.");
+//     }
+// };
+
+export const saveTransaction = (
+  accountId,
+  categoryId,
+  amount,
+  type,
+  notes,
+  date
+) => {
+  const db = getDb();
+
+  try {
+    console.log("Attempting to save transaction with these parameters:");
+    console.log({
+      accountId,
+      categoryId,
+      amount,
+      type,
+      description: notes,
+      date,
+    });
+
+    db.runSync(
+      `INSERT INTO transactions (account_id, category_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+      [accountId, categoryId, amount, type, notes, date]
+    );
+    console.log("Transaction saved successfully.");
+  } catch (error) {
+    console.error("Error saving transaction:", error);
+    throw new Error("Failed to save transaction.");
+  }
 };
 
 /**
@@ -33,9 +65,9 @@ export const saveTransaction = (accountId, categoryId, amount, type, notes) => {
  * @returns {Array<Object>} An array of transaction objects with joined data.
  */
 export const getAllTransactions = () => {
-    try {
-        const db = getDb();
-        const query = `
+  try {
+    const db = getDb();
+    const query = `
             SELECT 
                 T.id, 
                 T.amount, 
@@ -57,19 +89,20 @@ export const getAllTransactions = () => {
             LEFT JOIN accounts AS AT ON T.to_account_id = AT.id -- NEW: Join accounts a second time for the destination account
             ORDER BY T.date DESC;
         `;
-        const transactions = db.getAllSync(query);
+    const transactions = db.getAllSync(query);
 
-        console.log("Fetched transactions from database:");
-        console.log(JSON.stringify(transactions, null, 2));
+    console.log("Fetched transactions from database:");
+    console.log(JSON.stringify(transactions, null, 2));
 
-        console.log("Transactions fetched successfully with category and transfer details.");
-        return transactions;
-    } catch (error) {
-        console.error("Error fetching transactions:", error);
-        throw new Error("Failed to fetch transactions.");
-    }
+    console.log(
+      "Transactions fetched successfully with category and transfer details."
+    );
+    return transactions;
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    throw new Error("Failed to fetch transactions.");
+  }
 };
-
 
 /**
  * Retrieves a single transaction by its ID.
@@ -77,9 +110,9 @@ export const getAllTransactions = () => {
  * @returns {Object} The transaction object with joined data.
  */
 export const getTransactionById = (id) => {
-    try {
-        const db = getDb();
-        const query = `
+  try {
+    const db = getDb();
+    const query = `
             SELECT 
                 T.id, 
                 T.amount, 
@@ -101,28 +134,27 @@ export const getTransactionById = (id) => {
             LEFT JOIN accounts AS AT ON T.to_account_id = AT.id -- NEW: Join accounts a second time
             WHERE T.id = ?;
         `;
-        const transaction = db.getFirstSync(query, [id]);
-        return transaction;
-    } catch (error) {
-        console.error(`Error fetching transaction with ID ${id}:`, error);
-        throw new Error(`Failed to fetch transaction with ID ${id}.`);
-    }
+    const transaction = db.getFirstSync(query, [id]);
+    return transaction;
+  } catch (error) {
+    console.error(`Error fetching transaction with ID ${id}:`, error);
+    throw new Error(`Failed to fetch transaction with ID ${id}.`);
+  }
 };
-
 
 /**
  * Deletes a transaction by its ID.
  * @param {number} id The ID of the transaction to delete.
  */
 export const deleteTransaction = (id) => {
-    try {
-        const db = getDb();
-        db.runSync('DELETE FROM transactions WHERE id = ?;', [id]);
-        console.log(`Transaction with ID ${id} deleted successfully.`);
-    } catch (error) {
-        console.error(`Error deleting transaction with ID ${id}:`, error);
-        throw new Error(`Failed to delete transaction with ID ${id}.`);
-    }
+  try {
+    const db = getDb();
+    db.runSync("DELETE FROM transactions WHERE id = ?;", [id]);
+    console.log(`Transaction with ID ${id} deleted successfully.`);
+  } catch (error) {
+    console.error(`Error deleting transaction with ID ${id}:`, error);
+    throw new Error(`Failed to delete transaction with ID ${id}.`);
+  }
 };
 
 /**
@@ -131,9 +163,9 @@ export const deleteTransaction = (id) => {
  * @returns {Array<Object>} An array of transaction objects.
  */
 export const getTransactionsByAccount = (accountId) => {
-    try {
-        const db = getDb();
-        const query = `
+  try {
+    const db = getDb();
+    const query = `
             SELECT 
                 T.id, 
                 T.amount, 
@@ -152,53 +184,90 @@ export const getTransactionsByAccount = (accountId) => {
             WHERE T.account_id = ?
             ORDER BY T.date DESC;
         `;
-        const transactions = db.getAllSync(query, [accountId]);
-        return transactions;
-    } catch (error) {
-        console.error(`Error fetching transactions for account ${accountId}:`, error);
-        throw new Error(`Failed to fetch transactions for account ${accountId}.`);
-    }
+    const transactions = db.getAllSync(query, [accountId]);
+    return transactions;
+  } catch (error) {
+    console.error(
+      `Error fetching transactions for account ${accountId}:`,
+      error
+    );
+    throw new Error(`Failed to fetch transactions for account ${accountId}.`);
+  }
 };
 
 export const addSampleTransactions = () => {
-    const db = getDb();
-    try {
-        const foodCategory = db.getFirstSync('SELECT id FROM categories WHERE name = ?', ['Food']);
-        const salaryCategory = db.getFirstSync('SELECT id FROM categories WHERE name = ?', ['Salary']);
+  const db = getDb();
+  try {
+    const foodCategory = db.getFirstSync(
+      "SELECT id FROM categories WHERE name = ?",
+      ["Food"]
+    );
+    const salaryCategory = db.getFirstSync(
+      "SELECT id FROM categories WHERE name = ?",
+      ["Salary"]
+    );
 
-        if (foodCategory && salaryCategory) {
-            // Check if transactions already exist to prevent duplicates
-            const count = db.getFirstSync('SELECT COUNT(*) AS count FROM transactions');
-            if (count.count === 0) {
-                db.runSync('INSERT INTO transactions (amount, type, description, date, category_id) VALUES (?, ?, ?, ?, ?);', [50.00, 'expense', 'Lunch', new Date().toISOString(), foodCategory.id]);
-                db.runSync('INSERT INTO transactions (amount, type, description, date, category_id) VALUES (?, ?, ?, ?, ?);', [2500.00, 'income', 'Monthly Salary', new Date().toISOString(), salaryCategory.id]);
-                console.log("Sample transactions added successfully.");
-            }
-        } else {
-            console.log("Categories not found, cannot add sample transactions.");
-        }
-    } catch (error) {
-        console.error("Error adding sample transactions:", error);
+    if (foodCategory && salaryCategory) {
+      // Check if transactions already exist to prevent duplicates
+      const count = db.getFirstSync(
+        "SELECT COUNT(*) AS count FROM transactions"
+      );
+      if (count.count === 0) {
+        db.runSync(
+          "INSERT INTO transactions (amount, type, description, date, category_id) VALUES (?, ?, ?, ?, ?);",
+          [50.0, "expense", "Lunch", new Date().toISOString(), foodCategory.id]
+        );
+        db.runSync(
+          "INSERT INTO transactions (amount, type, description, date, category_id) VALUES (?, ?, ?, ?, ?);",
+          [
+            2500.0,
+            "income",
+            "Monthly Salary",
+            new Date().toISOString(),
+            salaryCategory.id,
+          ]
+        );
+        console.log("Sample transactions added successfully.");
+      }
+    } else {
+      console.log("Categories not found, cannot add sample transactions.");
     }
+  } catch (error) {
+    console.error("Error adding sample transactions:", error);
+  }
 };
 
-export const saveTransferTransaction = (fromAccountId, toAccountId, amount, notes) => {
-    const db = getDb();
-    const date = new Date().toISOString();
-    const type = 'transfer'; // Explicitly set the type for a transfer
+export const saveTransferTransaction = (
+  fromAccountId,
+  toAccountId,
+  amount,
+  notes
+) => {
+  const db = getDb();
+  const date = new Date().toISOString();
+  const type = "transfer"; // Explicitly set the type for a transfer
 
-    try {
-        console.log("Attempting to save transfer transaction with these parameters:");
-        console.log({ fromAccountId, toAccountId, amount, type, description: notes, date });
+  try {
+    console.log(
+      "Attempting to save transfer transaction with these parameters:"
+    );
+    console.log({
+      fromAccountId,
+      toAccountId,
+      amount,
+      type,
+      description: notes,
+      date,
+    });
 
-        // Add a new column 'to_account_id' in your transactions table to store the destination account ID
-        db.runSync(
-            `INSERT INTO transactions (account_id, to_account_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
-            [fromAccountId, toAccountId, amount, type, notes, date]
-        );
-        console.log('Transfer transaction saved successfully.');
-    } catch (error) {
-        console.error("Error saving transfer transaction:", error);
-        throw new Error("Failed to save transfer transaction.");
-    }
+    // Add a new column 'to_account_id' in your transactions table to store the destination account ID
+    db.runSync(
+      `INSERT INTO transactions (account_id, to_account_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+      [fromAccountId, toAccountId, amount, type, notes, date]
+    );
+    console.log("Transfer transaction saved successfully.");
+  } catch (error) {
+    console.error("Error saving transfer transaction:", error);
+    throw new Error("Failed to save transfer transaction.");
+  }
 };
