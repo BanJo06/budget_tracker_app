@@ -1,15 +1,15 @@
-import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { router } from 'expo-router';
-import { Drawer } from 'expo-router/drawer';
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import { router } from "expo-router";
+import { Drawer } from "expo-router/drawer";
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 // Place this at the top of your file or in a global types file (e.g., types/navigation.ts)
 export type DrawerParamList = {
-  'settings': undefined; // Example: A screen named 'settings'
-  'categories': undefined; // Example: A screen named 'categories'
-  'exportrecords': undefined; // Example: A screen named 'exportrecords'
-  '(tabs)': undefined; // If you have a nested tab navigator within the drawer
+  settings: undefined; // Example: A screen named 'settings'
+  categories: undefined; // Example: A screen named 'categories'
+  exportrecords: undefined; // Example: A screen named 'exportrecords'
+  "(tabs)": undefined; // If you have a nested tab navigator within the drawer
   // Add other top-level drawer screens here
 };
 
@@ -18,8 +18,8 @@ const CustomDrawerContent = (props) => {
   const currentRouteName = props.state.routes[props.state.index].name;
 
   // Define colors and styles that were previously in screenOptions
-  const activeTintColor = '#8938E9'; // Example active label/icon color
-  const inactiveTintColor = '#333'; // Example inactive label/icon color
+  const activeTintColor = "#8938E9"; // Example active label/icon color
+  const inactiveTintColor = "#333"; // Example inactive label/icon color
 
   return (
     <DrawerContentScrollView {...props}>
@@ -31,38 +31,50 @@ const CustomDrawerContent = (props) => {
       {/* Custom Drawer Items */}
       {/* Settings */}
       <DrawerItem
-        label={'Settings'}
+        label={"Settings"}
         icon={({ size }) => (
           // Note: SVG_ICONS is not provided, this would need to be a component you've defined elsewhere
           // For demonstration purposes, this is a placeholder.
           <Text style={{ fontSize: size }}>⚙️</Text>
         )}
         onPress={() => {
-          router.push('/settings');
+          router.push("/settings");
         }}
       />
 
       {/* Categories */}
       <DrawerItem
-        label={'Categories'}
+        label={"Categories"}
         icon={({ size }) => (
           // Placeholder for SVG_ICONS.CategorySidemenu
           <Text style={{ fontSize: size }}>🗂️</Text>
         )}
         onPress={() => {
-          router.push('/categories');
+          router.push("/categories");
         }}
       />
 
       {/* Export Records */}
       <DrawerItem
-        label={'Export Records'}
+        label={"Export Records"}
         icon={({ size }) => (
           // Placeholder for SVG_ICONS.ExportRecords
           <Text style={{ fontSize: size }}>📄</Text>
         )}
         onPress={() => {
-          router.push('/exportrecords');
+          router.push("/exportrecords");
+        }}
+      />
+
+      {/* Export Records */}
+      <DrawerItem
+        label={"Add Late Records"}
+        icon={({ size }) => (
+          // Placeholder for SVG_ICONS.ExportRecords
+          <Text style={{ fontSize: size }}>📄</Text>
+        )}
+        onPress={() => {
+          router.push("/addlaterecords");
         }}
       />
       {/* Add more custom DrawerItems as needed */}
@@ -74,7 +86,7 @@ const CustomDrawerContent = (props) => {
 export default function Layout() {
   return (
     <Drawer
-      drawerContent={props => <CustomDrawerContent {...props} />}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
       initialRouteName="(tabs)"
       screenOptions={{
         headerShown: false,
@@ -84,20 +96,23 @@ export default function Layout() {
       <Drawer.Screen
         name="(tabs)" // This points to app/(sidemenu)/(tabs)/_layout.jsx
         options={{
-          drawerLabel: 'Main Dashboard',
-          title: 'App Dashboard',
-          headerShown: false
+          drawerLabel: "Main Dashboard",
+          title: "App Dashboard",
+          headerShown: false,
         }}
       />
       <Drawer.Screen
         name="settings"
         options={({ navigation }) => ({
-          drawerLabel: 'Settings',
-          title: 'Settings',
+          drawerLabel: "Settings",
+          title: "Settings",
           headerShown: true, // Show header for this screen
           // Conditionally render the back button
           headerLeft: () => (
-            <Pressable onPress={() => navigation.goBack()} style={{ paddingHorizontal: 15 }}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={{ paddingHorizontal: 15 }}
+            >
               <Text style={{ fontSize: 24 }}>⬅️</Text>
             </Pressable>
           ),
@@ -106,12 +121,15 @@ export default function Layout() {
       <Drawer.Screen
         name="categories"
         options={({ navigation }) => ({
-          drawerLabel: 'Categories',
-          title: 'Categories',
+          drawerLabel: "Categories",
+          title: "Categories",
           headerShown: true, // Show header for this screen
           // Conditionally render the back button
           headerLeft: () => (
-            <Pressable onPress={() => navigation.goBack()} style={{ paddingHorizontal: 15 }}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={{ paddingHorizontal: 15 }}
+            >
               <Text style={{ fontSize: 24 }}>⬅️</Text>
             </Pressable>
           ),
@@ -120,12 +138,33 @@ export default function Layout() {
       <Drawer.Screen
         name="exportrecords"
         options={({ navigation }) => ({
-          drawerLabel: 'Export Records',
-          title: 'Export Records',
+          drawerLabel: "Export Records",
+          title: "Export Records",
           headerShown: true, // Show header for this screen
           // Conditionally render the back button
           headerLeft: () => (
-            <Pressable onPress={() => navigation.goBack()} style={{ paddingHorizontal: 15 }}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={{ paddingHorizontal: 15 }}
+            >
+              <Text style={{ fontSize: 24 }}>⬅️</Text>
+            </Pressable>
+          ),
+        })}
+      />
+
+      <Drawer.Screen
+        name="addlaterecords"
+        options={({ navigation }) => ({
+          drawerLabel: "Add Late Records",
+          title: "Add Late Records",
+          headerShown: true, // Show header for this screen
+          // Conditionally render the back button
+          headerLeft: () => (
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={{ paddingHorizontal: 15 }}
+            >
               <Text style={{ fontSize: 24 }}>⬅️</Text>
             </Pressable>
           ),
@@ -141,13 +180,13 @@ const styles = StyleSheet.create({
   drawerHeader: {
     padding: 20,
     borderBottomWidth: 2,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
     marginBottom: 10,
-    backgroundColor: 'white', // Light background for header
+    backgroundColor: "white", // Light background for header
   },
   drawerHeaderText: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
 });
