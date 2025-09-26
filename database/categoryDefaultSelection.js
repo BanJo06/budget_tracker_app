@@ -2,52 +2,54 @@ import { getDb } from "@/utils/database";
 
 // Define the default categories for expenses and income
 const defaultExpenseCategories = [
-    { name: 'Bills', icon_name: 'Bills' },
-    { name: 'Clothing', icon_name: 'Clothing' },
-    { name: 'Foods', icon_name: 'Foods' },
-    { name: 'Shopping', icon_name: 'Shopping' },
-    { name: 'Tuition', icon_name: 'Tuition' }
+  { name: "Bills", icon_name: "Bills" },
+  { name: "Clothing", icon_name: "Clothing" },
+  { name: "Foods", icon_name: "Foods" },
+  { name: "Shopping", icon_name: "Shopping" },
+  { name: "Tuition", icon_name: "Tuition" },
+  { name: "Other Expenses", icon_name: "OtherExpenses" },
 ];
 
 const defaultIncomeCategories = [
-    { name: 'Allowance', icon_name: 'Allowance' },
-    { name: 'Lottery', icon_name: 'Lottery' },
-    { name: 'Refunds', icon_name: 'Refunds' },
-    { name: 'Salary', icon_name: 'Salary' },
-    { name: 'Sideline', icon_name: 'Sideline' },
+  { name: "Allowance", icon_name: "Allowance" },
+  { name: "Lottery", icon_name: "Lottery" },
+  { name: "Refunds", icon_name: "Refunds" },
+  { name: "Salary", icon_name: "Salary" },
+  { name: "Sideline", icon_name: "Sideline" },
+  { name: "Other Income", icon_name: "OtherIncome" },
 ];
 
 /**
  * Seeds the database with default expense and income categories.
  */
 export const seedDefaultCategories = () => {
-    try {
-        const db = getDb();
-        console.log("Seeding default categories...");
+  try {
+    const db = getDb();
+    console.log("Seeding default categories...");
 
-        // Start a transaction for efficiency
-        db.withTransactionSync(() => {
-            // Insert default expense categories
-            defaultExpenseCategories.forEach(category => {
-                db.runSync(
-                    'INSERT INTO categories (name, type, icon_name) VALUES (?, ?, ?) ON CONFLICT(name) DO NOTHING;',
-                    [category.name, 'expense', category.icon_name]
-                );
-            });
+    // Start a transaction for efficiency
+    db.withTransactionSync(() => {
+      // Insert default expense categories
+      defaultExpenseCategories.forEach((category) => {
+        db.runSync(
+          "INSERT INTO categories (name, type, icon_name) VALUES (?, ?, ?) ON CONFLICT(name) DO NOTHING;",
+          [category.name, "expense", category.icon_name]
+        );
+      });
 
-            // Insert default income categories
-            defaultIncomeCategories.forEach(category => {
-                db.runSync(
-                    'INSERT INTO categories (name, type, icon_name) VALUES (?, ?, ?) ON CONFLICT(name) DO NOTHING;',
-                    [category.name, 'income', category.icon_name]
-                );
-            });
-        });
+      // Insert default income categories
+      defaultIncomeCategories.forEach((category) => {
+        db.runSync(
+          "INSERT INTO categories (name, type, icon_name) VALUES (?, ?, ?) ON CONFLICT(name) DO NOTHING;",
+          [category.name, "income", category.icon_name]
+        );
+      });
+    });
 
-        console.log("Default categories seeded successfully.");
-    } catch (error) {
-        console.error("Error seeding default categories:", error);
-    }
+    console.log("Default categories seeded successfully.");
+  } catch (error) {
+    console.error("Error seeding default categories:", error);
+  }
 };
 
 /**
@@ -56,13 +58,17 @@ export const seedDefaultCategories = () => {
  * @returns {Array<Object>} An array of category objects.
  */
 export const getCategoriesByType = (type) => {
-    try {
-        const db = getDb();
-        const allRows = db.getAllSync('SELECT * FROM categories WHERE type = ?;', [type]);
-        console.log(`Fetched ${allRows.length} categories of type '${type}'.`);
-        return allRows;
-    } catch (error) {
-        console.error(`Error fetching categories of type '${type}':`, error);
-        throw new Error(`Failed to retrieve categories of type '${type}' from the database.`);
-    }
+  try {
+    const db = getDb();
+    const allRows = db.getAllSync("SELECT * FROM categories WHERE type = ?;", [
+      type,
+    ]);
+    console.log(`Fetched ${allRows.length} categories of type '${type}'.`);
+    return allRows;
+  } catch (error) {
+    console.error(`Error fetching categories of type '${type}':`, error);
+    throw new Error(
+      `Failed to retrieve categories of type '${type}' from the database.`
+    );
+  }
 };

@@ -1,8 +1,12 @@
 import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
-import CategoryModal from '@/components/CategoryModal';
-import CategorySelection from '@/components/CategorySelection';
-import { addAccount, getAccounts, updateAccountBalance } from "@/utils/accounts";
+import CategoryModal from "@/components/CategoryModal";
+import CategorySelection from "@/components/CategorySelection";
+import {
+  addAccount,
+  getAccounts,
+  updateAccountBalance,
+} from "@/utils/accounts";
 import { initDatabase } from "@/utils/database";
 import { saveTransaction, saveTransferTransaction } from "@/utils/transactions";
 import { router } from "expo-router";
@@ -28,8 +32,9 @@ const CalculatorButton = ({ label, onPress, isLarge = false }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`h-[60] border-2 rounded-lg justify-center items-center active:bg-[#8938E9] ${isLarge ? "w-[49%]" : "w-[24%]"
-        }`}
+      className={`h-[60] border-2 rounded-lg justify-center items-center active:bg-[#8938E9] ${
+        isLarge ? "w-[49%]" : "w-[24%]"
+      }`}
       style={isLarge ? { width: "49%" } : { width: "24%" }}
     >
       {label === "←" ? (
@@ -99,10 +104,11 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
                   <TouchableOpacity
                     key={key}
                     onPress={() => setSelectedIcon(key)}
-                    className={`p-2 rounded-full border-2 ${selectedIcon === key
-                      ? "border-purple-600"
-                      : "border-gray-300"
-                      }`}
+                    className={`p-2 rounded-full border-2 ${
+                      selectedIcon === key
+                        ? "border-purple-600"
+                        : "border-gray-300"
+                    }`}
                   >
                     <IconComponent
                       size={24}
@@ -134,7 +140,13 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
 };
 
 // A simplified AccountsModal component
-const AccountsModal = ({ isVisible, onClose, accounts, onAddNewAccount, onSelectAccount }) => {
+const AccountsModal = ({
+  isVisible,
+  onClose,
+  accounts,
+  onAddNewAccount,
+  onSelectAccount,
+}) => {
   const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
 
   const toggleNewAccountModal = () => {
@@ -202,7 +214,9 @@ export default function Add() {
   const [displayValue, setDisplayValue] = useState("0");
   const [operator, setOperator] = useState("");
   const [notes, setNotes] = useState("");
-  const [selectedOption, setSelectedOption] = useState<'expense' | 'income' | 'transfer'>("expense");
+  const [selectedOption, setSelectedOption] = useState<
+    "expense" | "income" | "transfer"
+  >("expense");
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
   const [isToAccountsModalVisible, setToAccountsModalVisible] = useState(false); // New state for 'To' account modal
   const [accounts, setAccounts] = useState([]);
@@ -218,9 +232,9 @@ export default function Add() {
 
   // Modified handleSelectAccount to handle both 'From' and 'To' accounts
   const handleSelectAccount = (account, type) => {
-    if (type === 'from') {
+    if (type === "from") {
       setSelectedAccount(account);
-    } else if (type === 'to') {
+    } else if (type === "to") {
       setToAccount(account);
     }
   };
@@ -252,7 +266,7 @@ export default function Add() {
     try {
       await addAccount(
         newAccountData.name,
-        'Default Type',
+        "Default Type",
         newAccountData.balance,
         newAccountData.icon_name
       );
@@ -336,7 +350,7 @@ export default function Add() {
       return;
     }
 
-    if (transactionType === 'transfer') {
+    if (transactionType === "transfer") {
       if (!fromAccountId || !toAccountId) {
         console.error("Please select both 'From' and 'To' accounts.");
         return;
@@ -348,21 +362,27 @@ export default function Add() {
 
       try {
         // Deduct from the 'From' account
-        await updateAccountBalance(fromAccountId, amount, 'expense');
+        await updateAccountBalance(fromAccountId, amount, "expense");
 
         // Add to the 'To' account
-        await updateAccountBalance(toAccountId, amount, 'income');
+        await updateAccountBalance(toAccountId, amount, "income");
 
         // Save the transfer record in the transactions table
-        await saveTransferTransaction(fromAccountId, toAccountId, amount, transactionNotes);
+        await saveTransferTransaction(
+          fromAccountId,
+          toAccountId,
+          amount,
+          transactionNotes,
+          new Date().toISOString()
+        );
 
         console.log("Transfer saved successfully!");
         router.replace("/(sidemenu)/(tabs)");
       } catch (error) {
         console.error("Failed to save transfer:", error.message);
       }
-
-    } else { // Expense or Income
+    } else {
+      // Expense or Income
       if (!fromAccountId) {
         console.error("Please select an account.");
         return;
@@ -374,7 +394,14 @@ export default function Add() {
 
       try {
         await updateAccountBalance(fromAccountId, amount, transactionType);
-        await saveTransaction(fromAccountId, categoryId, amount, transactionType, transactionNotes);
+        await saveTransaction(
+          fromAccountId,
+          categoryId,
+          amount,
+          transactionType,
+          transactionNotes,
+          new Date().toISOString()
+        );
 
         console.log("Transaction saved successfully!");
         router.replace("/(sidemenu)/(tabs)");
@@ -383,7 +410,6 @@ export default function Add() {
       }
     }
   };
-
 
   const toggleAccountsModal = () => {
     setAccountsModalVisible(!isAccountsModalVisible);
@@ -407,14 +433,14 @@ export default function Add() {
         onClose={toggleAccountsModal}
         accounts={accounts}
         onAddNewAccount={handleAddNewAccount}
-        onSelectAccount={(account) => handleSelectAccount(account, 'from')}
+        onSelectAccount={(account) => handleSelectAccount(account, "from")}
       />
       <AccountsModal
         isVisible={isToAccountsModalVisible}
         onClose={toggleToAccountsModal}
         accounts={accounts}
         onAddNewAccount={handleAddNewAccount}
-        onSelectAccount={(account) => handleSelectAccount(account, 'to')}
+        onSelectAccount={(account) => handleSelectAccount(account, "to")}
       />
       <CategoryModal
         isVisible={isCategoriesModalVisible}
@@ -423,7 +449,7 @@ export default function Add() {
         <CategorySelection
           onSelectCategory={handleSelectCategory}
           isVisible={isCategoriesModalVisible}
-          type={selectedOption === 'expense' ? 'expense' : 'income'}
+          type={selectedOption === "expense" ? "expense" : "income"}
         />
       </CategoryModal>
       <View className="flex-row justify-between mt-4">
@@ -435,7 +461,9 @@ export default function Add() {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleSaveTransaction}
-          className={`w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg ${!dbReady && 'opacity-50'}`} // Conditional styling for opacity
+          className={`w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg ${
+            !dbReady && "opacity-50"
+          }`} // Conditional styling for opacity
           disabled={!dbReady} // Disable button if DB is not ready
         >
           <Text className="text-white text-base font-medium">SAVE</Text>
@@ -461,7 +489,7 @@ export default function Add() {
       <View className="flex-row justify-between mt-8">
         <View className="items-center flex-1 mr-2">
           <Text className="text-sm mb-2">
-            {selectedOption === 'transfer' ? 'From' : 'Account'}
+            {selectedOption === "transfer" ? "From" : "Account"}
           </Text>
           <TouchableOpacity
             onPress={toggleAccountsModal}
@@ -475,21 +503,29 @@ export default function Add() {
         </View>
         <View className="items-center flex-1 ml-2">
           <Text className="text-sm mb-2">
-            {selectedOption === 'transfer' ? 'To' : 'Category'}
+            {selectedOption === "transfer" ? "To" : "Category"}
           </Text>
           <TouchableOpacity
-            onPress={selectedOption === 'transfer' ? toggleToAccountsModal : toggleCategoriesModal}
+            onPress={
+              selectedOption === "transfer"
+                ? toggleToAccountsModal
+                : toggleCategoriesModal
+            }
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
           >
-            {selectedOption === 'transfer' ? (
+            {selectedOption === "transfer" ? (
               <SVG_ICONS.Account size={16} color="white" />
             ) : (
               <SVG_ICONS.Category size={16} color="white" />
             )}
             <Text className="text-white text-base">
-              {selectedOption === 'transfer'
-                ? toAccount ? toAccount.name : "Account"
-                : selectedCategory ? selectedCategory.name : "Category"}
+              {selectedOption === "transfer"
+                ? toAccount
+                  ? toAccount.name
+                  : "Account"
+                : selectedCategory
+                ? selectedCategory.name
+                : "Category"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -554,7 +590,10 @@ export default function Add() {
         </View>
         <View className="flex-row justify-between">
           <CalculatorButton label="0" onPress={() => handleNumberInput("0")} />
-          <CalculatorButton label="00" onPress={() => handleNumberInput("00")} />
+          <CalculatorButton
+            label="00"
+            onPress={() => handleNumberInput("00")}
+          />
           <CalculatorButton label="." onPress={() => handleNumberInput(".")} />
           <CalculatorButton label="=" onPress={handleCalculation} />
         </View>

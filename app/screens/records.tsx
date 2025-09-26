@@ -1,22 +1,28 @@
-import { CATEGORIES_EXPENSES_SVG_ICONS } from '@/assets/constants/categories_expenses_icons';
-import { CATEGORIES_INCOME_SVG_ICONS } from '@/assets/constants/categories_income_icons';
-import { SVG_ICONS } from '@/assets/constants/icons';
-import { seedDefaultCategories } from '@/database/categoryDefaultSelection';
-import { initDatabase } from '@/utils/database';
-import { addSampleTransactions, getAllTransactions } from '@/utils/transactions';
-import React, { useEffect, useState } from 'react';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { CATEGORIES_EXPENSES_SVG_ICONS } from "@/assets/constants/categories_expenses_icons";
+import { CATEGORIES_INCOME_SVG_ICONS } from "@/assets/constants/categories_income_icons";
+import { SVG_ICONS } from "@/assets/constants/icons";
+import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
+import { initDatabase } from "@/utils/database";
+import { getAllTransactions } from "@/utils/transactions";
+import React, { useEffect, useState } from "react";
+import {
+  Modal,
+  Pressable,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export default function Records() {
   const [transactions, setTransactions] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
 
   useEffect(() => {
     async function loadTransactions() {
       try {
         await initDatabase();
         seedDefaultCategories();
-        addSampleTransactions();
-
         const allTransactions = await getAllTransactions();
         setTransactions(allTransactions);
       } catch (error) {
@@ -28,18 +34,22 @@ export default function Records() {
 
   const groupTransactionsByDate = (transactionsList) => {
     const groupedData = {};
-    transactionsList.forEach(transaction => {
+    transactionsList.forEach((transaction) => {
       const date = new Date(transaction.date);
-      const day = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      const day = date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
       if (!groupedData[day]) {
         groupedData[day] = [];
       }
       groupedData[day].push(transaction);
     });
 
-    return Object.keys(groupedData).map(date => ({
+    return Object.keys(groupedData).map((date) => ({
       title: date,
-      data: groupedData[date]
+      data: groupedData[date],
     }));
   };
 
@@ -52,6 +62,114 @@ export default function Records() {
       </View>
     );
   }
+
+  const renderModalContent = () => {
+    if (!selectedTransaction) {
+      return null;
+    }
+
+    const {
+      type,
+      amount,
+      date,
+      description,
+      category_icon_name,
+      category_name,
+    } = selectedTransaction;
+    const isIncome = type === "income";
+    const isExpense = type === "expense";
+    const isTransfer = type === "transfer";
+    const amountPrefix = isIncome ? "+" : "-";
+    const amountColor = isIncome ? "#8938E9" : "#000000";
+    const displayAmount = isTransfer
+      ? amount.toFixed(2)
+      : `${amountPrefix}₱${amount.toFixed(2)}`;
+
+    let IconComponent;
+    let iconBgColor;
+    let mainText;
+    let subText;
+
+    if (isIncome) {
+      IconComponent =
+        CATEGORIES_INCOME_SVG_ICONS?.[category_icon_name] || SVG_ICONS.Category;
+      iconBgColor = "#8938E9";
+      mainText = category_name;
+      subText = "Income";
+    } else if (isExpense) {
+      IconComponent =
+        CATEGORIES_EXPENSES_SVG_ICONS?.[category_icon_name] ||
+        SVG_ICONS.Category;
+      iconBgColor = "#000000";
+      mainText = category_name;
+      subText = "Expense";
+    } else if (isTransfer) {
+      IconComponent = SVG_ICONS.Transfer;
+      iconBgColor = "#6b7280";
+      mainText = `Transfer`;
+      subText = `From ${selectedTransaction.account_name} to ${selectedTransaction.to_account_name}`;
+    }
+
+    const transactionDate = new Date(date);
+    const formattedDate = transactionDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = transactionDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return (
+      <View style={modalStyles.modalView}>
+        {/* Header with buttons */}
+        <View style={modalStyles.headerContainer}>
+          <Pressable
+            style={modalStyles.button}
+            onPress={() => setSelectedTransaction(null)}
+          >
+            <SVG_ICONS.Category size={24} color="#000" />
+          </Pressable>
+          <View style={modalStyles.buttonGroup}>
+            <Pressable style={modalStyles.button}></Pressable>
+            <Pressable style={modalStyles.button}></Pressable>
+          </View>
+        </View>
+
+        {/* Transaction details */}
+        <View style={modalStyles.detailContainer}>
+          <View style={[modalStyles.iconBg, { backgroundColor: iconBgColor }]}>
+            {IconComponent && <IconComponent size={40} color="white" />}
+          </View>
+          <Text style={[modalStyles.amountText, { color: amountColor }]}>
+            {displayAmount}
+          </Text>
+          <Text style={modalStyles.mainText}>{mainText}</Text>
+          <Text style={modalStyles.subText}>{subText}</Text>
+        </View>
+
+        <View style={modalStyles.infoRow}>
+          <Text style={modalStyles.infoLabel}>Account</Text>
+          <Text style={modalStyles.infoValue}>
+            {selectedTransaction.account_name}
+          </Text>
+        </View>
+        <View style={modalStyles.infoRow}>
+          <Text style={modalStyles.infoLabel}>Date & Time</Text>
+          <Text style={modalStyles.infoValue}>
+            {formattedDate} at {formattedTime}
+          </Text>
+        </View>
+        {description && (
+          <View style={modalStyles.infoRow}>
+            <Text style={modalStyles.infoLabel}>Notes</Text>
+            <Text style={modalStyles.infoValue}>{description}</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -68,102 +186,151 @@ export default function Records() {
           </View>
         )}
         renderItem={({ item }) => {
+          console.log("Item:", item);
+          console.log("SVG_ICONS:", SVG_ICONS); // Check if this is undefined
+          console.log(
+            "CATEGORIES_INCOME_SVG_ICONS:",
+            CATEGORIES_INCOME_SVG_ICONS
+          ); // Check this too
+          console.log(
+            "Icon to render:",
+            CATEGORIES_INCOME_SVG_ICONS?.[item.category_icon_name]
+          );
+          console.log(
+            "CATEGORIES_EXPENSES_SVG_ICONS:",
+            CATEGORIES_EXPENSES_SVG_ICONS
+          ); // Check this too
+          console.log(
+            "Icon to render:",
+            CATEGORIES_EXPENSES_SVG_ICONS?.[item.category_icon_name]
+          );
           let IconComponent;
           let iconBgColor;
           let mainText;
           let amountText;
           let amountColor;
 
-          // Use the `item.type` field to set the display properties
-          if (item.type === 'income') {
-            const categoryIconName = item.category_icon_name || 'OtherIncome';
-            const categoryName = item.category_name || 'Other Income';
-            IconComponent = CATEGORIES_INCOME_SVG_ICONS?.[categoryIconName] || SVG_ICONS.Category;
-            iconBgColor = '#8938E9'; // A distinct color for income
+          // 1. Check the transaction type first.
+          if (item.type === "income") {
+            // Logic for INCOME transactions: Only look in the INCOME map.
+            const categoryIconName = item.category_icon_name || "OtherIncome";
+            const categoryName = item.category_name || "Other Income";
+
+            // Only look up in the income map.
+            let foundIcon = CATEGORIES_INCOME_SVG_ICONS[categoryIconName];
+
+            // Assign the icon, with a safe fallback.
+            IconComponent = foundIcon || SVG_ICONS.Category;
+
+            // Console.log the result of the correct lookup only
+            console.log("Income Icon to render:", IconComponent);
+            // ... rest of income display variables
+            iconBgColor = "#8938E9";
             mainText = categoryName;
             amountText = `+₱${item.amount.toFixed(2)}`;
-            amountColor = '#8938E9';
+            amountColor = "#8938E9";
+          } else if (item.type === "expense") {
+            // Logic for EXPENSE transactions: Only look in the EXPENSE map.
+            const categoryIconName = item.category_icon_name || "OtherExpenses";
+            const categoryName = item.category_name || "Other Expenses";
 
-          } else if (item.type === 'expense') {
-            const categoryIconName = item.category_icon_name || 'OtherExpenses';
-            const categoryName = item.category_name || 'Other Expenses';
-            IconComponent = CATEGORIES_EXPENSES_SVG_ICONS?.[categoryIconName] || SVG_ICONS.Category;
-            iconBgColor = '#000000'; // A distinct color for expense
+            // Only look up in the expense map.
+            let foundIcon = CATEGORIES_EXPENSES_SVG_ICONS[categoryIconName];
+
+            // Assign the icon, with a safe fallback.
+            IconComponent = foundIcon || SVG_ICONS.Category;
+
+            // Console.log the result of the correct lookup only
+            console.log("Expense Icon to render:", IconComponent);
+            // ... rest of expense display variables
+            iconBgColor = "#000000";
             mainText = categoryName;
             amountText = `-₱${item.amount.toFixed(2)}`;
-            amountColor = '#000000';
-
-          } else if (item.type === 'transfer') { // New logic for transfers
+            amountColor = "#000000";
+          } else if (item.type === "transfer") {
+            // Logic for TRANSFER transactions (no category needed)
             IconComponent = SVG_ICONS.Transfer;
-            iconBgColor = '#6b7280';
+            // ... rest of transfer display variables
+            iconBgColor = "#6b7280";
             mainText = `Transfer from ${item.account_name} to ${item.to_account_name}`;
             amountText = `${item.amount.toFixed(2)}`;
-            amountColor = '#6b7280';
-
-          } else { // Fallback for any other types
-            IconComponent = SVG_ICONS.Category;
-            iconBgColor = '#6b7280';
-            mainText = 'Unknown Transaction';
-            amountText = `${item.amount.toFixed(2)}`;
-            amountColor = '#6b7280';
+            amountColor = "#6b7280";
           }
 
           return (
-            <View style={styles.transactionItem}>
-              <View style={[styles.iconContainer, { backgroundColor: iconBgColor }]}>
+            <Pressable
+              onPress={() => setSelectedTransaction(item)}
+              style={styles.transactionItem}
+            >
+              <View
+                style={[styles.iconContainer, { backgroundColor: iconBgColor }]}
+              >
                 {IconComponent && <IconComponent size={24} color="white" />}
               </View>
               <View style={styles.transactionDetails}>
                 <View style={styles.detailRow}>
                   <Text style={styles.categoryName}>{mainText}</Text>
-                  <Text style={[styles.amount, { color: amountColor }]}>{amountText}</Text>
+                  <Text style={[styles.amount, { color: amountColor }]}>
+                    {amountText}
+                  </Text>
                 </View>
-                {/* Optional: Add a second line for notes or account names if needed for clarity */}
                 <Text style={styles.subText}>{item.description}</Text>
               </View>
-            </View>
+            </Pressable>
           );
         }}
       />
+      {/* Modal for transaction details */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={!!selectedTransaction}
+        onRequestClose={() => {
+          setSelectedTransaction(null);
+        }}
+      >
+        <View style={modalStyles.centeredView}>{renderModalContent()}</View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ... (existing styles remain the same)
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     paddingHorizontal: 32,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
-    color: 'gray',
+    color: "gray",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     paddingTop: 16,
     paddingBottom: 8,
   },
   sectionHeader: {
-    flexDirection: 'column',
+    flexDirection: "column",
     marginVertical: 16,
   },
   sectionTitle: {
-    fontWeight: '500',
+    fontWeight: "500",
   },
   separator: {
     height: 2,
-    backgroundColor: 'black',
+    backgroundColor: "black",
     borderRadius: 999,
   },
   transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
     gap: 16,
   },
@@ -171,30 +338,115 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 999,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   transactionDetails: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
+    flexDirection: "column",
+    justifyContent: "center",
     gap: 4,
   },
   detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   categoryName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   amount: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   subText: {
     fontSize: 14,
-    color: 'gray',
-  }
+    color: "gray",
+  },
+});
+
+// New styles for the modal
+const modalStyles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+    backgroundColor: "rgba(0,0,0,0.5)", // Adds a semi-transparent overlay
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: "90%",
+  },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  button: {
+    padding: 10,
+  },
+  detailContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  iconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 999,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  amountText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  mainText: {
+    fontSize: 20,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  subText: {
+    fontSize: 16,
+    color: "gray",
+    textAlign: "center",
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  infoLabel: {
+    fontSize: 16,
+    color: "gray",
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: "500",
+    textAlign: "right",
+    flexShrink: 1, // Allows text to wrap if it's too long
+  },
 });
