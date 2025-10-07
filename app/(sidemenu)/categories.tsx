@@ -8,9 +8,11 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -53,11 +55,95 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, IconMap }) => {
   );
 };
 
+// A simplified NewCategoryModal component
+const NewCategoryModal = ({ isVisible, onClose }) => {
+  const [categoryName, setCategoryName] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState(null);
+
+  const handleSave = () => {
+    const newCategoryData = {
+      name: categoryName,
+      icon_name: selectedIcon,
+    };
+    onClose();
+    setCategoryName("");
+    setSelectedIcon(null);
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="bg-white p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4">Add new category</Text>
+          <View className="w-full flex-row gap-2 items-center mb-6">
+            <Text>Name</Text>
+            <TextInput
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+              placeholder="Untitled"
+              value={categoryName}
+              onChangeText={setCategoryName}
+            />
+          </View>
+          <View className="mb-6">
+            <Text className="text-sm mb-2">Select Icon</Text>
+            <View className="flex-row flex-wrap justify-start gap-4">
+              {Object.entries(CATEGORIES_EXPENSES_SVG_ICONS).map(
+                ([key, IconComponent]) => (
+                  <TouchableOpacity
+                    key={key}
+                    onPress={() => setSelectedIcon(key)}
+                    className={`p-2 rounded-full border-2 ${
+                      selectedIcon === key
+                        ? "border-purple-600"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <IconComponent
+                      size={24}
+                      color={selectedIcon === key ? "#8938E9" : "#000000"}
+                    />
+                  </TouchableOpacity>
+                )
+              )}
+            </View>
+          </View>
+          <View className="flex-row justify-end gap-4">
+            <TouchableOpacity
+              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              onPress={onClose}
+            >
+              <Text className="uppercase text-purple-600">Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
+              onPress={handleSave}
+            >
+              <Text className="uppercase text-white">Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 export default function Categories() {
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [isNewCategoryModalVisible, setNewCategoryModalVisible] =
+    useState(false);
+
+  const toggleNewCategoryModal = () => {
+    setNewCategoryModalVisible(!isNewCategoryModalVisible);
+  };
 
   useEffect(() => {
     const loadCategories = () => {
@@ -99,10 +185,6 @@ export default function Categories() {
       </View>
     );
   }
-
-  const handlePress = () => {
-    console.log("Pressed button");
-  };
 
   // Main content wrapped in ScrollView
   return (
@@ -149,7 +231,7 @@ export default function Categories() {
 
       <View className="px-8 pb-8">
         <TouchableOpacity
-          onPress={handlePress}
+          onPress={toggleNewCategoryModal}
           className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg mt-4"
         >
           <View className="flex-row items-center justify-center gap-2">
@@ -159,6 +241,10 @@ export default function Categories() {
             </Text>
           </View>
         </TouchableOpacity>
+        <NewCategoryModal
+          isVisible={isNewCategoryModalVisible}
+          onClose={toggleNewCategoryModal}
+        />
       </View>
     </ScrollView>
   );
