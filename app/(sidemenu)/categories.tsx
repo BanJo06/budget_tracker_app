@@ -91,8 +91,6 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
     };
 
     onSave(newCategoryData);
-
-    // Reset state after attempting to save
     setCategoryName("");
     setSelectedIcon(null);
     setSelectedOption("expense");
@@ -101,7 +99,7 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
 
   const handleSwitchChange = (value: "income" | "expense") => {
     setSelectedOption(value);
-    setSelectedIcon(null); // Reset icon selection when switching type
+    setSelectedIcon(null);
   };
 
   const options = [
