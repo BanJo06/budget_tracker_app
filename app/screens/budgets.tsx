@@ -594,7 +594,7 @@ export default function Budgets() {
 
       <Text className="text-sm font-medium">General Budgets</Text>
 
-      <View className="mt-4 space-y-2">
+      <View className="mt-4 space-y-2 gap-4">
         {[
           {
             label: "Daily",
