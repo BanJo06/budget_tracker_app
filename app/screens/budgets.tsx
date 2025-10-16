@@ -37,7 +37,7 @@ type PlannedBudget = {
   color_name: string;
   start_date?: string | null;
   end_date?: string | null;
-  initial_amount?: number;
+  amount?: number;
   is_ongoing?: boolean;
 };
 
@@ -144,7 +144,7 @@ const NewPlannedBudgetModal: React.FC<{
       budget_name: budgetName.trim(),
       budget_type: selectedOption,
       color_name: selectedColor,
-      initial_amount: amount,
+      amount: amount,
       ...(isGoalDateEnabled && {
         start_date: startDate ? formatDate(startDate) : null,
         end_date: endDate ? formatDate(endDate) : null,
@@ -515,13 +515,7 @@ export default function Budgets() {
       const startDate = data.start_date || null;
       const endDate = data.end_date || null;
 
-      savePlannedBudget(
-        categoryId,
-        data.initial_amount ?? 0,
-        startDate,
-        endDate,
-        true
-      );
+      savePlannedBudget(categoryId, data.amount ?? 0, startDate, endDate, true);
 
       // refresh list
       loadPlannedBudgets();
@@ -665,9 +659,8 @@ export default function Budgets() {
                   : "No Date"}
               </Text>
               <ProgressBar progress={currentProgress} />
-              <Text className="text-lg pt-2">
-                ₱{(pb.initial_amount ?? 0).toFixed(2)}
-              </Text>
+              <Text className="text-lg pt-1">₱0</Text>
+              <Text className="text-">(₱{(pb.amount ?? 0).toFixed(2)})</Text>
             </View>
           </View>
         ))}
