@@ -1,158 +1,246 @@
-import * as FileSystem from 'expo-file-system';
-import * as SQLite from 'expo-sqlite';
+import * as FileSystem from "expo-file-system";
+import * as SQLite from "expo-sqlite";
 
-// Use the synchronous API to open the database and create a shared reference.
-const db = SQLite.openDatabaseSync('budget_tracker.db');
+const db = SQLite.openDatabaseSync("budget_tracker.db");
 
-/**
- * Gets the full file path for the database.
- * @returns {string} The full path to the database file.
- */
 export const getDatabaseFilePath = () => {
-    // Expo.FileSystem stores SQLite databases in a specific directory.
-    const dbName = 'budget_tracker.db';
-    const dbPath = `${FileSystem.documentDirectory}SQLite/${dbName}`;
-    return dbPath;
+  const dbName = "budget_tracker.db";
+  return `${FileSystem.documentDirectory}SQLite/${dbName}`;
 };
 
-/**
- * Initializes the database tables and migrates schemas if necessary.
- */
 export const initDatabase = async () => {
-    try {
-        console.log("Initializing database schema...");
+  try {
+    console.log("Initializing database schema...");
+    db.execSync("PRAGMA journal_mode = WAL;");
 
-        db.execSync('PRAGMA journal_mode = WAL;');
+    db.withTransactionSync(() => {
+      // ✅ Check if `planned_budgets` table exists and has NOT NULL date columns
+      const existingTables = db.getAllSync(`
+        SELECT name FROM sqlite_master WHERE type='table' AND name='planned_budgets';
+      `);
 
-        db.withTransactionSync(() => {
-            db.execSync(`
-                CREATE TABLE IF NOT EXISTS accounts (
-                  id INTEGER PRIMARY KEY NOT NULL,
-                  name TEXT NOT NULL,
-                  type TEXT NOT NULL,
-                  balance REAL NOT NULL,
-                  icon_name TEXT
-                );
-                CREATE TABLE IF NOT EXISTS budgets (
-                  id INTEGER PRIMARY KEY NOT NULL,
-                  name TEXT NOT NULL,
-                  balance REAL NOT NULL
-                );
-                CREATE TABLE IF NOT EXISTS categories (
-                  id INTEGER PRIMARY KEY NOT NULL,
-                  name TEXT NOT NULL UNIQUE,
-                  type TEXT NOT NULL,
-                  icon_name TEXT
-                );
-                -- NEW: Create the transactions table
-                CREATE TABLE IF NOT EXISTS transactions (
-                  id INTEGER PRIMARY KEY NOT NULL,
-                  amount REAL NOT NULL,
-                  type TEXT NOT NULL,
-                  description TEXT,
-                  date TEXT NOT NULL,
-                  account_id INTEGER,
-                  category_id INTEGER,
-                  to_account_id INTEGER, -- Added for transfers
-                  FOREIGN KEY (account_id) REFERENCES accounts(id),
-                  FOREIGN KEY (category_id) REFERENCES categories(id),
-                  FOREIGN KEY (to_account_id) REFERENCES accounts(id)
-                );
-            `);
+      if (existingTables.length > 0) {
+        const columns = db.getAllSync(`PRAGMA table_info(planned_budgets);`);
+        const hasNotNullDateColumns = columns.some(
+          (col) =>
+            (col.name === "start_date" && col.notnull === 1) ||
+            (col.name === "end_date" && col.notnull === 1)
+        );
 
-            // --- Database Migrations ---
-            // We need to add a UNIQUE constraint to the 'name' column in both tables.
-            // We check for the constraint by looking for an existing index.
-
-            // Migration for the 'accounts' table
-            const accountIndex = db.getFirstSync("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_accounts_name';");
-            if (!accountIndex) {
-                console.log("Migrating 'accounts' table: Adding UNIQUE constraint...");
-                db.execSync(`
-                    CREATE UNIQUE INDEX idx_accounts_name ON accounts(name);
-                `);
-            }
-
-            // Migration for the 'budgets' table
-            const budgetIndex = db.getFirstSync("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_budgets_name';");
-            if (!budgetIndex) {
-                console.log("Migrating 'budgets' table: Adding UNIQUE constraint...");
-                db.execSync(`
-                    CREATE UNIQUE INDEX idx_budgets_name ON budgets(name);
-                `);
-            }
-        });
-
-        console.log('Database tables created/migrated successfully.');
-    } catch (error) {
-        console.error('Error initializing database tables:', error);
-        throw error; // Re-throw to propagate the error if needed
-    }
-};
-
-/**
- * Gets the singleton database instance.
- * @returns {SQLite.SQLiteDatabase} The database instance.
- */
-export const getDb = () => {
-    if (!db) {
-        throw new Error("Database not initialized. Call initDatabase() first.");
-    }
-    return db;
-};
-
-
-/**
- * Gets all budgets from the database.
- * @returns {Array<Object>} An array of budget objects.
- */
-export const getBudgets = () => {
-    try {
-        const allRows = db.getAllSync('SELECT * FROM budgets;');
-        return allRows;
-    } catch (error) {
-        console.error('Error getting budgets:', error);
-        throw new Error('Failed to retrieve budgets from the database.');
-    }
-};
-
-/**
- * Gets a single budget from the database by name.
- * @param {string} name The name of the budget to retrieve.
- * @returns {Object | undefined} The budget object, or undefined if not found.
- */
-export const getBudget = (name) => {
-    try {
-        const row = db.getFirstSync('SELECT * FROM budgets WHERE name = ?;', [name]);
-        // Return a default object if the row is not found
-        if (!row) {
-            return { name, balance: 0 };
+        if (hasNotNullDateColumns) {
+          console.log(
+            "⚠️ Old planned_budgets schema detected (NOT NULL dates). Recreating table..."
+          );
+          db.execSync("DROP TABLE IF EXISTS planned_budgets;");
         }
-        return row;
-    } catch (error) {
-        console.error(`Error getting budget '${name}':`, error);
-        throw new Error(`Failed to retrieve budget '${name}' from the database.`);
-    }
+      }
+
+      // ✅ Create all tables
+      db.execSync(`
+        CREATE TABLE IF NOT EXISTS accounts (
+          id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
+          type TEXT NOT NULL,
+          balance REAL NOT NULL,
+          color_name TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS budgets (
+          id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL UNIQUE,
+          balance REAL NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS categories (
+          id INTEGER PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL UNIQUE,
+          type TEXT NOT NULL,
+          icon_name TEXT,
+          color_name TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS transactions (
+          id INTEGER PRIMARY KEY NOT NULL,
+          amount REAL NOT NULL,
+          type TEXT NOT NULL,
+          description TEXT,
+          date TEXT NOT NULL,
+          account_id INTEGER,
+          category_id INTEGER,
+          icon_name TEXT,
+          to_account_id INTEGER,
+          FOREIGN KEY (account_id) REFERENCES accounts(id),
+          FOREIGN KEY (category_id) REFERENCES categories(id),
+          FOREIGN KEY (to_account_id) REFERENCES accounts(id)
+        );
+
+        -- ✅ start_date and end_date are now nullable
+        CREATE TABLE IF NOT EXISTS planned_budgets (
+          id INTEGER PRIMARY KEY NOT NULL,
+          category_id INTEGER NOT NULL,
+          amount REAL NOT NULL,
+          color_name TEXT,
+          start_date TEXT NULL,
+          end_date TEXT NULL,
+          is_ongoing INTEGER NOT NULL,
+          FOREIGN KEY (category_id) REFERENCES categories(id)
+        );
+      `);
+
+      // ✅ Ensure indexes exist
+      const accountIndex = db.getFirstSync(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_accounts_name';"
+      );
+      if (!accountIndex) {
+        db.execSync("CREATE UNIQUE INDEX idx_accounts_name ON accounts(name);");
+      }
+
+      const budgetIndex = db.getFirstSync(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_budgets_name';"
+      );
+      if (!budgetIndex) {
+        db.execSync("CREATE UNIQUE INDEX idx_budgets_name ON budgets(name);");
+      }
+    });
+
+    console.log("✅ Database initialized successfully.");
+  } catch (error) {
+    console.error("❌ Error initializing database tables:", error);
+    throw error;
+  }
 };
 
-/**
- * Saves a new budget or updates an existing one.
- * @param {string} name The name of the budget.
- * @param {string | number} balance The balance of the budget.
- * @returns {void}
- */
+// ✅ Get database reference
+export const getDb = () => db;
+
+// ✅ Budgets
+export const getBudgets = () => {
+  try {
+    return db.getAllSync("SELECT * FROM budgets;");
+  } catch (error) {
+    console.error("Error getting budgets:", error);
+    throw new Error("Failed to retrieve budgets.");
+  }
+};
+
+export const getBudget = (name) => {
+  try {
+    const row = db.getFirstSync("SELECT * FROM budgets WHERE name = ?;", [
+      name,
+    ]);
+    return row || { name, balance: 0 };
+  } catch (error) {
+    console.error(`Error getting budget '${name}':`, error);
+    throw new Error(`Failed to retrieve budget '${name}'.`);
+  }
+};
+
 export const saveBudget = (name, balance) => {
-    try {
-        const balanceNum = parseFloat(balance);
-        const finalBalance = isNaN(balanceNum) ? 0 : balanceNum;
-        db.runSync(`
-            INSERT INTO budgets (name, balance)
-            VALUES (?, ?)
-            ON CONFLICT(name) DO UPDATE SET balance = excluded.balance;
-        `, [name, finalBalance]);
-        console.log(`Budget '${name}' saved/updated successfully.`);
-    } catch (error) {
-        console.error(`Error saving budget '${name}':`, error);
-        throw new Error(`Failed to save/update the budget '${name}': ${error.message}`);
-    }
+  try {
+    const b = parseFloat(balance);
+    db.runSync(
+      `
+      INSERT INTO budgets (name, balance)
+      VALUES (?, ?)
+      ON CONFLICT(name) DO UPDATE SET balance = excluded.balance;
+      `,
+      [name, isNaN(b) ? 0 : b]
+    );
+    console.log(`✅ Budget '${name}' saved/updated.`);
+  } catch (error) {
+    console.error(`Error saving budget '${name}':`, error);
+    throw new Error(`Failed to save budget '${name}': ${error.message}`);
+  }
+};
+
+// ✅ Planned Budgets
+export const savePlannedBudget = (
+  categoryId,
+  amount,
+  startDate,
+  endDate,
+  isOngoing
+) => {
+  try {
+    const ongoingInt = isOngoing ? 1 : 0;
+    const result = db.runSync(
+      `
+      INSERT INTO planned_budgets (category_id, amount, start_date, end_date, is_ongoing)
+      VALUES (?, ?, ?, ?, ?);
+      `,
+      [
+        categoryId,
+        parseFloat(amount),
+        startDate || null,
+        endDate || null,
+        ongoingInt,
+      ]
+    );
+    console.log(`✅ Planned budget for category ${categoryId} saved.`);
+    return result.lastInsertRowId;
+  } catch (error) {
+    console.error("Error saving planned budget:", error);
+    throw new Error(`Failed to save planned budget: ${error.message}`);
+  }
+};
+
+export const getPlannedBudgets = () => {
+  try {
+    const query = `
+      SELECT
+        pb.id,
+        pb.amount,
+        pb.start_date,
+        pb.end_date,
+        pb.is_ongoing,
+        c.name AS budget_name,
+        c.color_name,
+        c.type AS budget_type
+      FROM planned_budgets pb
+      JOIN categories c ON pb.category_id = c.id
+      ORDER BY pb.start_date DESC;
+    `;
+    const allRows = db.getAllSync(query);
+    return allRows.map((row) => ({
+      ...row,
+      is_ongoing: row.is_ongoing === 1,
+    }));
+  } catch (error) {
+    console.error("Error getting planned budgets:", error);
+    throw new Error("Failed to retrieve planned budgets.");
+  }
+};
+
+export const deletePlannedBudget = (id) => {
+  try {
+    db.runSync("DELETE FROM planned_budgets WHERE id = ?;", [id]);
+    console.log(`🗑️ Planned budget ID ${id} deleted.`);
+  } catch (error) {
+    console.error(`Error deleting planned budget ID ${id}:`, error);
+    throw new Error(`Failed to delete planned budget ID ${id}.`);
+  }
+};
+
+// ✅ Full reset utility
+export const resetDatabase = () => {
+  try {
+    console.log("⚠️ Starting full database reset (data deletion)...");
+
+    db.withTransactionSync(() => {
+      db.execSync("DROP TABLE IF EXISTS planned_budgets;");
+      db.execSync("DROP TABLE IF EXISTS transactions;");
+      db.execSync("DROP TABLE IF EXISTS categories;");
+      db.execSync("DROP TABLE IF EXISTS budgets;");
+      db.execSync("DROP TABLE IF EXISTS accounts;");
+      db.execSync("DROP INDEX IF EXISTS idx_accounts_name;");
+      db.execSync("DROP INDEX IF EXISTS idx_budgets_name;");
+    });
+
+    console.log(
+      "✅ All tables dropped successfully. Call initDatabase() to recreate schema."
+    );
+  } catch (error) {
+    console.error("Error resetting database:", error);
+    throw new Error(`Failed to reset database: ${error.message}`);
+  }
 };

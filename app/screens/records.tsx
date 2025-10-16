@@ -5,14 +5,7 @@ import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
 import { initDatabase } from "@/utils/database";
 import { getAllTransactions } from "@/utils/transactions";
 import React, { useEffect, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  SectionList,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Modal, Pressable, SectionList, Text, View } from "react-native";
 
 export default function Records() {
   const [transactions, setTransactions] = useState([]);
@@ -56,9 +49,11 @@ export default function Records() {
   const sections = groupTransactionsByDate(transactions);
 
   if (transactions.length === 0) {
+    // styles.emptyContainer -> flex-1 justify-center items-center
+    // styles.emptyText -> text-gray
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No transactions recorded yet.</Text>
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">No transactions recorded yet.</Text>
       </View>
     );
   }
@@ -75,39 +70,46 @@ export default function Records() {
       description,
       category_icon_name,
       category_name,
+      account_name,
+      to_account_name,
     } = selectedTransaction;
     const isIncome = type === "income";
     const isExpense = type === "expense";
     const isTransfer = type === "transfer";
     const amountPrefix = isIncome ? "+" : "-";
-    const amountColor = isIncome ? "#8938E9" : "#000000";
+
+    // Use Tailwind classes for colors and prefix/amount logic
+    const amountColorClass = isIncome ? "text-[#8938E9]" : "text-black";
+    const iconBgColorClass = isIncome
+      ? "bg-[#8938E9]"
+      : isExpense
+      ? "bg-black"
+      : "bg-gray-500";
+    const amountCurrency = "₱";
+
     const displayAmount = isTransfer
       ? amount.toFixed(2)
-      : `${amountPrefix}₱${amount.toFixed(2)}`;
+      : `${amountPrefix}${amountCurrency}${amount.toFixed(2)}`;
 
     let IconComponent;
-    let iconBgColor;
     let mainText;
     let subText;
 
     if (isIncome) {
       IconComponent =
         CATEGORIES_INCOME_SVG_ICONS?.[category_icon_name] || SVG_ICONS.Category;
-      iconBgColor = "#8938E9";
       mainText = category_name;
       subText = "Income";
     } else if (isExpense) {
       IconComponent =
         CATEGORIES_EXPENSES_SVG_ICONS?.[category_icon_name] ||
         SVG_ICONS.Category;
-      iconBgColor = "#000000";
       mainText = category_name;
       subText = "Expense";
     } else if (isTransfer) {
       IconComponent = SVG_ICONS.Transfer;
-      iconBgColor = "#6b7280";
       mainText = `Transfer`;
-      subText = `From ${selectedTransaction.account_name} to ${selectedTransaction.to_account_name}`;
+      subText = `From ${account_name} to ${to_account_name}`;
     }
 
     const transactionDate = new Date(date);
@@ -122,49 +124,66 @@ export default function Records() {
     });
 
     return (
-      <View style={modalStyles.modalView}>
+      // modalStyles.modalView -> m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]
+      // (The shadow/elevation styles are complex to fully replicate, using shadow-lg as a close approximation)
+      <View className="m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]">
         {/* Header with buttons */}
-        <View style={modalStyles.headerContainer}>
+        {/* modalStyles.headerContainer -> flex-row justify-between w-full mb-5 */}
+        <View className="flex-row justify-between w-full mb-5">
+          {/* modalStyles.button -> p-2.5 */}
           <Pressable
-            style={modalStyles.button}
+            className="p-2.5"
             onPress={() => setSelectedTransaction(null)}
           >
             <SVG_ICONS.Category size={24} color="#000" />
           </Pressable>
-          <View style={modalStyles.buttonGroup}>
-            <Pressable style={modalStyles.button}></Pressable>
-            <Pressable style={modalStyles.button}></Pressable>
+          {/* modalStyles.buttonGroup -> flex-row gap-2.5 */}
+          <View className="flex-row gap-2.5">
+            <Pressable className="p-2.5"></Pressable>
+            <Pressable className="p-2.5"></Pressable>
           </View>
         </View>
 
         {/* Transaction details */}
-        <View style={modalStyles.detailContainer}>
-          <View style={[modalStyles.iconBg, { backgroundColor: iconBgColor }]}>
+        {/* modalStyles.detailContainer -> items-center mb-5 */}
+        <View className="items-center mb-5">
+          {/* modalStyles.iconBg -> w-15 h-15 rounded-full justify-center items-center mb-2.5 */}
+          <View
+            className={`w-15 h-15 rounded-full justify-center items-center mb-2.5 ${iconBgColorClass}`}
+          >
             {IconComponent && <IconComponent size={40} color="white" />}
           </View>
-          <Text style={[modalStyles.amountText, { color: amountColor }]}>
+          {/* modalStyles.amountText -> text-2xl font-bold mb-1.5 */}
+          <Text className={`text-2xl font-bold mb-1.5 ${amountColorClass}`}>
             {displayAmount}
           </Text>
-          <Text style={modalStyles.mainText}>{mainText}</Text>
-          <Text style={modalStyles.subText}>{subText}</Text>
+          {/* modalStyles.mainText -> text-xl font-medium text-center */}
+          <Text className="text-xl font-medium text-center">{mainText}</Text>
+          {/* modalStyles.subText -> text-base text-gray-500 text-center */}
+          <Text className="text-base text-gray-500 text-center">{subText}</Text>
         </View>
 
-        <View style={modalStyles.infoRow}>
-          <Text style={modalStyles.infoLabel}>Account</Text>
-          <Text style={modalStyles.infoValue}>
-            {selectedTransaction.account_name}
+        {/* modalStyles.infoRow -> flex-row justify-between w-full py-2.5 border-b border-gray-100 */}
+        <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
+          {/* modalStyles.infoLabel -> text-base text-gray-500 */}
+          <Text className="text-base text-gray-500">Account</Text>
+          {/* modalStyles.infoValue -> text-base font-medium text-right flex-shrink */}
+          <Text className="text-base font-medium text-right flex-shrink">
+            {account_name}
           </Text>
         </View>
-        <View style={modalStyles.infoRow}>
-          <Text style={modalStyles.infoLabel}>Date & Time</Text>
-          <Text style={modalStyles.infoValue}>
+        <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
+          <Text className="text-base text-gray-500">Date & Time</Text>
+          <Text className="text-base font-medium text-right flex-shrink">
             {formattedDate} at {formattedTime}
           </Text>
         </View>
         {description && (
-          <View style={modalStyles.infoRow}>
-            <Text style={modalStyles.infoLabel}>Notes</Text>
-            <Text style={modalStyles.infoValue}>{description}</Text>
+          <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
+            <Text className="text-base text-gray-500">Notes</Text>
+            <Text className="text-base font-medium text-right flex-shrink">
+              {description}
+            </Text>
           </View>
         )}
       </View>
@@ -172,109 +191,92 @@ export default function Records() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    // styles.container -> flex-1 bg-white px-8
+    <View className="flex-1 bg-white px-8">
+      {/* styles.header -> flex-row justify-end pt-4 pb-2 */}
+      <View className="flex-row justify-end pt-4 pb-2">
         <SVG_ICONS.Search size={30} />
       </View>
+
+      {/* Use the styled SectionList */}
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id.toString()}
         renderSectionHeader={({ section: { title } }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{title}</Text>
-            <View style={styles.separator} />
+          // styles.sectionHeader -> flex-col my-4
+          <View className="flex-col my-4">
+            {/* styles.sectionTitle -> font-medium */}
+            <Text className="font-medium">{title}</Text>
+            {/* styles.separator -> h-[2px] bg-black rounded-full */}
+            <View className="h-[2px] bg-black rounded-full" />
           </View>
         )}
         renderItem={({ item }) => {
-          console.log("Item:", item);
-          console.log("SVG_ICONS:", SVG_ICONS); // Check if this is undefined
-          console.log(
-            "CATEGORIES_INCOME_SVG_ICONS:",
-            CATEGORIES_INCOME_SVG_ICONS
-          ); // Check this too
-          console.log(
-            "Icon to render:",
-            CATEGORIES_INCOME_SVG_ICONS?.[item.category_icon_name]
-          );
-          console.log(
-            "CATEGORIES_EXPENSES_SVG_ICONS:",
-            CATEGORIES_EXPENSES_SVG_ICONS
-          ); // Check this too
-          console.log(
-            "Icon to render:",
-            CATEGORIES_EXPENSES_SVG_ICONS?.[item.category_icon_name]
-          );
           let IconComponent;
-          let iconBgColor;
+          let iconBgColorClass;
           let mainText;
           let amountText;
-          let amountColor;
+          let amountColorClass;
 
           // 1. Check the transaction type first.
           if (item.type === "income") {
-            // Logic for INCOME transactions: Only look in the INCOME map.
             const categoryIconName = item.category_icon_name || "OtherIncome";
             const categoryName = item.category_name || "Other Income";
 
-            // Only look up in the income map.
             let foundIcon = CATEGORIES_INCOME_SVG_ICONS[categoryIconName];
-
-            // Assign the icon, with a safe fallback.
             IconComponent = foundIcon || SVG_ICONS.Category;
 
-            // Console.log the result of the correct lookup only
-            console.log("Income Icon to render:", IconComponent);
-            // ... rest of income display variables
-            iconBgColor = "#8938E9";
+            iconBgColorClass = "bg-[#8938E9]";
+            amountColorClass = "text-[#8938E9]";
             mainText = categoryName;
             amountText = `+₱${item.amount.toFixed(2)}`;
-            amountColor = "#8938E9";
           } else if (item.type === "expense") {
-            // Logic for EXPENSE transactions: Only look in the EXPENSE map.
             const categoryIconName = item.category_icon_name || "OtherExpenses";
             const categoryName = item.category_name || "Other Expenses";
 
-            // Only look up in the expense map.
             let foundIcon = CATEGORIES_EXPENSES_SVG_ICONS[categoryIconName];
-
-            // Assign the icon, with a safe fallback.
             IconComponent = foundIcon || SVG_ICONS.Category;
 
-            // Console.log the result of the correct lookup only
-            console.log("Expense Icon to render:", IconComponent);
-            // ... rest of expense display variables
-            iconBgColor = "#000000";
+            iconBgColorClass = "bg-black";
+            amountColorClass = "text-black";
             mainText = categoryName;
             amountText = `-₱${item.amount.toFixed(2)}`;
-            amountColor = "#000000";
           } else if (item.type === "transfer") {
-            // Logic for TRANSFER transactions (no category needed)
             IconComponent = SVG_ICONS.Transfer;
-            // ... rest of transfer display variables
-            iconBgColor = "#6b7280";
+
+            iconBgColorClass = "bg-gray-500";
+            amountColorClass = "text-gray-500";
             mainText = `Transfer from ${item.account_name} to ${item.to_account_name}`;
             amountText = `${item.amount.toFixed(2)}`;
-            amountColor = "#6b7280";
           }
 
           return (
+            // styles.transactionItem -> flex-row items-center mb-4 gap-4
             <Pressable
               onPress={() => setSelectedTransaction(item)}
-              style={styles.transactionItem}
+              className="flex-row items-center mb-4 gap-4"
             >
+              {/* styles.iconContainer -> w-12.5 h-12.5 rounded-full justify-center items-center */}
               <View
-                style={[styles.iconContainer, { backgroundColor: iconBgColor }]}
+                className={`w-[50px] h-[50px] rounded-full justify-center items-center ${iconBgColorClass}`}
               >
                 {IconComponent && <IconComponent size={24} color="white" />}
               </View>
-              <View style={styles.transactionDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.categoryName}>{mainText}</Text>
-                  <Text style={[styles.amount, { color: amountColor }]}>
+              {/* styles.transactionDetails -> flex-1 flex-col justify-center gap-1 */}
+              <View className="flex-1 flex-col justify-center gap-1">
+                {/* styles.detailRow -> flex-row justify-between items-center */}
+                <View className="flex-row justify-between items-center">
+                  {/* styles.categoryName -> text-base font-medium */}
+                  <Text className="text-base font-medium">{mainText}</Text>
+                  {/* styles.amount -> text-base font-bold */}
+                  <Text className={`text-base font-bold ${amountColorClass}`}>
                     {amountText}
                   </Text>
                 </View>
-                <Text style={styles.subText}>{item.description}</Text>
+                {/* styles.subText -> text-sm text-gray-500 */}
+                <Text className="text-sm text-gray-500">
+                  {item.description}
+                </Text>
               </View>
             </Pressable>
           );
@@ -289,164 +291,11 @@ export default function Records() {
           setSelectedTransaction(null);
         }}
       >
-        <View style={modalStyles.centeredView}>{renderModalContent()}</View>
+        {/* modalStyles.centeredView -> flex-1 justify-center items-center mt-5.5 bg-black/50 */}
+        <View className="flex-1 justify-center items-center mt-[22px] bg-black/50">
+          {renderModalContent()}
+        </View>
       </Modal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  // ... (existing styles remain the same)
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-    paddingHorizontal: 32,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyText: {
-    color: "gray",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  sectionHeader: {
-    flexDirection: "column",
-    marginVertical: 16,
-  },
-  sectionTitle: {
-    fontWeight: "500",
-  },
-  separator: {
-    height: 2,
-    backgroundColor: "black",
-    borderRadius: 999,
-  },
-  transactionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 16,
-  },
-  iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 999,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  transactionDetails: {
-    flex: 1,
-    flexDirection: "column",
-    justifyContent: "center",
-    gap: 4,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  amount: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  subText: {
-    fontSize: 14,
-    color: "gray",
-  },
-});
-
-// New styles for the modal
-const modalStyles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
-    backgroundColor: "rgba(0,0,0,0.5)", // Adds a semi-transparent overlay
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: "90%",
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 20,
-  },
-  buttonGroup: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  button: {
-    padding: 10,
-  },
-  detailContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  iconBg: {
-    width: 60,
-    height: 60,
-    borderRadius: 999,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  amountText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  mainText: {
-    fontSize: 20,
-    fontWeight: "500",
-    textAlign: "center",
-  },
-  subText: {
-    fontSize: 16,
-    color: "gray",
-    textAlign: "center",
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  infoLabel: {
-    fontSize: 16,
-    color: "gray",
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: "500",
-    textAlign: "right",
-    flexShrink: 1, // Allows text to wrap if it's too long
-  },
-});
