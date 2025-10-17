@@ -85,6 +85,18 @@ export const initDatabase = async () => {
           is_ongoing INTEGER NOT NULL,
           FOREIGN KEY (category_id) REFERENCES categories(id)
         );
+
+        CREATE TABLE IF NOT EXISTS planned_budget_transactions (
+          id INTEGER PRIMARY KEY NOT NULL,
+          planned_budget_id INTEGER NOT NULL,
+          amount REAL NOT NULL,
+          note TEXT,
+          date TEXT NOT NULL,
+          account_id INTEGER,
+          FOREIGN KEY (planned_budget_id) REFERENCES planned_budgets(id),
+          FOREIGN KEY (account_id) REFERENCES accounts(id)
+        );
+        
       `);
 
       // ✅ Ensure indexes exist
@@ -242,5 +254,78 @@ export const resetDatabase = () => {
   } catch (error) {
     console.error("Error resetting database:", error);
     throw new Error(`Failed to reset database: ${error.message}`);
+  }
+};
+
+// ✅ Save planned budget transaction
+export const savePlannedBudgetTransaction = (
+  plannedBudgetId,
+  amount,
+  note,
+  date,
+  accountId
+) => {
+  try {
+    const db = getDb();
+    db.runSync(
+      `
+      INSERT INTO planned_budget_transactions (planned_budget_id, amount, note, date, account_id)
+      VALUES (?, ?, ?, ?, ?);
+      `,
+      [plannedBudgetId, parseFloat(amount), note || "", date, accountId || null]
+    );
+    console.log(`💾 Transaction saved for planned budget ${plannedBudgetId}`);
+  } catch (error) {
+    console.error("Error saving planned budget transaction:", error);
+    throw new Error(
+      `Failed to save planned budget transaction: ${error.message}`
+    );
+  }
+};
+
+// ✅ Get all transactions for a planned budget
+export const getPlannedBudgetTransactions = (plannedBudgetId) => {
+  try {
+    const result = db.getAllSync(
+      `
+      SELECT
+        t.id,
+        t.amount,
+        t.note,
+        t.date,
+        a.name AS account_name
+      FROM planned_budget_transactions t
+      LEFT JOIN accounts a ON t.account_id = a.id
+      WHERE t.planned_budget_id = ?
+      ORDER BY t.date DESC;
+      `,
+      [plannedBudgetId]
+    );
+    return result;
+  } catch (error) {
+    console.error("Error fetching planned budget transactions:", error);
+    throw new Error("Failed to fetch planned budget transactions.");
+  }
+};
+
+export const getAllPlannedBudgetTransactions = () => {
+  try {
+    const db = getDb();
+    const results = db.getAllSync(`
+      SELECT
+        t.id,
+        t.planned_budget_id,
+        t.amount,
+        t.note,
+        t.date,
+        a.name AS account_name
+      FROM planned_budget_transactions t
+      LEFT JOIN accounts a ON t.account_id = a.id
+      ORDER BY t.date DESC;
+    `);
+    return results;
+  } catch (error) {
+    console.error("❌ Error fetching all planned budget transactions:", error);
+    throw error;
   }
 };

@@ -1,6 +1,12 @@
 import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { getAccounts } from "@/utils/accounts";
-import { getPlannedBudgets, initDatabase } from "@/utils/database";
+import {
+  getAllPlannedBudgetTransactions,
+  getPlannedBudgets,
+  initDatabase,
+  savePlannedBudgetTransaction,
+} from "@/utils/database";
+
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -21,7 +27,7 @@ import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent
 import type { TabHomeScreenNavigationProp } from "../../../types";
 
 // =========================================================
-// 🟣 AccountsModal (AddNewAccount removed)
+// 🟣 AccountsModal (unchanged)
 // =========================================================
 const AccountsModal = ({
   isVisible,
@@ -61,7 +67,7 @@ const AccountsModal = ({
               <TouchableOpacity
                 key={account.id}
                 className="w-full h-[50] px-4 flex-row justify-between items-center mb-2 active:bg-[#F8F4FF]"
-                onPress={() => onSelectAccount(account)} // 👈 Only call this now
+                onPress={() => onSelectAccount(account)}
               >
                 <View className="flex-row gap-2 items-center">
                   <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
@@ -82,7 +88,7 @@ const AccountsModal = ({
 };
 
 // =========================================================
-// 🟣 Main Screen
+// 🟣 Main Screen (logic fixes applied)
 // =========================================================
 export default function Index() {
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
@@ -92,25 +98,16 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
   const [currentProgress, setCurrentProgress] = useState(0.25);
 
-  const [selectedBudget, setSelectedBudget] = useState(null);
+  const [selectedBudget, setSelectedBudget] = useState<any | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTransactionModalVisible, setIsTransactionModalVisible] =
     useState(false);
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
-  const [accounts, setAccounts] = useState<
-    Array<{
-      id: number | string;
-      name: string;
-      balance: number;
-      icon_name: string;
-    }>
-  >([]);
-  const [selectedAccount, setSelectedAccount] = useState<null | {
-    id: number | string;
-    name: string;
-    balance: number;
-    icon_name: string;
-  }>(null);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<any | null>(null);
+
+  // IMPORTANT: budgetTransactions holds ALL transactions across budgets
+  const [budgetTransactions, setBudgetTransactions] = useState<any[]>([]);
   const [dbReady, setDbReady] = useState(false);
 
   // 🧩 Initialize DB + load accounts
@@ -136,8 +133,23 @@ export default function Index() {
   // 🧾 Transaction form states
   const [transactionAmount, setTransactionAmount] = useState("");
   const [transactionNote, setTransactionNote] = useState("");
-  const [transactionDate, setTransactionDate] = useState("");
 
+  // Load all transactions (global)
+  const loadAllTransactions = async () => {
+    try {
+      const all = await getAllPlannedBudgetTransactions();
+      const sorted = all.sort(
+        (a: any, b: any) =>
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      console.log("🧾 [DEBUG] All transactions loaded:", sorted);
+      setBudgetTransactions(sorted);
+    } catch (err) {
+      console.error("❌ [DEBUG] Error loading all transactions:", err);
+    }
+  };
+
+  // Load planned budgets
   const loadPlannedBudgets = useCallback(async () => {
     try {
       setLoading(true);
@@ -158,30 +170,120 @@ export default function Index() {
   useFocusEffect(
     useCallback(() => {
       loadPlannedBudgets();
+      loadAllTransactions();
     }, [loadPlannedBudgets])
   );
 
-  const getProgress = (budget) => 0.6;
+  // Also load all transactions once when component mounts (fallback)
+  useEffect(() => {
+    loadAllTransactions();
+  }, []);
 
-  const handleSaveTransaction = () => {
+  // ---------- Progress calculation ----------
+  // tolerant key check: some DB rows might use planned_budget_id or budget_id
+  const getPlannedBudgetId = (t: any) =>
+    t.planned_budget_id ?? t.budget_id ?? t.plannedBudgetId ?? null;
+
+  const calculateProgress = (budget: any, allTransactions: any[]) => {
+    if (!budget || !allTransactions) {
+      console.log("⚠️ [DEBUG] Missing budget or transactions input");
+      return 0;
+    }
+
+    const transactions = allTransactions.filter(
+      (t) => getPlannedBudgetId(t) === budget.id
+    );
+
+    console.log(
+      `🧮 [DEBUG] Budget "${budget.budget_name}" (${budget.id}) has`,
+      transactions.length,
+      "transactions"
+    );
+
+    if (!transactions || transactions.length === 0) {
+      console.log("ℹ️ [DEBUG] No transactions for this budget yet");
+      return 0;
+    }
+
+    const totalSaved = transactions.reduce(
+      (sum, t) => sum + parseFloat(t.amount || 0),
+      0
+    );
+    const goal = parseFloat(budget.amount || 0);
+    const progress = goal > 0 ? Math.min(totalSaved / goal, 1) : 0;
+
+    console.log(
+      `💰 [DEBUG] Total Saved = ₱${totalSaved.toFixed(
+        2
+      )} / Goal = ₱${goal.toFixed(2)} → Progress = ${(progress * 100).toFixed(
+        2
+      )}%`
+    );
+
+    return progress;
+  };
+
+  const getProgress = (budget: any) => {
+    return calculateProgress(budget, budgetTransactions);
+  };
+
+  // ---------- Save transaction ----------
+  useEffect(() => {
+    if (selectedBudget?.id) {
+      const transactions = budgetTransactions.filter(
+        (t) => getPlannedBudgetId(t) === selectedBudget.id
+      );
+      console.log("✅ [DEBUG] All transactions:", budgetTransactions);
+      console.log("✅ [DEBUG] Filtered for selected:", transactions);
+    }
+  }, [selectedBudget, budgetTransactions]);
+
+  const handleSaveTransaction = async () => {
     if (!transactionAmount) {
       alert("Please enter an amount.");
       return;
     }
-    console.log("💾 Transaction Saved:", {
-      budgetId: selectedBudget?.id,
+    if (!selectedBudget) {
+      alert("No planned budget selected.");
+      return;
+    }
+
+    console.log("💾 [DEBUG] Saving transaction:", {
+      budgetId: selectedBudget.id,
       amount: transactionAmount,
+      account: selectedAccount?.id,
       note: transactionNote,
-      date: transactionDate,
-      account: selectedAccount,
     });
-    setTransactionAmount("");
-    setTransactionNote("");
-    setTransactionDate("");
-    setSelectedAccount(null);
-    setIsTransactionModalVisible(false);
+
+    try {
+      const currentDate = new Date().toISOString(); // store full ISO timestamp
+
+      await savePlannedBudgetTransaction(
+        selectedBudget.id,
+        transactionAmount,
+        transactionNote,
+        currentDate,
+        selectedAccount ? selectedAccount.id : null
+      );
+
+      // Refresh all transactions (global), so progress updates across cards
+      await loadAllTransactions();
+
+      // Optionally refresh budgets listing
+      await loadPlannedBudgets();
+
+      // Clear form & close modal
+      setTransactionAmount("");
+      setTransactionNote("");
+      setSelectedAccount(null);
+      setIsTransactionModalVisible(false);
+    } catch (err) {
+      console.error("Error saving transaction:", err);
+      alert("Failed to save transaction.");
+    }
   };
 
+  // ---------- UI ----------
   return (
     <View className="items-center">
       {/* === Header === */}
@@ -213,7 +315,6 @@ export default function Index() {
       >
         <View className="pb-[20] flex-row justify-between">
           <Text className="text-[12px] font-medium self-center">Overview</Text>
-
           <View className="flex-row justify-between gap-x-2">
             <SVG_ICONS.ArrowLeft width={24} height={24} />
             <Text className="text-[12px] font-medium self-center">
@@ -312,6 +413,14 @@ export default function Index() {
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => {
+                  console.log("📋 [DEBUG] Selected budget:", budget);
+                  const filtered = budgetTransactions.filter(
+                    (t) => getPlannedBudgetId(t) === budget.id
+                  );
+                  console.log(
+                    `🧾 [DEBUG] Found ${filtered.length} transactions for this budget:`,
+                    filtered
+                  );
                   setSelectedBudget(budget);
                   setIsModalVisible(true);
                 }}
@@ -409,24 +518,89 @@ export default function Index() {
                   Progress: {(getProgress(selectedBudget) * 100).toFixed(0)}%
                 </Text>
 
-                <View className="mt-4">
+                <View className="my-4">
                   <Text className="text-[16px] font-bold">Savings Record</Text>
                 </View>
 
-                <ScrollView>
-                  <View className="mt-4">
-                    <View className="gap-2">
-                      <Text>April 12, 2025</Text>
-                      <View className="w-full border"></View>
-                      <View className="flex-row justify-between">
-                        <View className="flex-row gap-2">
-                          <Text>7:00pm</Text>
-                          <Text>Pocket Money</Text>
-                        </View>
-                        <Text>P1000.00</Text>
-                      </View>
-                    </View>
-                  </View>
+                <ScrollView style={{ maxHeight: 300 }}>
+                  {/* Filter transactions specifically for the selected budget (and sort) */}
+                  {budgetTransactions.filter(
+                    (t) => getPlannedBudgetId(t) === selectedBudget.id
+                  ).length === 0 ? (
+                    <Text className="text-gray-500">No transactions yet.</Text>
+                  ) : (
+                    budgetTransactions
+                      .filter(
+                        (t) => getPlannedBudgetId(t) === selectedBudget.id
+                      )
+                      .sort(
+                        (a, b) =>
+                          new Date(a.date).getTime() -
+                          new Date(b.date).getTime()
+                      )
+                      .map((t, index, arr) => {
+                        const dateObj = new Date(t.date);
+                        const formattedDate = dateObj.toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        );
+                        const formattedTime = dateObj.toLocaleTimeString(
+                          "en-US",
+                          {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        );
+
+                        // Determine prevDate from the filtered & sorted array (arr)
+                        const prev = arr[index - 1];
+                        const prevDate =
+                          prev &&
+                          new Date(prev.date).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          });
+                        const isNewDate = formattedDate !== prevDate;
+
+                        return (
+                          <View
+                            key={t.id}
+                            className="mb-3 border-b border-gray-200 pb-2"
+                          >
+                            {isNewDate && (
+                              <>
+                                <Text className="text-[12px] text-gray-500">
+                                  {formattedDate}
+                                </Text>
+                                <View className="border my-2"></View>
+                              </>
+                            )}
+
+                            <View className="flex-row justify-between">
+                              <View className="flex-row gap-2">
+                                <Text className="text-[12px] text-gray-500">
+                                  {formattedTime}
+                                </Text>
+                                <Text className="text-[12px] text-gray-500">
+                                  {t.account_name || "Unknown Account"}
+                                </Text>
+                              </View>
+                              <Text className="text-[14px] text-[#8938E9]">
+                                ₱{parseFloat(t.amount).toFixed(2)}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                  )}
                 </ScrollView>
 
                 <View className="flex-row gap-4">
