@@ -1,33 +1,33 @@
-import AccountIcon from '../icons/AccountIcon';
-import AddActiveIcon from '../icons/AddActiveIcon';
-import AddIcon from '../icons/AddIcon';
-import ArrowLeftIcon from '../icons/ArrowLeftIcon';
-import ArrowRightIcon from '../icons/ArrowRightIcon';
-import BackspaceIcon from '../icons/BackspaceIcon';
-import ButtonArrowDownIcon from '../icons/ButtonArrowDownIcon';
-import CategoryIcon from '../icons/CategoryIcon';
-import CategoryIconSidemenu from '../icons/CategoryIconSidemenu';
-import CloseIcon from '../icons/CloseIcon';
-import DailyRewardIcon from '../icons/DailyRewardIcon';
-import DashboardActiveIcon from '../icons/DashboardActiveIcon';
-import DashboardIcon from '../icons/DashboardIcon';
-import EllipsisIcon from '../icons/EllipsisIcon';
-import ExportRecordsIcon from '../icons/ExportRecordsIcon';
-import GraphsActiveIcon from '../icons/GraphsActiveIcon';
-import GraphsIcon from '../icons/GraphsIcon';
-import InsightIcon from '../icons/InsightIcon';
-import QuestsActiveIcon from '../icons/QuestsActiveIcon';
-import QuestsIcon from '../icons/QuestsIcon';
-import ReportsActiveIcon from '../icons/ReportsActiveIcon';
-import ReportsIcon from '../icons/ReportsIcon';
-import SearchIcon from '../icons/SearchIcon';
-import SettingsIcon from '../icons/SettingsIcon';
-import ShopBackButtonIcon from '../icons/ShopBackButtonIcon';
-import ShopIcon from '../icons/ShopIcon';
-import SideMenuIcon from '../icons/SideMenuIcon';
-import SmallAddIcon from '../icons/SmallAddIcon';
-import TransferIcon from '../icons/TransferIcon';
-
+import AccountIcon from "../icons/AccountIcon";
+import AddActiveIcon from "../icons/AddActiveIcon";
+import AddIcon from "../icons/AddIcon";
+import ArrowLeftIcon from "../icons/ArrowLeftIcon";
+import ArrowRightIcon from "../icons/ArrowRightIcon";
+import BackspaceIcon from "../icons/BackspaceIcon";
+import ButtonArrowDownIcon from "../icons/ButtonArrowDownIcon";
+import CategoryIcon from "../icons/CategoryIcon";
+import CategoryIconSidemenu from "../icons/CategoryIconSidemenu";
+import CloseIcon from "../icons/CloseIcon";
+import DailyRewardIcon from "../icons/DailyRewardIcon";
+import DashboardActiveIcon from "../icons/DashboardActiveIcon";
+import DashboardIcon from "../icons/DashboardIcon";
+import EllipsisIcon from "../icons/EllipsisIcon";
+import ExportRecordsIcon from "../icons/ExportRecordsIcon";
+import GraphsActiveIcon from "../icons/GraphsActiveIcon";
+import GraphsIcon from "../icons/GraphsIcon";
+import InsightIcon from "../icons/InsightIcon";
+import PlannedBudgetsIcon from "../icons/PlannedBudgetsIcon";
+import QuestsActiveIcon from "../icons/QuestsActiveIcon";
+import QuestsIcon from "../icons/QuestsIcon";
+import ReportsActiveIcon from "../icons/ReportsActiveIcon";
+import ReportsIcon from "../icons/ReportsIcon";
+import SearchIcon from "../icons/SearchIcon";
+import SettingsIcon from "../icons/SettingsIcon";
+import ShopBackButtonIcon from "../icons/ShopBackButtonIcon";
+import ShopIcon from "../icons/ShopIcon";
+import SideMenuIcon from "../icons/SideMenuIcon";
+import SmallAddIcon from "../icons/SmallAddIcon";
+import TransferIcon from "../icons/TransferIcon";
 
 // Define an interface for your icon map for better type safety
 interface SvgIconMap {
@@ -66,4 +66,5 @@ export const SVG_ICONS: SvgIconMap = {
   SmallAdd: SmallAddIcon,
   Ellipsis: EllipsisIcon,
   Transfer: TransferIcon,
+  PlannedBudgets: PlannedBudgetsIcon,
 };
