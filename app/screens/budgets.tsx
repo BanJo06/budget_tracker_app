@@ -24,10 +24,12 @@ import {
   getDatabaseFilePath,
   getDb,
   getPlannedBudgets,
+  getPlannedBudgetTransactions,
   initDatabase,
   saveBudget as saveBudgetDb,
   savePlannedBudget,
 } from "@/utils/database";
+import { useFocusEffect } from "@react-navigation/native";
 import SwitchSelector from "react-native-switch-selector";
 
 type PlannedBudget = {
@@ -365,9 +367,12 @@ export default function Budgets() {
   const [canShare, setCanShare] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [plannedBudgets, setPlannedBudgets] = useState<PlannedBudget[]>([]);
   const [isNewPlannedBudgetModalVisible, setNewPlannedBudgetVisible] =
     useState(false);
+  const [plannedBudgets, setPlannedBudgets] = useState<PlannedBudget[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<number, number>>({});
+
+  const [spentMap, setSpentMap] = useState<Record<number, number>>({});
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -409,15 +414,44 @@ export default function Budgets() {
     getAndSetBudgetValue("monthly_budget", setMonthlyBudget);
   }, [getAndSetBudgetValue]);
 
-  const loadPlannedBudgets = useCallback(() => {
+  const loadPlannedBudgets = useCallback(async () => {
     try {
-      const rows = getPlannedBudgets();
-      console.log("📊 Planned Budgets fetched from DB:", rows); // <== Add this
-      setPlannedBudgets(rows);
-    } catch (e) {
-      console.error("Error loading planned budgets:", e);
+      await initDatabase();
+      const budgets = await getPlannedBudgets();
+      setPlannedBudgets(budgets);
+
+      const progressData: Record<number, number> = {};
+      const spentData: Record<number, number> = {};
+
+      for (const pb of budgets) {
+        const transactions = await getPlannedBudgetTransactions(pb.id);
+
+        // ✅ totalSpent is scoped only within this loop
+        const totalSpent = transactions.reduce(
+          (sum: number, t: any) => sum + (t.amount ?? 0),
+          0
+        );
+
+        const progress = pb.amount ? totalSpent / pb.amount : 0;
+
+        progressData[pb.id] = progress;
+        spentData[pb.id] = totalSpent; // ✅ store it by budget ID
+      }
+
+      // ✅ Set both maps after loop finishes
+      setProgressMap(progressData);
+      setSpentMap(spentData);
+    } catch (error) {
+      console.error("Error loading planned budgets:", error);
     }
   }, []);
+
+  // ✅ Refresh data every time screen refocuses
+  useFocusEffect(
+    useCallback(() => {
+      loadPlannedBudgets();
+    }, [])
+  );
 
   // Initialize DB and load data once
   useEffect(() => {
@@ -586,6 +620,7 @@ export default function Budgets() {
         onSave={handleSaveBudget}
       />
 
+      {/* ✅ General Budgets Section */}
       <Text className="text-sm font-medium">General Budgets</Text>
 
       <View className="mt-4 space-y-2 gap-4">
@@ -627,44 +662,62 @@ export default function Budgets() {
         ))}
       </View>
 
+      {/* ✅ Planned Budgets Section */}
       <View className="mt-11">
         <Text className="text-sm font-medium">Planned Budgets</Text>
       </View>
 
-      <View className="flex-row flex-wrap mt-6 gap-8">
-        {plannedBudgets.map((pb) => (
-          <View
-            key={pb.id}
-            className="w-[137px] h-[136px] p-2 bg-white rounded-lg shadow-md"
-          >
-            <View className="flex-row pb-4 justify-between">
-              <View className="flex-row gap-2 items-center">
-                <View
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: pb.color_name || "#ccc" }}
-                />
-                <Text>{pb.budget_name}</Text>
+      {/* ✅ Only this part scrolls horizontally */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingVertical: 10,
+          gap: 16,
+          paddingRight: 20,
+        }}
+      >
+        {plannedBudgets.map((pb) => {
+          const totalSpent = spentMap[pb.id] || 0;
+          const currentProgress = progressMap[pb.id] || 0;
+
+          return (
+            <View
+              key={pb.id}
+              className="w-[137px] h-[136px] p-2 bg-white rounded-lg shadow-md"
+            >
+              <View className="flex-row pb-4 justify-between">
+                <View className="flex-row gap-2 items-center">
+                  <View
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: pb.color_name || "#ccc" }}
+                  />
+                  <Text>{pb.budget_name}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => console.log("Menu pressed", pb.id)}
+                >
+                  <SVG_ICONS.Ellipsis width={24} height={24} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => console.log("Menu pressed", pb.id)}
-              >
-                <SVG_ICONS.Ellipsis width={24} height={24} />
-              </TouchableOpacity>
-            </View>
 
-            <View className="items-center">
-              <Text className="text-xs pb-1">
-                {pb.start_date && pb.end_date
-                  ? `${pb.start_date} - ${pb.end_date}`
-                  : "No Date"}
-              </Text>
-              <ProgressBar progress={currentProgress} />
-              <Text className="text-lg pt-1">₱0</Text>
-              <Text className="text-">(₱{(pb.amount ?? 0).toFixed(2)})</Text>
-            </View>
-          </View>
-        ))}
+              <View className="items-center">
+                <Text className="text-xs pb-1">
+                  {pb.start_date && pb.end_date
+                    ? `${pb.start_date} - ${pb.end_date}`
+                    : "Ongoing"}
+                </Text>
 
+                <ProgressBar progress={currentProgress} />
+
+                <Text className="text-lg pt-1">₱{totalSpent.toFixed(2)}</Text>
+                <Text className="text-">(₱{(pb.amount ?? 0).toFixed(2)})</Text>
+              </View>
+            </View>
+          );
+        })}
+
+        {/* ✅ “Add New Budget” button included in scroll */}
         <TouchableOpacity
           className="w-[137px] h-[136px] p-2 border border-purple-600 rounded-lg justify-center items-center"
           onPress={() => setNewPlannedBudgetVisible(true)}
@@ -674,13 +727,14 @@ export default function Budgets() {
             <Text className="text-purple-600">Add New Budget</Text>
           </View>
         </TouchableOpacity>
+      </ScrollView>
 
-        <NewPlannedBudgetModal
-          isVisible={isNewPlannedBudgetModalVisible}
-          onClose={() => setNewPlannedBudgetVisible(false)}
-          onSave={handlePlannedBudgetSave}
-        />
-      </View>
+      {/* ✅ Modal and Share Button (not scrollable) */}
+      <NewPlannedBudgetModal
+        isVisible={isNewPlannedBudgetModalVisible}
+        onClose={() => setNewPlannedBudgetVisible(false)}
+        onSave={handlePlannedBudgetSave}
+      />
 
       <View className="mt-4">
         <Button
