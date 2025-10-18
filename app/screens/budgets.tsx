@@ -1,3 +1,4 @@
+import { deletePlannedBudget } from "@/utils/database";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Sharing from "expo-sharing";
 import React, { useCallback, useEffect, useState } from "react";
@@ -20,26 +21,27 @@ import { SVG_ICONS } from "@/assets/constants/icons";
 import GeneralBudgetsModal from "@/components/GeneralBudgetsModal";
 import ProgressBar from "@/components/ProgressBar";
 import {
+  getAllPlannedBudgetTransactions,
   getBudget as getBudgetDb,
   getDatabaseFilePath,
   getDb,
   getPlannedBudgets,
-  getPlannedBudgetTransactions,
   initDatabase,
   saveBudget as saveBudgetDb,
   savePlannedBudget,
 } from "@/utils/database";
 import { useFocusEffect } from "@react-navigation/native";
+import { TouchableWithoutFeedback } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
 
 type PlannedBudget = {
-  id: number;
+  id?: number;
   budget_name: string;
   budget_type: "income" | "expense";
   color_name: string;
+  amount?: number;
   start_date?: string | null;
   end_date?: string | null;
-  amount?: number;
   is_ongoing?: boolean;
 };
 
@@ -49,29 +51,63 @@ const formatDate = (date: Date) =>
     "0"
   )}-${String(date.getDate()).padStart(2, "0")}`;
 
-const NewPlannedBudgetModal: React.FC<{
+type NewPlannedBudgetModalProps = {
   isVisible: boolean;
   onClose: () => void;
   onSave: (d: Omit<PlannedBudget, "id">) => void;
-}> = ({ isVisible, onClose, onSave }) => {
-  const [budgetName, setBudgetName] = useState("");
-  const [initialAmount, setInitialAmount] = useState("");
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedOption, setSelectedOption] = useState<"income" | "expense">(
-    "expense"
-  );
-  const [isGoalDateEnabled, setIsGoalDateEnabled] = useState(false);
+  initialData?: PlannedBudget; // ✅ add this
+};
 
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
+  isVisible,
+  onClose,
+  onSave,
+  initialData,
+}) => {
+  const [budgetName, setBudgetName] = useState(initialData?.budget_name ?? "");
+  const [amount, setAmount] = useState(
+    initialData?.amount ? String(initialData.amount) : ""
+  );
+  const [selectedColor, setSelectedColor] = useState<string | null>(
+    initialData?.color_name ?? null
+  );
+  const [selectedOption, setSelectedOption] = useState<"income" | "expense">(
+    initialData?.budget_type ?? "expense"
+  );
+  const [isGoalDateEnabled, setIsGoalDateEnabled] = useState(
+    !!initialData?.start_date || !!initialData?.end_date
+  );
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    initialData?.start_date ? new Date(initialData.start_date) : undefined
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    initialData?.end_date ? new Date(initialData.end_date) : undefined
+  );
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
+  // ✅ Populate modal state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setBudgetName(initialData.budget_name ?? "");
+      setAmount(initialData.amount ? String(initialData.amount) : "");
+      setSelectedColor(initialData.color_name ?? null);
+      setSelectedOption(initialData.budget_type ?? "expense");
+      setIsGoalDateEnabled(!!initialData.start_date || !!initialData.end_date);
+      setStartDate(
+        initialData.start_date ? new Date(initialData.start_date) : undefined
+      );
+      setEndDate(
+        initialData.end_date ? new Date(initialData.end_date) : undefined
+      );
+    }
+  }, [initialData]);
+
+  // Reset state when modal closes
   useEffect(() => {
     if (!isVisible) {
-      // reset when modal closes
       setBudgetName("");
-      setInitialAmount("");
+      setAmount("");
       setSelectedColor(null);
       setSelectedOption("expense");
       setIsGoalDateEnabled(false);
@@ -87,29 +123,24 @@ const NewPlannedBudgetModal: React.FC<{
     selectedDate: Date | undefined,
     isStart: boolean
   ) => {
-    // handle platform differences
     if (Platform.OS !== "ios") {
       if (event.type === "dismissed") {
         isStart ? setShowStartDatePicker(false) : setShowEndDatePicker(false);
         return;
       }
-      // on 'set' we let selectedDate through
-      isStart ? setShowStartDatePicker(false) : setShowEndDatePicker(false);
-    } else {
-      // ios - we close after selection as well
       isStart ? setShowStartDatePicker(false) : setShowEndDatePicker(false);
     }
 
     if (!selectedDate) return;
 
     if (isStart) {
-      if (endDate && selectedDate.getTime() > endDate.getTime()) {
+      if (endDate && selectedDate > endDate) {
         Alert.alert("Date Error", "Start Date cannot be after End Date.");
         return;
       }
       setStartDate(selectedDate);
     } else {
-      if (startDate && selectedDate.getTime() < startDate.getTime()) {
+      if (startDate && selectedDate < startDate) {
         Alert.alert("Date Error", "End Date cannot be before Start Date.");
         return;
       }
@@ -125,11 +156,13 @@ const NewPlannedBudgetModal: React.FC<{
       );
       return;
     }
-    const amount = parseFloat(initialAmount.trim());
-    if (isNaN(amount) || amount < 0) {
+
+    const parsedAmount = parseFloat(amount.trim());
+    if (isNaN(parsedAmount) || parsedAmount < 0) {
       Alert.alert("Input Error", "Please enter a valid goal amount.");
       return;
     }
+
     if (isGoalDateEnabled && (!startDate || !endDate)) {
       Alert.alert(
         "Missing Goal Date",
@@ -137,16 +170,12 @@ const NewPlannedBudgetModal: React.FC<{
       );
       return;
     }
-    if (isGoalDateEnabled && startDate && endDate && startDate > endDate) {
-      Alert.alert("Date Error", "Start Date cannot be after End Date.");
-      return;
-    }
 
     const payload: Omit<PlannedBudget, "id"> = {
       budget_name: budgetName.trim(),
       budget_type: selectedOption,
       color_name: selectedColor,
-      amount: amount,
+      amount: parsedAmount,
       ...(isGoalDateEnabled && {
         start_date: startDate ? formatDate(startDate) : null,
         end_date: endDate ? formatDate(endDate) : null,
@@ -181,7 +210,7 @@ const NewPlannedBudgetModal: React.FC<{
                   const val = v as "income" | "expense";
                   setSelectedOption(val);
                   setSelectedColor(null);
-                  setInitialAmount("");
+                  setAmount("");
                   setStartDate(undefined);
                   setEndDate(undefined);
                 }}
@@ -215,8 +244,8 @@ const NewPlannedBudgetModal: React.FC<{
               className="flex-1 h-10 border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
               placeholder="0.00"
               keyboardType="numeric"
-              value={initialAmount}
-              onChangeText={setInitialAmount}
+              value={amount}
+              onChangeText={setAmount}
             />
           </View>
 
@@ -347,13 +376,13 @@ const NewPlannedBudgetModal: React.FC<{
 
 export default function Budgets() {
   // Visual / state
-  const [currentProgress] = useState(0.25);
   const [dailyBudget, setDailyBudget] = useState("0.00");
   const [weeklyBudget, setWeeklyBudget] = useState("0.00");
   const [monthlyBudget, setMonthlyBudget] = useState("0.00");
 
   const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] =
     useState(false);
+
   const [isWeeklyBudgetModalVisible, setWeeklyBudgetModalVisible] =
     useState(false);
   const [isMonthlyBudgetModalVisible, setMonthlyBudgetModalVisible] =
@@ -363,6 +392,8 @@ export default function Budgets() {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertTitle, setAlertTitle] = useState("");
 
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
   const [dbInitialized, setDbInitialized] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -370,6 +401,8 @@ export default function Budgets() {
   const [isNewPlannedBudgetModalVisible, setNewPlannedBudgetVisible] =
     useState(false);
   const [plannedBudgets, setPlannedBudgets] = useState<PlannedBudget[]>([]);
+  const [selectedBudget, setSelectedBudget] = useState(null);
+
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
 
   const [spentMap, setSpentMap] = useState<Record<number, number>>({});
@@ -417,28 +450,24 @@ export default function Budgets() {
   const loadPlannedBudgets = useCallback(async () => {
     try {
       await initDatabase();
-      const budgets = await getPlannedBudgets();
+      const budgets = await getPlannedBudgets(); // ✅ fetch all planned budgets
       setPlannedBudgets(budgets);
 
       const progressData: Record<number, number> = {};
       const spentData: Record<number, number> = {};
 
       for (const pb of budgets) {
-        const transactions = await getPlannedBudgetTransactions(pb.id);
-
-        // ✅ totalSpent is scoped only within this loop
+        const transactions = await getAllPlannedBudgetTransactions(pb.id);
         const totalSpent = transactions.reduce(
-          (sum: number, t: any) => sum + (t.amount ?? 0),
+          (sum, t) => sum + (t.amount ?? 0),
           0
         );
-
         const progress = pb.amount ? totalSpent / pb.amount : 0;
 
         progressData[pb.id] = progress;
-        spentData[pb.id] = totalSpent; // ✅ store it by budget ID
+        spentData[pb.id] = totalSpent;
       }
 
-      // ✅ Set both maps after loop finishes
       setProgressMap(progressData);
       setSpentMap(spentData);
     } catch (error) {
@@ -524,38 +553,52 @@ export default function Budgets() {
     }
   };
 
-  const handlePlannedBudgetSave = async (data: Omit<PlannedBudget, "id">) => {
+  const handlePlannedBudgetSave = async (
+    data: Omit<PlannedBudget, "id">,
+    existingPlannedBudget?: PlannedBudget
+  ) => {
     try {
-      const categoryInsert = getDb().runSync(
-        `
-        INSERT INTO categories (name, type, color_name)
-        VALUES (?, ?, ?)
-        ON CONFLICT(name) DO UPDATE SET
-          type = excluded.type,
-          color_name = excluded.color_name;
-      `,
-        [data.budget_name, data.budget_type, data.color_name]
-      );
-
-      const categoryRow = getDb().getFirstSync(
-        "SELECT id FROM categories WHERE name = ?;",
-        [data.budget_name]
-      ) as { id: number } | undefined;
-
-      if (!categoryRow)
-        throw new Error("Failed to fetch category ID after insertion.");
-
-      const categoryId = categoryRow.id;
       const startDate = data.start_date || null;
       const endDate = data.end_date || null;
 
-      savePlannedBudget(categoryId, data.amount ?? 0, startDate, endDate, true);
+      if (existingPlannedBudget?.id) {
+        // Update existing planned budget
+        getDb().runSync(
+          `
+          UPDATE planned_budgets
+          SET budget_name = ?, budget_type = ?, color_name = ?, amount = ?, start_date = ?, end_date = ?, is_ongoing = ?
+          WHERE id = ?;
+        `,
+          [
+            data.budget_name,
+            data.budget_type,
+            data.color_name,
+            data.amount ?? 0,
+            startDate,
+            endDate,
+            1,
+            existingPlannedBudget.id,
+          ]
+        );
+      } else {
+        // Insert new planned budget
+        savePlannedBudget(
+          data.budget_name,
+          data.budget_type,
+          data.amount ?? 0,
+          data.color_name ?? "#000000", // fallback
+          startDate,
+          endDate,
+          true
+        );
+      }
 
-      // refresh list
       loadPlannedBudgets();
       showAlert(
         "Success",
-        `Category '${data.budget_name}' saved as a new ${data.budget_type} budget!`
+        existingPlannedBudget
+          ? `Planned budget '${data.budget_name}' updated!`
+          : `Planned budget '${data.budget_name}' created!`
       );
     } catch (error) {
       console.error("Error saving planned budget:", error);
@@ -667,73 +710,182 @@ export default function Budgets() {
         <Text className="text-sm font-medium">Planned Budgets</Text>
       </View>
 
-      {/* ✅ Only this part scrolls horizontally */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingVertical: 10,
-          gap: 16,
-          paddingRight: 20,
-        }}
-      >
-        {plannedBudgets.map((pb) => {
-          const totalSpent = spentMap[pb.id] || 0;
-          const currentProgress = progressMap[pb.id] || 0;
-
-          return (
-            <View
-              key={pb.id}
-              className="w-[137px] h-[136px] p-2 bg-white rounded-lg shadow-md"
-            >
-              <View className="flex-row pb-4 justify-between">
-                <View className="flex-row gap-2 items-center">
-                  <View
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: pb.color_name || "#ccc" }}
-                  />
-                  <Text>{pb.budget_name}</Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => console.log("Menu pressed", pb.id)}
-                >
-                  <SVG_ICONS.Ellipsis width={24} height={24} />
-                </TouchableOpacity>
-              </View>
-
-              <View className="items-center">
-                <Text className="text-xs pb-1">
-                  {pb.start_date && pb.end_date
-                    ? `${pb.start_date} - ${pb.end_date}`
-                    : "Ongoing"}
-                </Text>
-
-                <ProgressBar progress={currentProgress} />
-
-                <Text className="text-lg pt-1">₱{totalSpent.toFixed(2)}</Text>
-                <Text className="text-">(₱{(pb.amount ?? 0).toFixed(2)})</Text>
-              </View>
-            </View>
-          );
-        })}
-
-        {/* ✅ “Add New Budget” button included in scroll */}
-        <TouchableOpacity
-          className="w-[137px] h-[136px] p-2 border border-purple-600 rounded-lg justify-center items-center"
-          onPress={() => setNewPlannedBudgetVisible(true)}
+      <TouchableWithoutFeedback onPress={() => setOpenMenuId(null)}>
+        {/* ✅ Only this part scrolls horizontally */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ overflow: "visible" }}
+          contentContainerStyle={{
+            paddingVertical: 10,
+            gap: 16,
+            paddingRight: 20,
+            overflow: "visible",
+          }}
         >
-          <View className="items-center gap-4">
-            <View className="w-8 h-8 rounded-full border border-purple-600" />
-            <Text className="text-purple-600">Add New Budget</Text>
-          </View>
-        </TouchableOpacity>
-      </ScrollView>
+          {plannedBudgets.map((pb) => {
+            const totalSpent = spentMap[pb.id] || 0;
+            const currentProgress = progressMap[pb.id] || 0;
+
+            return (
+              <View
+                key={pb.id}
+                className="w-[137px] h-[136px] p-2 bg-white rounded-lg shadow-md"
+                style={{
+                  position: "relative",
+                  zIndex: openMenuId === pb.id ? 9999 : 1,
+                }}
+              >
+                <View className="flex-row pb-4 justify-between">
+                  <View className="flex-row gap-2 items-center">
+                    <View
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: pb.color_name || "#ccc" }}
+                    />
+                    <Text>{pb.budget_name}</Text>
+                  </View>
+                  <View className="relative">
+                    <TouchableOpacity
+                      onPress={() =>
+                        setOpenMenuId(openMenuId === pb.id ? null : pb.id)
+                      }
+                    >
+                      <SVG_ICONS.Ellipsis width={24} height={24} />
+                    </TouchableOpacity>
+
+                    {openMenuId === pb.id && (
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 28,
+                          right: 0,
+                          backgroundColor: "#ffffff",
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: "#d1d5db",
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 4,
+                          elevation: 10,
+                          zIndex: 9999,
+                          width: 120,
+                        }}
+                      >
+                        {[
+                          {
+                            label: "Edit",
+                            color: "#6f42c1",
+                            action: () => {
+                              setSelectedBudget(pb); // 🟣 set current budget for editing
+                              setNewPlannedBudgetVisible(true); // open same modal
+                              setOpenMenuId(null);
+                            },
+                          },
+                          {
+                            label: "Delete",
+                            color: "#dc2626",
+                            action: () => {
+                              setOpenMenuId(null);
+                              Alert.alert(
+                                "Delete Planned Budget",
+                                "Are you sure you want to delete this planned budget?",
+                                [
+                                  { text: "Cancel", style: "cancel" },
+                                  {
+                                    text: "Delete",
+                                    style: "destructive",
+                                    onPress: async () => {
+                                      try {
+                                        deletePlannedBudget(pb.id);
+                                        // 🧹 Re-fetch your planned budgets after deleting
+                                        loadPlannedBudgets?.(); // optional refresh callback
+                                        console.log(
+                                          `🗑️ Planned budget ${pb.id} deleted.`
+                                        );
+                                      } catch (err) {
+                                        console.error(
+                                          "Error deleting budget:",
+                                          err
+                                        );
+                                        Alert.alert(
+                                          "Error",
+                                          "Failed to delete planned budget."
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]
+                              );
+                            },
+                          },
+                        ].map((item, idx) => (
+                          <TouchableOpacity
+                            key={idx}
+                            onPress={item.action}
+                            style={{
+                              paddingVertical: 10,
+                              paddingHorizontal: 14,
+                              borderBottomWidth: idx === 0 ? 1 : 0,
+                              borderBottomColor: "#e5e7eb",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: item.color,
+                                fontSize: 14,
+                                fontWeight: "500",
+                              }}
+                            >
+                              {item.label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View className="items-center">
+                  <Text className="text-xs pb-1">
+                    {pb.start_date && pb.end_date
+                      ? `${pb.start_date} - ${pb.end_date}`
+                      : "Ongoing"}
+                  </Text>
+
+                  <ProgressBar progress={currentProgress} />
+
+                  <Text className="text-lg pt-1">₱{totalSpent.toFixed(2)}</Text>
+                  <Text className="text-">
+                    (₱{(pb.amount ?? 0).toFixed(2)})
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+
+          {/* ✅ “Add New Budget” button included in scroll */}
+          <TouchableOpacity
+            className="w-[137px] h-[136px] p-2 border border-purple-600 rounded-lg justify-center items-center"
+            onPress={() => setNewPlannedBudgetVisible(true)}
+          >
+            <View className="items-center gap-4">
+              <View className="w-8 h-8 rounded-full border border-purple-600" />
+              <Text className="text-purple-600">Add New Budget</Text>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
+      </TouchableWithoutFeedback>
 
       {/* ✅ Modal and Share Button (not scrollable) */}
       <NewPlannedBudgetModal
         isVisible={isNewPlannedBudgetModalVisible}
-        onClose={() => setNewPlannedBudgetVisible(false)}
-        onSave={handlePlannedBudgetSave}
+        onClose={() => {
+          setNewPlannedBudgetVisible(false);
+          setSelectedBudget(null);
+        }}
+        onSave={(data) => handlePlannedBudgetSave(data, selectedBudget)}
+        initialData={selectedBudget}
       />
 
       <View className="mt-4">

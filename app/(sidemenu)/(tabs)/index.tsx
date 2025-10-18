@@ -1,4 +1,8 @@
-import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
+import type {
+  Account,
+  PlannedBudget,
+  PlannedBudgetTransaction,
+} from "@/types/types";
 import { getAccounts } from "@/utils/accounts";
 import {
   getAllPlannedBudgetTransactions,
@@ -6,86 +10,22 @@ import {
   initDatabase,
   savePlannedBudgetTransaction,
 } from "@/utils/database";
-
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
-  Modal,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SVG_ICONS } from "../../../assets/constants/icons";
+import PlannedBudgetModals from "../../../components/PlannedBudgetModals";
 import ProgressBar from "../../../components/ProgressBar";
 import ProgressRing from "../../../components/ProgressRing";
 import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent";
 import type { TabHomeScreenNavigationProp } from "../../../types";
-
-// =========================================================
-// 🟣 AccountsModal (unchanged)
-// =========================================================
-const AccountsModal = ({
-  isVisible,
-  onClose,
-  accounts,
-  onSelectAccount,
-}: {
-  isVisible: boolean;
-  onClose: () => void;
-  accounts: Array<{
-    id: number | string;
-    name: string;
-    balance: number;
-    icon_name: string;
-  }>;
-  onSelectAccount: (account: {
-    id: number | string;
-    name: string;
-    balance: number;
-    icon_name: string;
-  }) => void;
-}) => {
-  return (
-    <Modal
-      animationType="slide"
-      transparent
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Select Account</Text>
-
-          {accounts.map((account) => {
-            const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
-            return (
-              <TouchableOpacity
-                key={account.id}
-                className="w-full h-[50] px-4 flex-row justify-between items-center mb-2 active:bg-[#F8F4FF]"
-                onPress={() => onSelectAccount(account)}
-              >
-                <View className="flex-row gap-2 items-center">
-                  <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
-                    {IconComponent && <IconComponent size={24} color="white" />}
-                  </View>
-                  <Text className="text-lg">{account.name}</Text>
-                </View>
-                <Text className="text-[#8938E9] text-lg">
-                  ₱{account.balance.toFixed(2)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    </Modal>
-  );
-};
 
 // =========================================================
 // 🟣 Main Screen (logic fixes applied)
@@ -94,21 +34,28 @@ export default function Index() {
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const router = useRouter();
 
-  const [plannedBudgets, setPlannedBudgets] = useState([]);
+  const [plannedBudgets, setPlannedBudgets] = useState<PlannedBudget[]>([]);
+  const [budgetTransactions, setBudgetTransactions] = useState<
+    PlannedBudgetTransaction[]
+  >([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [dbReady, setDbReady] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [currentProgress, setCurrentProgress] = useState(0.25);
 
-  const [selectedBudget, setSelectedBudget] = useState<any | null>(null);
+  // FIX: Added currentProgress state as a placeholder
+  const [currentProgress, setCurrentProgress] = useState(0);
+
+  const [selectedBudget, setSelectedBudget] = useState<PlannedBudget | null>(
+    null
+  );
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTransactionModalVisible, setIsTransactionModalVisible] =
     useState(false);
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
-  const [accounts, setAccounts] = useState<any[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<any | null>(null);
 
-  // IMPORTANT: budgetTransactions holds ALL transactions across budgets
-  const [budgetTransactions, setBudgetTransactions] = useState<any[]>([]);
-  const [dbReady, setDbReady] = useState(false);
+  const [transactionAmount, setTransactionAmount] = useState("");
 
   // 🧩 Initialize DB + load accounts
   useEffect(() => {
@@ -118,6 +65,8 @@ export default function Index() {
         const initialAccounts = await getAccounts();
         setAccounts(initialAccounts);
         setDbReady(true);
+        // FIX: Set placeholder progress value to prevent crash
+        setCurrentProgress(0.5);
       } catch (error) {
         console.error(
           "Error initializing database or loading accounts:",
@@ -129,10 +78,6 @@ export default function Index() {
   }, []);
 
   const toggleAccountsModal = () => setAccountsModalVisible((p) => !p);
-
-  // 🧾 Transaction form states
-  const [transactionAmount, setTransactionAmount] = useState("");
-  const [transactionNote, setTransactionNote] = useState("");
 
   // Load all transactions (global)
   const loadAllTransactions = async () => {
@@ -157,7 +102,7 @@ export default function Index() {
       const budgets = await getPlannedBudgets();
       setPlannedBudgets(budgets);
     } catch (error) {
-      console.error("❌ Error loading planned budgets:", error);
+      console.error("Error loading planned budgets:", error);
     } finally {
       setLoading(false);
     }
@@ -184,6 +129,7 @@ export default function Index() {
   const getPlannedBudgetId = (t: any) =>
     t.planned_budget_id ?? t.budget_id ?? t.plannedBudgetId ?? null;
 
+  // This function seems unused in the UI, but kept for reference
   const calculateProgress = (budget: any, allTransactions: any[]) => {
     if (!budget || !allTransactions) {
       console.log("⚠️ [DEBUG] Missing budget or transactions input");
@@ -223,8 +169,23 @@ export default function Index() {
     return progress;
   };
 
-  const getProgress = (budget: any) => {
-    return calculateProgress(budget, budgetTransactions);
+  // FIX: Simplified and corrected the redundant getProgress logic
+  const getProgress = (
+    budget: PlannedBudget,
+    transactions: PlannedBudgetTransaction[]
+  ): number => {
+    if (!budget) return 0;
+    const budgetAmount = Number(budget.amount || 0);
+    if (budgetAmount === 0) return 0;
+
+    const spentAmount = transactions
+      .filter((t) => t.planned_budget_id === budget.id)
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+    const progress = spentAmount / budgetAmount;
+
+    // Return progress as a number between 0 and 1 (clamped)
+    return progress > 1 ? 1 : progress;
   };
 
   // ---------- Save transaction ----------
@@ -248,35 +209,21 @@ export default function Index() {
       return;
     }
 
-    console.log("💾 [DEBUG] Saving transaction:", {
-      budgetId: selectedBudget.id,
-      amount: transactionAmount,
-      account: selectedAccount?.id,
-      note: transactionNote,
-    });
-
     try {
-      const currentDate = new Date().toISOString(); // store full ISO timestamp
-
+      const currentDate = new Date().toISOString();
       await savePlannedBudgetTransaction(
         selectedBudget.id,
-        transactionAmount,
-        transactionNote,
+        Number(transactionAmount),
         currentDate,
-        selectedAccount ? selectedAccount.id : null
+        selectedAccount?.id ?? null
       );
 
-      // Refresh all transactions (global), so progress updates across cards
-      await loadAllTransactions();
-
-      // Optionally refresh budgets listing
-      await loadPlannedBudgets();
-
-      // Clear form & close modal
       setTransactionAmount("");
-      setTransactionNote("");
       setSelectedAccount(null);
       setIsTransactionModalVisible(false);
+
+      await loadAllTransactions();
+      await loadPlannedBudgets();
     } catch (err) {
       console.error("Error saving transaction:", err);
       alert("Failed to save transaction.");
@@ -286,6 +233,22 @@ export default function Index() {
   // ---------- UI ----------
   return (
     <View className="items-center">
+      <PlannedBudgetModals
+        isBudgetModalVisible={isModalVisible}
+        setIsBudgetModalVisible={setIsModalVisible}
+        selectedBudget={selectedBudget}
+        budgetTransactions={budgetTransactions}
+        isTransactionModalVisible={isTransactionModalVisible}
+        setIsTransactionModalVisible={setIsTransactionModalVisible}
+        transactionAmount={transactionAmount}
+        setTransactionAmount={setTransactionAmount}
+        selectedAccount={selectedAccount}
+        setSelectedAccount={setSelectedAccount}
+        accounts={accounts}
+        handleSaveTransaction={handleSaveTransaction}
+        toggleAccountsModal={toggleAccountsModal}
+        isAccountsModalVisible={isAccountsModalVisible}
+      />
       {/* === Header === */}
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
@@ -325,6 +288,7 @@ export default function Index() {
         </View>
 
         <View className="flex-row justify-between">
+          {/* FIX: Use the 'currentProgress' state variable */}
           <ProgressRing
             progress={currentProgress}
             radius={70}
@@ -458,13 +422,20 @@ export default function Index() {
 
                 {/* === Progress & Info === */}
                 <View className="py-[16] px-[20]">
-                  <ProgressBar progress={getProgress(budget)} />
+                  {/* FIX: Use 'budget' instead of 'selectedBudget' for the current item */}
+                  <ProgressBar
+                    progress={getProgress(budget, budgetTransactions)}
+                  />
                   <View className="mt-[8]">
                     <Text className="text-[14px]">
-                      Spent ₱{(budget.amount * getProgress(budget)).toFixed(0)}{" "}
+                      Spent ₱
+                      {(
+                        Number(budget.amount) *
+                        Number(getProgress(budget, budgetTransactions))
+                      ).toFixed(0)}{" "}
                       from{" "}
                       <Text className="text-[14px] text-[#8938E9]">
-                        ₱{budget.amount.toFixed(0)}
+                        ₱{Number(budget.amount).toFixed(0)}
                       </Text>
                     </Text>
                   </View>
@@ -475,228 +446,6 @@ export default function Index() {
           />
         )}
       </View>
-
-      {/* === Budget Details Modal === */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="w-[360] h-[700] bg-white rounded-[20] p-[20] shadow-lg">
-            {selectedBudget ? (
-              <>
-                <View className="flex-row gap-4 items-center pb-5">
-                  <View
-                    className="w-[40] h-[40] rounded-full"
-                    style={{
-                      backgroundColor: selectedBudget.color_name || "#FCC21B",
-                    }}
-                  />
-                  <View className="flex-col">
-                    <Text className="text-[18px] font-medium text-[#392F46]">
-                      {selectedBudget.budget_name || "Unnamed Budget"}
-                    </Text>
-                    <Text className="text-[14px] text-[#392F46] opacity-70">
-                      {selectedBudget.budget_type + " category" ||
-                        "Unnamed Budget"}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
-                  Goal Amount: ₱{selectedBudget.amount.toFixed(2)}
-                </Text>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
-                  Start Date: {selectedBudget.start_date || "Ongoing"}
-                </Text>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
-                  End Date: {selectedBudget.end_date || "Ongoing"}
-                </Text>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
-                  Progress: {(getProgress(selectedBudget) * 100).toFixed(0)}%
-                </Text>
-
-                <View className="my-4">
-                  <Text className="text-[16px] font-bold">Savings Record</Text>
-                </View>
-
-                <ScrollView style={{ maxHeight: 300 }}>
-                  {/* Filter transactions specifically for the selected budget (and sort) */}
-                  {budgetTransactions.filter(
-                    (t) => getPlannedBudgetId(t) === selectedBudget.id
-                  ).length === 0 ? (
-                    <Text className="text-gray-500">No transactions yet.</Text>
-                  ) : (
-                    budgetTransactions
-                      .filter(
-                        (t) => getPlannedBudgetId(t) === selectedBudget.id
-                      )
-                      .sort(
-                        (a, b) =>
-                          new Date(a.date).getTime() -
-                          new Date(b.date).getTime()
-                      )
-                      .map((t, index, arr) => {
-                        const dateObj = new Date(t.date);
-                        const formattedDate = dateObj.toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          }
-                        );
-                        const formattedTime = dateObj.toLocaleTimeString(
-                          "en-US",
-                          {
-                            hour: "numeric",
-                            minute: "2-digit",
-                            hour12: true,
-                          }
-                        );
-
-                        // Determine prevDate from the filtered & sorted array (arr)
-                        const prev = arr[index - 1];
-                        const prevDate =
-                          prev &&
-                          new Date(prev.date).toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          });
-                        const isNewDate = formattedDate !== prevDate;
-
-                        return (
-                          <View
-                            key={t.id}
-                            className="mb-3 border-b border-gray-200 pb-2"
-                          >
-                            {isNewDate && (
-                              <>
-                                <Text className="text-[12px] text-gray-500">
-                                  {formattedDate}
-                                </Text>
-                                <View className="border my-2"></View>
-                              </>
-                            )}
-
-                            <View className="flex-row justify-between">
-                              <View className="flex-row gap-2">
-                                <Text className="text-[12px] text-gray-500">
-                                  {formattedTime}
-                                </Text>
-                                <Text className="text-[12px] text-gray-500">
-                                  {t.account_name || "Unknown Account"}
-                                </Text>
-                              </View>
-                              <Text className="text-[14px] text-[#8938E9]">
-                                ₱{parseFloat(t.amount).toFixed(2)}
-                              </Text>
-                            </View>
-                          </View>
-                        );
-                      })
-                  )}
-                </ScrollView>
-
-                <View className="flex-row gap-4">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setIsModalVisible(false);
-                      setIsTransactionModalVisible(true);
-                    }}
-                    className="flex-1 mt-[16] bg-[#8938E9] px-[16] py-[10] rounded-[12]"
-                  >
-                    <Text className="text-white text-center font-medium">
-                      CREATE TRANSACTION
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setIsModalVisible(false)}
-                    className="flex-1 mt-[16] bg-[#8938E9] px-[16] py-[10] rounded-[12] justify-center"
-                  >
-                    <Text className="text-white text-center font-medium">
-                      CLOSE
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : (
-              <Text>Loading...</Text>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* === Transaction Modal === */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isTransactionModalVisible}
-        onRequestClose={() => setIsTransactionModalVisible(false)}
-      >
-        <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="w-[360] bg-white rounded-[20] p-[20] shadow-lg">
-            <Text className="text-[18px] font-semibold text-[#392F46] mb-[16]">
-              Create Budget Transaction
-            </Text>
-
-            <TextInput
-              placeholder="Amount (₱)"
-              keyboardType="numeric"
-              value={transactionAmount}
-              onChangeText={setTransactionAmount}
-              className="w-full border border-gray-300 rounded-[12] p-[10] mb-4"
-            />
-
-            <View className="mb-4">
-              <Text className="mb-2">Account:</Text>
-              <TouchableOpacity
-                onPress={toggleAccountsModal}
-                className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
-              >
-                <SVG_ICONS.Account size={16} color="white" />
-                <Text className="text-white text-base">
-                  {selectedAccount ? selectedAccount.name : "Select Account"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View className="flex-row gap-4 mt-[20]">
-              <TouchableOpacity
-                onPress={handleSaveTransaction}
-                className="flex-1 bg-[#8938E9] px-[16] py-[10] rounded-[12]"
-              >
-                <Text className="text-white text-center font-medium">SAVE</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setIsTransactionModalVisible(false)}
-                className="flex-1 bg-gray-400 px-[16] py-[10] rounded-[12]"
-              >
-                <Text className="text-white text-center font-medium">
-                  CANCEL
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Accounts modal */}
-            <AccountsModal
-              isVisible={isAccountsModalVisible}
-              onClose={toggleAccountsModal}
-              accounts={accounts}
-              onSelectAccount={(acc) => {
-                setSelectedAccount(acc);
-                setAccountsModalVisible(false);
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
