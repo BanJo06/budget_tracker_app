@@ -33,6 +33,7 @@ export default function Records() {
         weekday: "long",
         month: "long",
         day: "numeric",
+        year: "numeric", // include the year
       });
       if (!groupedData[day]) {
         groupedData[day] = [];
@@ -49,8 +50,6 @@ export default function Records() {
   const sections = groupTransactionsByDate(transactions);
 
   if (transactions.length === 0) {
-    // styles.emptyContainer -> flex-1 justify-center items-center
-    // styles.emptyText -> text-gray
     return (
       <View className="flex-1 justify-center items-center">
         <Text className="text-gray-500">No transactions recorded yet.</Text>
@@ -124,20 +123,15 @@ export default function Records() {
     });
 
     return (
-      // modalStyles.modalView -> m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]
-      // (The shadow/elevation styles are complex to fully replicate, using shadow-lg as a close approximation)
       <View className="m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]">
         {/* Header with buttons */}
-        {/* modalStyles.headerContainer -> flex-row justify-between w-full mb-5 */}
         <View className="flex-row justify-between w-full mb-5">
-          {/* modalStyles.button -> p-2.5 */}
           <Pressable
             className="p-2.5"
             onPress={() => setSelectedTransaction(null)}
           >
             <SVG_ICONS.Category size={24} color="#000" />
           </Pressable>
-          {/* modalStyles.buttonGroup -> flex-row gap-2.5 */}
           <View className="flex-row gap-2.5">
             <Pressable className="p-2.5"></Pressable>
             <Pressable className="p-2.5"></Pressable>
@@ -145,29 +139,20 @@ export default function Records() {
         </View>
 
         {/* Transaction details */}
-        {/* modalStyles.detailContainer -> items-center mb-5 */}
         <View className="items-center mb-5">
-          {/* modalStyles.iconBg -> w-15 h-15 rounded-full justify-center items-center mb-2.5 */}
           <View
             className={`w-15 h-15 rounded-full justify-center items-center mb-2.5 ${iconBgColorClass}`}
           >
             {IconComponent && <IconComponent size={40} color="white" />}
           </View>
-          {/* modalStyles.amountText -> text-2xl font-bold mb-1.5 */}
           <Text className={`text-2xl font-bold mb-1.5 ${amountColorClass}`}>
             {displayAmount}
           </Text>
-          {/* modalStyles.mainText -> text-xl font-medium text-center */}
           <Text className="text-xl font-medium text-center">{mainText}</Text>
-          {/* modalStyles.subText -> text-base text-gray-500 text-center */}
           <Text className="text-base text-gray-500 text-center">{subText}</Text>
         </View>
-
-        {/* modalStyles.infoRow -> flex-row justify-between w-full py-2.5 border-b border-gray-100 */}
         <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-          {/* modalStyles.infoLabel -> text-base text-gray-500 */}
           <Text className="text-base text-gray-500">Account</Text>
-          {/* modalStyles.infoValue -> text-base font-medium text-right flex-shrink */}
           <Text className="text-base font-medium text-right flex-shrink">
             {account_name}
           </Text>
@@ -191,9 +176,7 @@ export default function Records() {
   };
 
   return (
-    // styles.container -> flex-1 bg-white px-8
     <View className="flex-1 bg-white px-8">
-      {/* styles.header -> flex-row justify-end pt-4 pb-2 */}
       <View className="flex-row justify-end pt-4 pb-2">
         <SVG_ICONS.Search size={30} />
       </View>
@@ -203,11 +186,8 @@ export default function Records() {
         sections={sections}
         keyExtractor={(item) => item.id.toString()}
         renderSectionHeader={({ section: { title } }) => (
-          // styles.sectionHeader -> flex-col my-4
           <View className="flex-col my-4">
-            {/* styles.sectionTitle -> font-medium */}
             <Text className="font-medium">{title}</Text>
-            {/* styles.separator -> h-[2px] bg-black rounded-full */}
             <View className="h-[2px] bg-black rounded-full" />
           </View>
         )}
@@ -251,29 +231,22 @@ export default function Records() {
           }
 
           return (
-            // styles.transactionItem -> flex-row items-center mb-4 gap-4
             <Pressable
               onPress={() => setSelectedTransaction(item)}
               className="flex-row items-center mb-4 gap-4"
             >
-              {/* styles.iconContainer -> w-12.5 h-12.5 rounded-full justify-center items-center */}
               <View
                 className={`w-[50px] h-[50px] rounded-full justify-center items-center ${iconBgColorClass}`}
               >
                 {IconComponent && <IconComponent size={24} color="white" />}
               </View>
-              {/* styles.transactionDetails -> flex-1 flex-col justify-center gap-1 */}
               <View className="flex-1 flex-col justify-center gap-1">
-                {/* styles.detailRow -> flex-row justify-between items-center */}
                 <View className="flex-row justify-between items-center">
-                  {/* styles.categoryName -> text-base font-medium */}
                   <Text className="text-base font-medium">{mainText}</Text>
-                  {/* styles.amount -> text-base font-bold */}
                   <Text className={`text-base font-bold ${amountColorClass}`}>
                     {amountText}
                   </Text>
                 </View>
-                {/* styles.subText -> text-sm text-gray-500 */}
                 <Text className="text-sm text-gray-500">
                   {item.description}
                 </Text>
