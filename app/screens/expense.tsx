@@ -1,20 +1,15 @@
 import { getDb } from "@/utils/database";
-import { Picker } from "@react-native-picker/picker";
 import React, { useEffect, useState } from "react";
-import {
-  Dimensions,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
 
-// Define the type for the transaction data from your query
+interface ExpenseContentProps {
+  month: number;
+  year: number;
+}
+
 interface ExpenseTransaction {
   amount: number;
   type: string;
@@ -22,22 +17,21 @@ interface ExpenseTransaction {
   category_name: string;
 }
 
-// Helper function to get transactions from the database with explicit typing
 const fetchTransactions = async (): Promise<ExpenseTransaction[]> => {
   try {
     const db = getDb();
     const query = `
-            SELECT 
-                T.amount, 
-                T.type, 
-                T.date, 
-                C.name AS category_name, 
-                C.icon_name AS category_icon_name
-            FROM transactions AS T
-            LEFT JOIN categories AS C ON T.category_id = C.id
-            WHERE T.type = 'expense'
-            ORDER BY T.date DESC;
-        `;
+      SELECT 
+        T.amount, 
+        T.type, 
+        T.date, 
+        C.name AS category_name, 
+        C.icon_name AS category_icon_name
+      FROM transactions AS T
+      LEFT JOIN categories AS C ON T.category_id = C.id
+      WHERE T.type = 'expense'
+      ORDER BY T.date DESC;
+    `;
     const transactions = db.getAllSync(query) as ExpenseTransaction[];
     return transactions;
   } catch (error) {
@@ -46,7 +40,6 @@ const fetchTransactions = async (): Promise<ExpenseTransaction[]> => {
   }
 };
 
-// Simple color mapping for categories
 const categoryColors: { [key: string]: string } = {
   Food: "#8938E9",
   Shopping: "#FACC15",
@@ -54,17 +47,13 @@ const categoryColors: { [key: string]: string } = {
   Bills: "#EF4444",
   Clothing: "#3B82F6",
   Tuition: "#A855F7",
-  Uncategorized: "#CCCCCC", // Fallback color
+  Uncategorized: "#CCCCCC",
 };
 
-// Helper function to get color with a safe fallback
-const getCategoryColor = (categoryName: string): string => {
-  return categoryColors[categoryName] || categoryColors["Uncategorized"];
-};
+const getCategoryColor = (categoryName: string) =>
+  categoryColors[categoryName] || categoryColors["Uncategorized"];
 
-// Helper function to generate month and year arrays for the Picker
 const getMonths = () => {
-  const months = [];
   const monthNames = [
     "January",
     "February",
@@ -79,41 +68,31 @@ const getMonths = () => {
     "November",
     "December",
   ];
-  for (let i = 0; i < 12; i++) {
-    months.push({ label: monthNames[i], value: i + 1 });
-  }
-  return months;
+  return monthNames.map((name, i) => ({ label: name, value: i + 1 }));
 };
 
 const getYears = () => {
-  const years = [];
   const currentYear = new Date().getFullYear();
-  for (let i = currentYear; i >= currentYear - 5; i--) {
-    years.push({ label: String(i), value: i });
-  }
-  return years;
+  return Array.from({ length: 6 }, (_, i) => ({
+    label: String(currentYear - i),
+    value: currentYear - i,
+  }));
 };
 
-export default function ExpenseScreen() {
+export default function ExpenseContent({ month, year }: ExpenseContentProps) {
   const [period, setPeriod] = useState("month");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [expensesData, setExpensesData] = useState<{
-    totalDay: number;
-    totalWeek: number;
-    totalMonth: number;
-    filteredCategories: {
-      name: string;
-      amount: number;
-      percentage: number;
-    }[];
-    totalFiltered: number;
-  }>({
+  const [expensesData, setExpensesData] = useState({
     totalDay: 0,
     totalWeek: 0,
     totalMonth: 0,
-    filteredCategories: [],
+    filteredCategories: [] as {
+      name: string;
+      amount: number;
+      percentage: number;
+    }[],
     totalFiltered: 0,
   });
 
@@ -135,17 +114,8 @@ export default function ExpenseScreen() {
         now.getMonth(),
         now.getDate() - now.getDay()
       ).toISOString();
-
-      const startOfSelectedMonth = new Date(
-        selectedYear,
-        selectedMonth - 1,
-        1
-      ).toISOString();
-      const endOfSelectedMonth = new Date(
-        selectedYear,
-        selectedMonth,
-        0
-      ).toISOString();
+      const startOfSelectedMonth = new Date(year, month - 1, 1).toISOString();
+      const endOfSelectedMonth = new Date(year, month, 0).toISOString();
 
       const totalDay = allExpenses
         .filter((t) => t.date >= startOfDay)
@@ -153,7 +123,6 @@ export default function ExpenseScreen() {
       const totalWeek = allExpenses
         .filter((t) => t.date >= startOfWeek)
         .reduce((sum, t) => sum + t.amount, 0);
-
       const totalMonth = allExpenses
         .filter(
           (t) => t.date >= startOfSelectedMonth && t.date <= endOfSelectedMonth
@@ -162,6 +131,7 @@ export default function ExpenseScreen() {
 
       let filteredExpenses: ExpenseTransaction[] = [];
       let totalFiltered = 0;
+
       if (period === "day") {
         filteredExpenses = allExpenses.filter((t) => t.date >= startOfDay);
         totalFiltered = totalDay;
@@ -169,35 +139,28 @@ export default function ExpenseScreen() {
         filteredExpenses = allExpenses.filter((t) => t.date >= startOfWeek);
         totalFiltered = totalWeek;
       } else {
-        // 'month'
         filteredExpenses = allExpenses.filter(
           (t) => t.date >= startOfSelectedMonth && t.date <= endOfSelectedMonth
         );
         totalFiltered = totalMonth;
       }
-      const categoryMap: {
-        [key: string]: {
-          name: string;
-          amount: number;
-        };
-      } = {};
 
+      const categoryMap: { [key: string]: { name: string; amount: number } } =
+        {};
       filteredExpenses.forEach((exp) => {
         const categoryName = exp.category_name || "Uncategorized";
-        if (!categoryMap[categoryName]) {
-          categoryMap[categoryName] = {
-            name: categoryName,
-            amount: 0,
-          };
-        }
+        if (!categoryMap[categoryName])
+          categoryMap[categoryName] = { name: categoryName, amount: 0 };
         categoryMap[categoryName].amount += exp.amount;
       });
 
-      const processedCategories = Object.values(categoryMap).map((cat) => ({
-        ...cat,
-        percentage: totalFiltered > 0 ? (cat.amount / totalFiltered) * 100 : 0,
-      }));
-      processedCategories.sort((a, b) => b.percentage - a.percentage);
+      const processedCategories = Object.values(categoryMap)
+        .map((cat) => ({
+          ...cat,
+          percentage:
+            totalFiltered > 0 ? (cat.amount / totalFiltered) * 100 : 0,
+        }))
+        .sort((a, b) => b.percentage - a.percentage);
 
       setExpensesData({
         totalDay,
@@ -208,81 +171,60 @@ export default function ExpenseScreen() {
       });
     };
     processExpenses();
-  }, [period, selectedMonth, selectedYear]);
+  }, [month, year]);
 
-  // Data for the Pie Chart with explicit type conversions
   const pieData = expensesData.filteredCategories
-    .filter(
-      (category) => typeof category.amount === "number" && category.amount > 0
-    )
-    .map((category) => ({
-      name: category.name,
-      population: category.amount,
-      color: getCategoryColor(category.name),
+    .filter((c) => typeof c.amount === "number" && c.amount > 0)
+    .map((c) => ({
+      name: c.name,
+      population: c.amount,
+      color: getCategoryColor(c.name),
       legendFontColor: "#7F7F7F",
       legendFontSize: 12,
     }));
 
   const getCurrencyFormatted = (amount: number) => `₱${amount.toFixed(2)}`;
 
-  // Chart configuration for react-native-chart-kit
   const chartConfig = {
-    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    propsForLabels: {
-      fontSize: 12,
-    },
+    color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+    propsForLabels: { fontSize: 12 },
   };
-
-  console.log("Total filtered expenses:", expensesData.totalFiltered);
 
   return (
     <ScrollView
-      contentContainerStyle={{
-        alignItems: "center",
-        paddingHorizontal: 20,
-      }}
+      contentContainerStyle={{ alignItems: "center", paddingHorizontal: 20 }}
     >
       {/* Graph Overview */}
-      <View
-        className="w-[330] h-[220] p-[20] mt-[18] mb-[16] bg-white rounded-[20]"
-        style={[{ elevation: 5 }]}
-      >
+      <View className="w-[330px] h-[220px] p-5 mt-4 mb-4 bg-white rounded-2xl shadow-md">
         <View className="flex-row justify-between">
-          <Text>Expense</Text>
+          <Text className="text-black font-medium">Expense</Text>
           <Pressable onPress={() => setIsModalVisible(true)}>
-            <Text className="text-[12px] font-medium text-[#7E8085]">
+            <Text className="text-[#7E8085] font-medium text-xs">
               {currentMonthName}, {selectedYear}
             </Text>
           </Pressable>
         </View>
-        {/* Pie Chart and Details Container */}
-        <View className="flex-row justify-between items-center">
-          {/* Pie Chart directly here */}
+
+        <View className="flex-row justify-between items-center mt-4">
           <PieChart
             data={pieData}
             width={screenWidth * 0.5}
             height={150}
             chartConfig={chartConfig}
-            accessor={"population"}
-            backgroundColor={"transparent"}
-            paddingLeft={"16"}
+            accessor="population"
+            backgroundColor="transparent"
+            paddingLeft="16"
             hasLegend={false}
           />
-          {/* Manual legend/details on the right */}
           <View>
             {expensesData.filteredCategories.map((category, index) => (
               <View key={index} className="flex-row items-center mb-1">
                 <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 6,
-                    backgroundColor: getCategoryColor(category.name),
-                    marginRight: 4,
-                  }}
+                  className="w-3 h-3 rounded-full mr-1"
+                  style={{ backgroundColor: getCategoryColor(category.name) }}
                 />
-                <Text className="text-[12px]">
+                <Text className="text-xs">
                   {category.name} ({category.percentage.toFixed(0)}%)
                 </Text>
               </View>
@@ -291,82 +233,71 @@ export default function ExpenseScreen() {
         </View>
       </View>
 
-      <View className="flex-row justify-center gap-[8] mx-5">
-        <View
-          className={"w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]"}
-          style={[{ elevation: 5 }]}
-        >
-          <View className="flex-col justify-center items-center gap-[8]">
-            <Text className="text-[16px] text-[#392F46] opacity-65">Day</Text>
-            <Text className="text-[16px] font-bold text-[#8938E9]">
-              {getCurrencyFormatted(expensesData.totalDay)}
-            </Text>
-          </View>
-        </View>
-        <View
-          className={"w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]"}
-          style={[{ elevation: 5 }]}
-        >
-          <View className="flex-col justify-center items-center gap-[8]">
-            <Text className="text-[16px] text-[#392F46] opacity-65">Week</Text>
-            <Text className="text-[16px] font-bold text-[#8938E9]">
-              {getCurrencyFormatted(expensesData.totalWeek)}
-            </Text>
-          </View>
-        </View>
-        <View
-          className={"w-[104] h-[86] px-[12] py-[20] bg-white rounded-[20]"}
-          style={[{ elevation: 5 }]}
-        >
-          <View className="flex-col justify-center items-center gap-[8]">
-            <Text className="text-[16px] text-[#392F46] opacity-65">Month</Text>
-            <Text className="text-[16px] font-bold text-[#8938E9]">
-              {getCurrencyFormatted(expensesData.totalMonth)}
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View className="flex-col mt-[32] gap-[16]">
-        {expensesData.filteredCategories.map((category, index) => (
-          <View key={index} className="flex-row gap-[16] w-[330] items-center">
+      {/* Summary Cards */}
+      <View className="flex-row justify-center gap-2 mx-1">
+        {["Day", "Week", "Month"].map((label, idx) => {
+          const value = [
+            expensesData.totalDay,
+            expensesData.totalWeek,
+            expensesData.totalMonth,
+          ][idx];
+          return (
             <View
-              className="w-[50] h-[50] rounded-full"
-              style={{ backgroundColor: getCategoryColor(category.name) }}
-            ></View>
-            <View className="justify-center gap-[4]">
-              <Text className="text-[16px] font-medium">{category.name}</Text>
-              <Text className="text-[12px] text-[#392F46] opacity-65">
-                Cash
+              key={label}
+              className="w-26 h-22 p-5 bg-white rounded-2xl shadow-md flex-col justify-center items-center"
+            >
+              <Text className="text-[#392F46] opacity-60 text-base">
+                {label}
+              </Text>
+              <Text className="text-[#8938E9] font-bold text-base">
+                {getCurrencyFormatted(value)}
               </Text>
             </View>
-            <View className="flex-1 flex-col justify-end items-end gap-[4]">
-              <Text className="text-[16px] font-medium">
+          );
+        })}
+      </View>
+
+      {/* Category List */}
+      <View className="flex-col mt-8 gap-4">
+        {expensesData.filteredCategories.map((category, index) => (
+          <View key={index} className="flex-row gap-4 w-[330px] items-center">
+            <View
+              className="w-12 h-12 rounded-full"
+              style={{ backgroundColor: getCategoryColor(category.name) }}
+            />
+            <View className="justify-center gap-1">
+              <Text className="text-base font-medium">{category.name}</Text>
+              <Text className="text-[#392F46] opacity-60 text-xs">Cash</Text>
+            </View>
+            <View className="flex-1 flex-col justify-end items-end gap-1">
+              <Text className="text-base font-medium">
                 {getCurrencyFormatted(category.amount)}
               </Text>
-              <Text className="text-[12px] text-[#392F46] opacity-65">
+              <Text className="text-[#392F46] opacity-60 text-xs">
                 {category.percentage.toFixed(0)}%
               </Text>
             </View>
           </View>
         ))}
       </View>
-      {/* The Modal */}
+
+      {/* Modal
       <Modal
         animationType="slide"
         transparent={true}
         visible={isModalVisible}
-        onRequestClose={() => {
-          setIsModalVisible(!isModalVisible);
-        }}
+        onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>Select Month and Year</Text>
-            <View style={styles.pickerContainer}>
+        <View className="flex-1 justify-center items-center mt-5 bg-black/50">
+          <View className="m-5 bg-white rounded-2xl p-8 items-center shadow-md">
+            <Text className="text-lg font-bold mb-4">
+              Select Month and Year
+            </Text>
+            <View className="flex-row items-center">
               <Picker
                 selectedValue={selectedMonth}
-                onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-                style={styles.picker}
+                onValueChange={(v) => setSelectedMonth(v)}
+                className="w-36"
               >
                 {months.map((m) => (
                   <Picker.Item key={m.value} label={m.label} value={m.value} />
@@ -374,8 +305,8 @@ export default function ExpenseScreen() {
               </Picker>
               <Picker
                 selectedValue={selectedYear}
-                onValueChange={(itemValue) => setSelectedYear(itemValue)}
-                style={styles.picker}
+                onValueChange={(v) => setSelectedYear(v)}
+                className="w-36"
               >
                 {years.map((y) => (
                   <Picker.Item key={y.value} label={y.label} value={y.value} />
@@ -383,65 +314,14 @@ export default function ExpenseScreen() {
               </Picker>
             </View>
             <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setIsModalVisible(!isModalVisible)}
+              onPress={() => setIsModalVisible(false)}
+              className="mt-4 bg-blue-500 px-5 py-2 rounded-xl"
             >
-              <Text style={styles.textStyle}>Done</Text>
+              <Text className="text-white font-bold text-center">Done</Text>
             </Pressable>
           </View>
         </View>
-      </Modal>
+      </Modal> */}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-  },
-  buttonClose: {
-    backgroundColor: "#2196F3",
-  },
-  textStyle: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 18,
-  },
-  pickerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  picker: {
-    width: 150,
-  },
-});

@@ -1,5 +1,6 @@
+import { Picker } from "@react-native-picker/picker";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Modal, Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
 import { SVG_ICONS } from "../../../assets/constants/icons";
 import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent";
@@ -10,6 +11,9 @@ import IncomeContent from "../../screens/income";
 export default function Graphs() {
   // State to hold the currently selected value ('expense' or 'income')
   const [selectedOption, setSelectedOption] = useState("expense");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Options for the SwitchSelector
   const options = [
@@ -17,83 +21,146 @@ export default function Graphs() {
     { label: "Income", value: "income" },
   ];
 
-  const handlePress = () => {
-    console.log("Button pressed!");
-  };
+  // Month & Year helper arrays
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const months = monthNames.map((name, i) => ({ label: name, value: i + 1 }));
 
+  const currentMonthName = months.find((m) => m.value === selectedMonth)?.label;
+
+  const years = [];
+  const currentYear = new Date().getFullYear();
+  for (let i = currentYear; i >= currentYear - 5; i--) {
+    years.push({ label: String(i), value: i });
+  }
+
+  // Render content based on selected switch
   const renderContent = () => {
-    switch (selectedOption) {
-      case "expense":
-        return <ExpenseContent />;
-      case "income":
-        return <IncomeContent />;
-      default:
-        return <ExpenseContent />;
-    }
+    if (selectedOption === "expense")
+      return <ExpenseContent month={selectedMonth} year={selectedYear} />;
+    if (selectedOption === "income")
+      return <IncomeContent month={selectedMonth} year={selectedYear} />;
+    return null;
   };
-
-  const [currentProgress, setCurrentProgress] = useState(0.25); // State to manage progress
-
-  // Example: Parent manages the state, perhaps based on an external event or data
-  const [currentDisplayMode, setCurrentDisplayMode] = useState(0); // 0 for Expense, 1 for Income
 
   return (
-    <View className="items-center flex-1">
+    <View className="flex-1 items-center bg-gray-50">
+      {/* Top Box */}
       <ReusableRoundedBoxComponent style={{ marginHorizontal: 20 }}>
-        <View className="flex-col pt-[8] px-8">
-          <View className="flex-row items-center gap-[4] pb-[16]">
-            <View className="w-[25] h-[25] bg-white"></View>
-            <Text className="font-medium text-white">Budget Tracker</Text>
+        <View className="flex-col pt-2 px-2">
+          {/* Header */}
+          <View className="flex-row items-center gap-2 pb-4">
+            <View className="w-6 h-6 bg-white rounded-full"></View>
+            <Text className="font-medium text-white text-lg">
+              Budget Tracker
+            </Text>
           </View>
 
-          <View className="flex-row items-center justify-center">
+          {/* Title */}
+          <View className="flex-row justify-center items-center">
             <SVG_ICONS.SideMenu
               width={30}
               height={30}
-              style={{ position: "absolute", left: 0 }}
+              className="absolute left-0"
             />
-            <Text className="text-[16px] font-medium text-white">Graphs</Text>
+            <Text className="text-white font-medium text-[16px]">Graphs</Text>
           </View>
 
-          {/* Container for the SwitchSelector and the Date/Month Selector Button */}
-          <View className="flex-row justify-between w-full mt-10 gap-10">
+          {/* Switch + Date Picker */}
+          <View className="flex-row justify-between mt-6 gap-4 w-full">
             <SwitchSelector
               options={options}
-              initial={0} // Index of the initially selected option (0 for Expense)
-              onPress={(value) => setSelectedOption(value)} // Callback when an option is pressed
-              textColor={"#000000"} // Color for the unselected text
-              selectedColor={"#ffffff"} // Color for the selected text
-              buttonColor={"#7a44cf"} // Color for the selected button background
-              hasPadding={true}
+              initial={0}
+              onPress={(value) => setSelectedOption(value)}
+              textColor="#000"
+              selectedColor="#fff"
+              buttonColor="#7a44cf"
+              hasPadding
               borderRadius={30}
-              borderColor={"#ffffff"}
+              borderColor="#fff"
               valuePadding={2}
               height={40}
-              width={168} // This is key!
-              // Removed fixed width here to allow flexbox to manage layout (This comment is misleading if width is present)
-              style={{ flex: 1, marginEnd: 10 }} // Use flex:1 to take available space, add margin to separate from button
-              // --- Styles for medium font weight ---
-              textStyle={{ fontSize: 12, fontWeight: "500" }} // Style for unselected text (medium font weight)
-              selectedTextStyle={{ fontSize: 12, fontWeight: "500" }} // Style for selected text (medium font weight)
+              width={168}
+              style={{ flex: 1, marginEnd: 10 }}
+              textStyle={{ fontSize: 12, fontWeight: "500" }}
+              selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
             />
 
+            {/* Date Picker Button */}
             <TouchableOpacity
-              onPress={handlePress}
-              className="w-[126px] h-[39px] flex-row items-center justify-center bg-white px-5 py-3 rounded-full active:bg-[#F0E4FF] gap-2"
+              onPress={() => setIsModalVisible(true)}
+              className="w-[126px] h-[39px] flex-row items-center justify-center bg-white rounded-full gap-2"
             >
-              {/* Text beside the icon */}
-              <Text className="text-black text-[12px] font-medium">
-                April, 2025
+              <Text className="text-black font-medium text-[12px]">
+                {currentMonthName}, {selectedYear}
               </Text>
-              {/* Use your imported SVG icon component here */}
-              {/* Ensure SVG_ICONS.ButtonArrowDown is correctly defined and imported */}
               <SVG_ICONS.ButtonArrowDown size={15} />
             </TouchableOpacity>
           </View>
         </View>
       </ReusableRoundedBoxComponent>
-      {/* Wrap renderContent in a View with flex: 1 to ensure it takes up remaining space */}
-      <View style={{ flex: 1 }}>{renderContent()}</View>
+
+      {/* Render Graph Content */}
+      <View className="flex-1 w-full">{renderContent()}</View>
+
+      {/* Month/Year Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white rounded-2xl p-8 m-4 w-[90%] shadow-md items-center">
+            <Text className="text-lg font-bold mb-4">
+              Select Month and Year
+            </Text>
+
+            <View className="flex-row items-center gap-2">
+              {/* Month Picker */}
+              <Picker
+                selectedValue={selectedMonth}
+                onValueChange={(value) => setSelectedMonth(value)}
+                style={{ width: 150, height: 150 }} // Important: native style
+              >
+                {months.map((m) => (
+                  <Picker.Item key={m.value} label={m.label} value={m.value} />
+                ))}
+              </Picker>
+
+              {/* Year Picker */}
+              <Picker
+                selectedValue={selectedYear}
+                onValueChange={(value) => setSelectedYear(value)}
+                style={{ width: 150, height: 150 }} // Important: native style
+              >
+                {years.map((y) => (
+                  <Picker.Item key={y.value} label={y.label} value={y.value} />
+                ))}
+              </Picker>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => setIsModalVisible(false)}
+              className="mt-4 bg-blue-500 px-5 py-2 rounded-xl"
+            >
+              <Text className="text-white font-bold text-center">Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
