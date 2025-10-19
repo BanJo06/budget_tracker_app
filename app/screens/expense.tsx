@@ -1,6 +1,6 @@
 import { getDb } from "@/utils/database";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Pressable, ScrollView, Text, View } from "react-native";
+import { Dimensions, ScrollView, Text, View } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -199,11 +199,6 @@ export default function ExpenseContent({ month, year }: ExpenseContentProps) {
       <View className="w-[330px] h-[220px] p-5 mt-4 mb-4 bg-white rounded-2xl shadow-md">
         <View className="flex-row justify-between">
           <Text className="text-black font-medium">Expense</Text>
-          <Pressable onPress={() => setIsModalVisible(true)}>
-            <Text className="text-[#7E8085] font-medium text-xs">
-              {currentMonthName}, {selectedYear}
-            </Text>
-          </Pressable>
         </View>
 
         <View className="flex-row justify-between items-center mt-4">

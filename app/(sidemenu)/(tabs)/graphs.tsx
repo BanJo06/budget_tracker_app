@@ -1,4 +1,6 @@
+import { TabHomeScreenNavigationProp } from "@/types";
 import { Picker } from "@react-native-picker/picker";
+import { useNavigation } from "expo-router";
 import React, { useState } from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
@@ -15,6 +17,7 @@ export default function Graphs() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  const navigation = useNavigation<TabHomeScreenNavigationProp>();
   // Options for the SwitchSelector
   const options = [
     { label: "Expense", value: "expense" },
@@ -59,27 +62,26 @@ export default function Graphs() {
     <View className="flex-1 items-center bg-gray-50">
       {/* Top Box */}
       <ReusableRoundedBoxComponent style={{ marginHorizontal: 20 }}>
-        <View className="flex-col pt-2 px-2">
+        <View className="flex-col px-[32] pt-[8]">
           {/* Header */}
-          <View className="flex-row items-center gap-2 pb-4">
-            <View className="w-6 h-6 bg-white rounded-full"></View>
-            <Text className="font-medium text-white text-lg">
-              Budget Tracker
-            </Text>
+          <View className="flex-row items-center gap-[4] pb-[16]">
+            <View className="w-[25] h-[25] bg-white"></View>
+            <Text className="font-medium text-white">Budget Tracker</Text>
           </View>
 
           {/* Title */}
-          <View className="flex-row justify-center items-center">
-            <SVG_ICONS.SideMenu
-              width={30}
-              height={30}
-              className="absolute left-0"
-            />
-            <Text className="text-white font-medium text-[16px]">Graphs</Text>
+          <View className="flex-row items-center justify-center">
+            <TouchableOpacity
+              className="w-[30px] h-[30px] rounded-full flex-row absolute left-0 active:bg-[#F0E4FF]"
+              onPress={() => navigation.openDrawer()}
+            >
+              <SVG_ICONS.SideMenu width={30} height={30} />
+            </TouchableOpacity>
+            <Text className="text-[16px] font-medium text-white">Graphs</Text>
           </View>
 
           {/* Switch + Date Picker */}
-          <View className="flex-row justify-between mt-6 gap-4 w-full">
+          <View className="flex-row justify-between w-full mt-10 gap-10">
             <SwitchSelector
               options={options}
               initial={0}
