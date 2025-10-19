@@ -77,20 +77,26 @@ export default function Index() {
     setupDatabaseAndLoadAccounts();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const freshAccounts = await getAccounts();
+        setAccounts(freshAccounts);
+        console.log("🔄 Reloaded accounts:", freshAccounts);
+      })();
+    }, [])
+  );
+
   const toggleAccountsModal = () => setAccountsModalVisible((p) => !p);
 
   // Load all transactions (global)
   const loadAllTransactions = async () => {
     try {
-      const all = await getAllPlannedBudgetTransactions();
-      const sorted = all.sort(
-        (a: any, b: any) =>
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
-      console.log("🧾 [DEBUG] All transactions loaded:", sorted);
-      setBudgetTransactions(sorted);
+      const allTx = await getAllPlannedBudgetTransactions(); // get everything
+      setBudgetTransactions(allTx);
+      console.log("🧾 Loaded all transactions from DB:", allTx);
     } catch (err) {
-      console.error("❌ [DEBUG] Error loading all transactions:", err);
+      console.error("❌ Error loading transactions:", err);
     }
   };
 
@@ -211,6 +217,7 @@ export default function Index() {
 
     try {
       const currentDate = new Date().toISOString();
+
       await savePlannedBudgetTransaction(
         selectedBudget.id,
         Number(transactionAmount),
@@ -218,17 +225,45 @@ export default function Index() {
         selectedAccount?.id ?? null
       );
 
+      console.log("✅ Transaction saved for:", selectedBudget.id);
+
+      // 🧩 FIXED — pass selectedBudget.id
+      const verify = await getAllPlannedBudgetTransactions(selectedBudget.id);
+      console.log("🧾 [VERIFY] All transactions in DB after save:", verify);
+
+      // Reset modal state
       setTransactionAmount("");
       setSelectedAccount(null);
       setIsTransactionModalVisible(false);
 
+      // Reload data
       await loadAllTransactions();
       await loadPlannedBudgets();
     } catch (err) {
-      console.error("Error saving transaction:", err);
-      alert("Failed to save transaction.");
+      console.error("❌ Error saving transaction:", err);
     }
   };
+
+  useEffect(() => {
+    if (plannedBudgets.length === 0) return;
+
+    const totalSpent = budgetTransactions.reduce(
+      (sum, t) => sum + Number(t.amount || 0),
+      0
+    );
+    const totalGoal = plannedBudgets.reduce(
+      (sum, b) => sum + Number(b.amount || 0),
+      0
+    );
+
+    const overallProgress = totalGoal > 0 ? totalSpent / totalGoal : 0;
+
+    console.log(
+      `📊 [DEBUG] totalSpent=${totalSpent}, totalGoal=${totalGoal}, progress=${overallProgress}`
+    );
+
+    setCurrentProgress(overallProgress);
+  }, [plannedBudgets, budgetTransactions]);
 
   // ---------- UI ----------
   return (

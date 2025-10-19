@@ -85,9 +85,22 @@ export default function PlannedBudgetModals({
     accounts: Account[];
     onSelectAccount: (acc: Account) => void;
   }) => (
-    <Modal animationType="slide" transparent visible={isVisible}>
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
+    <Modal
+      animationType="slide"
+      transparent
+      visible={isVisible}
+      onRequestClose={onClose} // ✅ enables Android back button
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressOut={onClose} // ✅ tap outside to close (optional UX improvement)
+        className="flex-1 justify-center items-center bg-black/50"
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {}} // prevents modal from closing when inner content pressed
+          className="bg-white p-6 rounded-lg w-11/12"
+        >
           <Text className="text-xl font-bold mb-4">Select Account</Text>
           {accounts.map((account) => {
             const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
@@ -109,8 +122,8 @@ export default function PlannedBudgetModals({
               </TouchableOpacity>
             );
           })}
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 
