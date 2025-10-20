@@ -20,10 +20,6 @@ export default function Quests() {
     { label: "Weekly", value: "weekly" },
   ];
 
-  const handlePress = () => {
-    console.log("Completed quest!");
-  };
-
   const renderContent = () => {
     if (selectedOption === "daily")
       // *** PASS STATE AND SETTER AS PROPS HERE ***
