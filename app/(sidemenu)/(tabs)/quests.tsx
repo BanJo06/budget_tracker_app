@@ -9,7 +9,7 @@ import DailyContent from "../../screens/daily";
 import WeeklyContent from "../../screens/weekly";
 
 export default function Quests() {
-  const [currentProgress, setCurrentProgress] = useState(0.25); // State to manage progress
+  const [currentProgress, setCurrentProgress] = useState();
 
   // State to hold the currently selected value ('daily' or 'weekly')
   const [selectedOption, setSelectedOption] = useState("daily");

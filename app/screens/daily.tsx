@@ -1,8 +1,16 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import ProgressBar from "@/components/ProgressBar";
-import { DailyQuest, DAILY_QUESTS } from "@/data/daily_quests"; // adjust path
-import React, { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { DailyQuest, DAILY_QUESTS } from "@/data/daily_quests";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Dimensions,
+  Platform,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface DailyContentProps {
   currentProgress: number;
@@ -10,7 +18,7 @@ interface DailyContentProps {
 }
 
 interface QuestState extends DailyQuest {
-  readyToComplete: boolean; // shows "Complete" button when quest action is done
+  readyToComplete: boolean;
 }
 
 const DailyContent: React.FC<DailyContentProps> = ({
@@ -21,35 +29,106 @@ const DailyContent: React.FC<DailyContentProps> = ({
     DAILY_QUESTS.map((q) => ({ ...q, readyToComplete: false }))
   );
 
-  // Simulate user action (to test)
+  const [notification, setNotification] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  // --- Handle quest trigger (user performs the quest) ---
   const handleQuestAction = (id: string) => {
+    const triggeredQuest = quests.find((q) => q.id === id);
+    if (!triggeredQuest || triggeredQuest.readyToComplete) return;
+
     setQuests((prev) =>
       prev.map((q) => (q.id === id ? { ...q, readyToComplete: true } : q))
     );
+
+    // ✅ Show toast immediately
+    showNotification(`🎯 Quest Completed: ${triggeredQuest.title}`);
   };
 
+  // --- Mark quest as completed (after pressing Complete) ---
   const handleComplete = (id: string) => {
-    setQuests((prevQuests) =>
-      prevQuests.map((quest) =>
-        quest.id === id
-          ? { ...quest, completed: true, readyToComplete: false }
-          : quest
+    const completedQuest = quests.find((q) => q.id === id);
+    if (!completedQuest) return;
+
+    setQuests((prev) =>
+      prev.map((q) =>
+        q.id === id ? { ...q, completed: true, readyToComplete: false } : q
       )
     );
   };
 
-  // 🔹 Recalculate progress whenever quests change
+  // --- Toast animation logic ---
+  const showNotification = (message: string) => {
+    setNotification(message);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: -100,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start(() => setNotification(null));
+      }, 2000);
+    });
+  };
+
+  // --- Update progress based on completed quests ---
   useEffect(() => {
     const completedCount = quests.filter((q) => q.completed).length;
     const total = quests.length;
-    const newProgress = completedCount / total;
-    setCurrentProgress(newProgress); // automatically updates ProgressBar
+    setCurrentProgress(completedCount / total);
   }, [quests]);
+
+  const statusBarHeight =
+    Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 44;
+  const screenWidth = Dimensions.get("window").width;
 
   return (
     <View className="flex-1 w-full">
+      {/* --- Toast Notification (absolute to screen top) --- */}
+      {notification && (
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+            position: "absolute",
+            top: statusBarHeight + 10,
+            left: 0,
+            width: screenWidth,
+            alignItems: "center",
+            zIndex: 1000,
+            elevation: 10,
+          }}
+        >
+          <View className="bg-[#8938E9] px-6 py-3 rounded-[12] shadow-lg">
+            <Text className="text-white text-[14px] font-semibold">
+              {notification}
+            </Text>
+          </View>
+        </Animated.View>
+      )}
+
       {/* --- Progress Bar Section --- */}
-      <View className="flex-col items-end px-[32] gap-[6] pt-[16] pb-[32]">
+      <View className="flex-col items-end px-[32] gap-[6] pt-[16] pb-[32] mt-[20]">
         <View className="pr-6 mb-2">
           <SVG_ICONS.DailyReward width={50} height={66} />
         </View>
@@ -81,7 +160,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
             </Text>
 
             <View className="items-end flex-1 justify-end">
-              {/* Show Complete button only if quest is ready */}
+              {/* Show Complete button only if quest ready */}
               {quest.readyToComplete && !quest.completed && (
                 <TouchableOpacity
                   onPress={() => handleComplete(quest.id)}
@@ -99,7 +178,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
               )}
             </View>
 
-            {/* TEMP test trigger: simulate user doing quest */}
+            {/* TEMP simulate quest trigger (testing only) */}
             {!quest.readyToComplete && !quest.completed && (
               <TouchableOpacity
                 onPress={() => handleQuestAction(quest.id)}
