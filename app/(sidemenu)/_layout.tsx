@@ -1,3 +1,4 @@
+import { ToastProvider } from "@/components/ToastContext";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
@@ -85,94 +86,96 @@ const CustomDrawerContent = (props) => {
 // This is the main layout for your (sidemenu) folder, defining the Drawer Navigator
 export default function Layout() {
   return (
-    <Drawer
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
-      initialRouteName="(tabs)"
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      {/* This drawer.screen (tabs) will deleted automatically if there's a error in tabs */}
-      <Drawer.Screen
-        name="(tabs)" // This points to app/(sidemenu)/(tabs)/_layout.jsx
-        options={{
-          drawerLabel: "Main Dashboard",
-          title: "App Dashboard",
+    <ToastProvider>
+      <Drawer
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
+        initialRouteName="(tabs)"
+        screenOptions={{
           headerShown: false,
         }}
-      />
-      <Drawer.Screen
-        name="settings"
-        options={({ navigation }) => ({
-          drawerLabel: "Settings",
-          title: "Settings",
-          headerShown: true, // Show header for this screen
-          // Conditionally render the back button
-          headerLeft: () => (
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ paddingHorizontal: 15 }}
-            >
-              <Text style={{ fontSize: 24 }}>⬅️</Text>
-            </Pressable>
-          ),
-        })}
-      />
-      <Drawer.Screen
-        name="categories"
-        options={({ navigation }) => ({
-          drawerLabel: "Categories",
-          title: "Categories",
-          headerShown: true, // Show header for this screen
-          // Conditionally render the back button
-          headerLeft: () => (
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ paddingHorizontal: 15 }}
-            >
-              <Text style={{ fontSize: 24 }}>⬅️</Text>
-            </Pressable>
-          ),
-        })}
-      />
-      <Drawer.Screen
-        name="exportrecords"
-        options={({ navigation }) => ({
-          drawerLabel: "Export Records",
-          title: "Export Records",
-          headerShown: true, // Show header for this screen
-          // Conditionally render the back button
-          headerLeft: () => (
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ paddingHorizontal: 15 }}
-            >
-              <Text style={{ fontSize: 24 }}>⬅️</Text>
-            </Pressable>
-          ),
-        })}
-      />
+      >
+        {/* This drawer.screen (tabs) will deleted automatically if there's a error in tabs */}
+        <Drawer.Screen
+          name="(tabs)" // This points to app/(sidemenu)/(tabs)/_layout.jsx
+          options={{
+            drawerLabel: "Main Dashboard",
+            title: "App Dashboard",
+            headerShown: false,
+          }}
+        />
+        <Drawer.Screen
+          name="settings"
+          options={({ navigation }) => ({
+            drawerLabel: "Settings",
+            title: "Settings",
+            headerShown: true, // Show header for this screen
+            // Conditionally render the back button
+            headerLeft: () => (
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={{ paddingHorizontal: 15 }}
+              >
+                <Text style={{ fontSize: 24 }}>⬅️</Text>
+              </Pressable>
+            ),
+          })}
+        />
+        <Drawer.Screen
+          name="categories"
+          options={({ navigation }) => ({
+            drawerLabel: "Categories",
+            title: "Categories",
+            headerShown: true, // Show header for this screen
+            // Conditionally render the back button
+            headerLeft: () => (
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={{ paddingHorizontal: 15 }}
+              >
+                <Text style={{ fontSize: 24 }}>⬅️</Text>
+              </Pressable>
+            ),
+          })}
+        />
+        <Drawer.Screen
+          name="exportrecords"
+          options={({ navigation }) => ({
+            drawerLabel: "Export Records",
+            title: "Export Records",
+            headerShown: true, // Show header for this screen
+            // Conditionally render the back button
+            headerLeft: () => (
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={{ paddingHorizontal: 15 }}
+              >
+                <Text style={{ fontSize: 24 }}>⬅️</Text>
+              </Pressable>
+            ),
+          })}
+        />
 
-      <Drawer.Screen
-        name="addlaterecords"
-        options={({ navigation }) => ({
-          drawerLabel: "Add Late Records",
-          title: "Add Late Records",
-          headerShown: true, // Show header for this screen
-          // Conditionally render the back button
-          headerLeft: () => (
-            <Pressable
-              onPress={() => navigation.goBack()}
-              style={{ paddingHorizontal: 15 }}
-            >
-              <Text style={{ fontSize: 24 }}>⬅️</Text>
-            </Pressable>
-          ),
-        })}
-      />
+        <Drawer.Screen
+          name="addlaterecords"
+          options={({ navigation }) => ({
+            drawerLabel: "Add Late Records",
+            title: "Add Late Records",
+            headerShown: true, // Show header for this screen
+            // Conditionally render the back button
+            headerLeft: () => (
+              <Pressable
+                onPress={() => navigation.goBack()}
+                style={{ paddingHorizontal: 15 }}
+              >
+                <Text style={{ fontSize: 24 }}>⬅️</Text>
+              </Pressable>
+            ),
+          })}
+        />
 
-      {/* Add any other screens you want to be part of your drawer navigator */}
-    </Drawer>
+        {/* Add any other screens you want to be part of your drawer navigator */}
+      </Drawer>
+    </ToastProvider>
   );
 }
 

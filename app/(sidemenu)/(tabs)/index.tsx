@@ -1,3 +1,5 @@
+import { useToast } from "@/components/ToastContext";
+import { checkDailyQuests } from "@/data/daily_quests_logic";
 import type {
   Account,
   PlannedBudget,
@@ -10,6 +12,7 @@ import {
   initDatabase,
   savePlannedBudgetTransaction,
 } from "@/utils/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -33,6 +36,7 @@ import type { TabHomeScreenNavigationProp } from "../../../types";
 export default function Index() {
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [plannedBudgets, setPlannedBudgets] = useState<PlannedBudget[]>([]);
   const [budgetTransactions, setBudgetTransactions] = useState<
@@ -57,6 +61,10 @@ export default function Index() {
 
   const [transactionAmount, setTransactionAmount] = useState("");
 
+  const [readyQuests, setReadyQuests] = useState<string[]>([]);
+  const [useAppCompleted, setUseAppCompleted] = useState(false);
+  const [useAppProgress, setUseAppProgress] = useState(0);
+
   // 🧩 Initialize DB + load accounts
   useEffect(() => {
     async function setupDatabaseAndLoadAccounts() {
@@ -76,6 +84,74 @@ export default function Index() {
     }
     setupDatabaseAndLoadAccounts();
   }, []);
+
+  //Troubleshoot for DailyQuests
+  // Reset code
+  // useEffect(() => {
+  //   const debugReset = async () => {
+  //     await AsyncStorage.multiRemove([
+  //       "@hasUsedApp",
+  //       "useAppQuestDate",
+  //       "useAppQuestTriggered",
+  //     ]);
+  //     console.log("🧹 Cleared AsyncStorage for testing first login");
+  //   };
+
+  //   debugReset();
+  // }, []);
+
+  // 🧩 Handle Use App Quest
+  useEffect(() => {
+    async function handleDailyQuestCheck() {
+      const { readyIds } = await checkDailyQuests();
+
+      if (readyIds.includes("1")) {
+        console.log("🎉 Quest Completed: Use App");
+        showToast("🎉 Quest Completed: Use App");
+        setUseAppCompleted(true);
+        setUseAppProgress(1); // 100%
+      } else {
+        const hasUsedApp = await AsyncStorage.getItem("@hasUsedApp");
+        const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
+        const today = new Date().toDateString();
+
+        // If already done today → show as complete
+        if (hasUsedApp === "true" && lastUseApp === today) {
+          setUseAppCompleted(true);
+          setUseAppProgress(1);
+        } else {
+          setUseAppCompleted(false);
+          setUseAppProgress(0);
+        }
+      }
+    }
+
+    handleDailyQuestCheck();
+  }, []);
+
+  // Automatic Reset when midnight (12:00am)
+  useEffect(() => {
+    const resetQuestIfNewDay = async () => {
+      const today = new Date().toDateString();
+      const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
+      if (lastUseApp !== today) {
+        await AsyncStorage.multiRemove(["@hasUsedApp", "useAppQuestDate"]);
+        setUseAppCompleted(false);
+        setUseAppProgress(0);
+        console.log("🔄 New day detected — quest reset");
+      }
+    };
+    resetQuestIfNewDay();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        const freshAccounts = await getAccounts();
+        setAccounts(freshAccounts);
+      })();
+    }, [])
+  );
 
   useFocusEffect(
     useCallback(() => {
