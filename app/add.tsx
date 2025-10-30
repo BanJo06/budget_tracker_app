@@ -15,6 +15,8 @@ import { SVG_ICONS } from "@/assets/constants/icons";
 import CategoryModal from "@/components/CategoryModal";
 import CategorySelection from "@/components/CategorySelection";
 
+import { useToast } from "@/components/ToastContext";
+import { markTransactionQuestCompleted } from "@/data/daily_quests_logic";
 import {
   addAccount,
   getAccounts,
@@ -346,6 +348,8 @@ const CalculatorGrid = ({
 // ==============================
 
 export default function Add() {
+  const { showToast } = useToast();
+
   const [firstValue, setFirstValue] = useState("");
   const [displayValue, setDisplayValue] = useState("0");
   const [operator, setOperator] = useState("");
@@ -574,6 +578,22 @@ export default function Add() {
         );
 
         console.log("Transaction saved successfully!");
+
+        // ✅ Complete the "Add 1 transaction" quest
+        //         const newReadyIds = await completeAddTransactionQuest(); // your logic to mark quest "2" complete
+        // if (newReadyIds.includes("2")) {
+        //   console.log("🎉 'Add 1 transaction' quest completed!");
+
+        //   // ✅ Notify Quests to update progress
+        //   onTransactionCompleted?.("2");
+        // }
+
+        // ✅ Mark the quest
+        const newlyCompleted = await markTransactionQuestCompleted();
+        if (newlyCompleted) {
+          showToast("🎉 Quest Completed: Add 1 transaction");
+        }
+
         router.replace("/(sidemenu)/(tabs)");
       } catch (error: any) {
         console.error("Failed to save transaction:", error?.message || error);

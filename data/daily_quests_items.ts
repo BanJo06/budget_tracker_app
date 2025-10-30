@@ -14,7 +14,7 @@ export const DAILY_QUESTS: DailyQuest[] = [
   },
   {
     id: "2",
-    title: "Add 1 task",
+    title: "Add 1 transaction",
     completed: false,
     color: "#FFFFFF",
   },

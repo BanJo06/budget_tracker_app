@@ -15,19 +15,34 @@ export default function Quests() {
   const [readyQuests, setReadyQuests] = useState<string[]>([]);
   const { showToast } = useToast(); // ✅ Global toast
 
+  // Track which quests are completed in this session
+  const [completedQuestIds, setCompletedQuestIds] = useState<string[]>([]);
+
   useEffect(() => {
     (async () => {
       const { readyIds } = await checkDailyQuests();
       setReadyQuests(readyIds);
 
-      const totalQuests = 3; // adjust this if needed
+      const totalQuests = 3;
       setCurrentProgress(readyIds.length / totalQuests);
 
-      if (readyIds.includes("1")) {
-        showToast("🎉 Quest Completed: Use App");
-      }
+      if (readyIds.includes("1")) showToast("🎉 Quest Completed: Use App");
+      if (readyIds.includes("2"))
+        showToast("🎉 Quest Completed: Add 1 transaction");
     })();
   }, []);
+
+  // ✅ Called when "Add 1 transaction" is completed
+  const handleTransactionQuestCompleted = async (questId: string) => {
+    // refresh quests after transaction
+    const { readyIds } = await checkDailyQuests();
+    setReadyQuests(readyIds);
+    setCurrentProgress(readyIds.length / 3);
+
+    if (readyIds.includes(questId)) {
+      showToast("🎉 Quest Completed: Add 1 transaction");
+    }
+  };
 
   const renderContent = () => {
     if (selectedOption === "daily") {
@@ -37,6 +52,7 @@ export default function Quests() {
           setCurrentProgress={setCurrentProgress}
           showToast={showToast}
           readyIds={readyQuests}
+          onTransactionQuestCompleted={handleTransactionQuestCompleted}
         />
       );
     }

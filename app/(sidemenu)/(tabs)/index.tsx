@@ -100,6 +100,20 @@ export default function Index() {
   //   debugReset();
   // }, []);
 
+  // useEffect(() => {
+  //   const debugResetTransactionQuest = async () => {
+  //     await AsyncStorage.multiRemove([
+  //       "@addTransactionCompleted",
+  //       "@addTransactionResetDate",
+  //     ]);
+  //     console.log(
+  //       "🧹 'Add 1 transaction' quest has been reset for troubleshooting."
+  //     );
+  //   };
+
+  //   debugResetTransactionQuest();
+  // }, []);
+
   // 🧩 Handle Use App Quest
   useEffect(() => {
     async function handleDailyQuestCheck() {

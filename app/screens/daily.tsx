@@ -21,6 +21,7 @@ interface DailyContentProps {
   setCurrentProgress: React.Dispatch<React.SetStateAction<number>>;
   showToast: (message: string) => void;
   readyIds: string[];
+  onTransactionQuestCompleted?: (questId: string) => void;
 }
 
 const DailyContent: React.FC<DailyContentProps> = ({
@@ -28,6 +29,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
   setCurrentProgress,
   showToast,
   readyIds,
+  onTransactionQuestCompleted,
 }) => {
   const [quests, setQuests] = useState<QuestState[]>([]);
 
@@ -99,8 +101,11 @@ const DailyContent: React.FC<DailyContentProps> = ({
         q.id === id ? { ...q, completed: true, readyToComplete: false } : q
       )
     );
+
     const quest = DAILY_QUESTS.find((q) => q.id === id);
     if (quest) showToast(`🎉 Quest Completed: ${quest.title}`);
+
+    if (id === "2") onTransactionQuestCompleted?.(id); // notify parent
   };
 
   const screenWidth = Dimensions.get("window").width;
