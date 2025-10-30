@@ -1,6 +1,10 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { useToast } from "@/components/ToastContext";
-import { checkDailyQuests } from "@/data/daily_quests_logic";
+import {
+  checkDailyQuests,
+  isTransactionQuestCompletedToday,
+} from "@/data/daily_quests_logic";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -13,34 +17,45 @@ export default function Quests() {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [selectedOption, setSelectedOption] = useState("daily");
   const [readyQuests, setReadyQuests] = useState<string[]>([]);
-  const { showToast } = useToast(); // ✅ Global toast
+  const { showToast } = useToast();
 
-  // Track which quests are completed in this session
-  const [completedQuestIds, setCompletedQuestIds] = useState<string[]>([]);
-
+  // 🔥 delay to ensure toast is visible (ToastProvider mounted)
   useEffect(() => {
-    (async () => {
-      const { readyIds } = await checkDailyQuests();
-      setReadyQuests(readyIds);
-
-      const totalQuests = 3;
-      setCurrentProgress(readyIds.length / totalQuests);
-
-      if (readyIds.includes("1")) showToast("🎉 Quest Completed: Use App");
-      if (readyIds.includes("2"))
-        showToast("🎉 Quest Completed: Add 1 transaction");
-    })();
+    const timer = setTimeout(() => {
+      initializeQuests();
+    }, 400);
+    return () => clearTimeout(timer);
   }, []);
 
-  // ✅ Called when "Add 1 transaction" is completed
-  const handleTransactionQuestCompleted = async (questId: string) => {
-    // refresh quests after transaction
+  const initializeQuests = async () => {
+    console.log("🎯 Running quest check...");
     const { readyIds } = await checkDailyQuests();
     setReadyQuests(readyIds);
-    setCurrentProgress(readyIds.length / 3);
 
-    if (readyIds.includes(questId)) {
+    const totalQuests = 3;
+    setCurrentProgress(readyIds.length / totalQuests);
+
+    const today = new Date().toDateString();
+
+    // ✅ Use App Quest
+    if (readyIds.includes("1")) {
+      const toastKey = "@useAppQuestToastDate";
+      const lastToastDate = await AsyncStorage.getItem(toastKey);
+      if (lastToastDate !== today) {
+        showToast("🎉 Quest Completed: Use App");
+        await AsyncStorage.setItem(toastKey, today);
+      }
+    }
+
+    // ✅ Add 1 Transaction Quest
+    const transactionCompleted = await isTransactionQuestCompletedToday();
+    const toastKey = "@transactionQuestToastDate";
+    const lastToastDate = await AsyncStorage.getItem(toastKey);
+
+    if (transactionCompleted && lastToastDate !== today) {
+      console.log("🔥 Showing toast for 'Add 1 transaction'");
       showToast("🎉 Quest Completed: Add 1 transaction");
+      await AsyncStorage.setItem(toastKey, today);
     }
   };
 
@@ -50,9 +65,8 @@ export default function Quests() {
         <DailyContent
           currentProgress={currentProgress}
           setCurrentProgress={setCurrentProgress}
-          showToast={showToast}
           readyIds={readyQuests}
-          onTransactionQuestCompleted={handleTransactionQuestCompleted}
+          showToast={showToast}
         />
       );
     }

@@ -1,9 +1,11 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import ProgressBar from "@/components/ProgressBar";
 import { DailyQuest, DAILY_QUESTS } from "@/data/daily_quests_items";
+import { resetAddTransactionQuest } from "@/data/daily_quests_logic";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Platform,
   StatusBar,
@@ -21,7 +23,6 @@ interface DailyContentProps {
   setCurrentProgress: React.Dispatch<React.SetStateAction<number>>;
   showToast: (message: string) => void;
   readyIds: string[];
-  onTransactionQuestCompleted?: (questId: string) => void;
 }
 
 const DailyContent: React.FC<DailyContentProps> = ({
@@ -29,88 +30,78 @@ const DailyContent: React.FC<DailyContentProps> = ({
   setCurrentProgress,
   showToast,
   readyIds,
-  onTransactionQuestCompleted,
 }) => {
   const [quests, setQuests] = useState<QuestState[]>([]);
-
-  // ✅ Initialize quests when component mounts
-  useEffect(() => {
-    const initialized = DAILY_QUESTS.map((q) => ({
-      ...q,
-      completed: false,
-      readyToComplete: false,
-    }));
-    setQuests(initialized);
-  }, []);
-
-  // ✅ Update quests based on readyIds
-  // Update quests based on readyIds
-  useEffect(() => {
-    if (!readyIds || readyIds.length === 0) return;
-
-    console.log("🎯 [DailyContent] Applying readyIds =", readyIds);
-
-    setQuests((prev) =>
-      prev.map((q) =>
-        readyIds.includes(q.id)
-          ? { ...q, completed: true, readyToComplete: false }
-          : q
-      )
-    );
-  }, [readyIds]);
+  const [isLoaded, setIsLoaded] = useState(false); // ✅ prevents 0% flash
 
   useEffect(() => {
-    const loadQuestState = async () => {
-      const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
-      const today = new Date().toDateString();
+    const initQuests = async () => {
+      try {
+        const today = new Date().toDateString();
+        const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
 
-      setQuests((prev) =>
-        prev.map((q) => {
-          if (q.id === "1" && lastUseApp === today) {
-            return { ...q, completed: true };
-          }
-          return q;
-        })
-      );
+        const initialized = DAILY_QUESTS.map((q) => {
+          const completedFromReadyIds = readyIds.includes(q.id);
+          const completedFromStorage =
+            q.id === "1" && lastUseApp === today ? true : false;
+
+          return {
+            ...q,
+            completed: completedFromReadyIds || completedFromStorage,
+            readyToComplete: false,
+          };
+        });
+
+        setQuests(initialized);
+
+        // Calculate progress once after initialization
+        const completedCount = initialized.filter((q) => q.completed).length;
+        const progress =
+          DAILY_QUESTS.length > 0 ? completedCount / DAILY_QUESTS.length : 0;
+        setCurrentProgress(progress);
+
+        // ✅ Delay render until everything is ready
+        setTimeout(() => setIsLoaded(true), 50);
+      } catch (error) {
+        console.error("Error initializing quests:", error);
+        setIsLoaded(true);
+      }
     };
 
-    loadQuestState();
-  }, []);
+    initQuests();
+  }, [readyIds]);
 
+  // ✅ Keep progress synced with quest updates
   useEffect(() => {
-    console.log("🎯 [DailyContent] Checking quests completion status:");
-    quests.forEach((q) => {
-      console.log(
-        `- Quest "${q.title}" (id=${q.id}): completed = ${q.completed}`
-      );
-    });
-  }, [quests]);
-
-  // ✅ Update progress bar dynamically
-  useEffect(() => {
+    if (!isLoaded) return; // skip until ready
     const completedCount = quests.filter((q) => q.completed).length;
     const total = quests.length;
     const progress = total > 0 ? completedCount / total : 0;
     setCurrentProgress(progress);
-  }, [quests]);
+  }, [quests, isLoaded]);
 
-  // ✅ Handle manual completion
   const handleComplete = (id: string) => {
     setQuests((prev) =>
       prev.map((q) =>
         q.id === id ? { ...q, completed: true, readyToComplete: false } : q
       )
     );
-
     const quest = DAILY_QUESTS.find((q) => q.id === id);
     if (quest) showToast(`🎉 Quest Completed: ${quest.title}`);
-
-    if (id === "2") onTransactionQuestCompleted?.(id); // notify parent
   };
 
   const screenWidth = Dimensions.get("window").width;
   const statusBarHeight =
     Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 44;
+
+  if (!isLoaded) {
+    // ✅ Optional loader — avoids flicker entirely
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size="large" color="#8938E9" />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 w-full">
@@ -163,6 +154,16 @@ const DailyContent: React.FC<DailyContentProps> = ({
           </View>
         ))}
       </View>
+
+      {/* Reset Button */}
+      <TouchableOpacity
+        onPress={resetAddTransactionQuest}
+        className="mt-4 px-4"
+      >
+        <Text className="text-center text-[#8938E9] font-medium">
+          Reset Daily Quests
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };

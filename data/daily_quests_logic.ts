@@ -17,12 +17,9 @@ export const checkDailyQuests = async (): Promise<CheckResult> => {
     const hasUsedApp = await AsyncStorage.getItem("@hasUsedApp");
     const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
 
-    const addTransactionDone = await AsyncStorage.getItem(
-      "@addTransactionCompleted"
-    );
-    const lastTransactionReset = await AsyncStorage.getItem(
-      "@addTransactionResetDate"
-    );
+    // 🔹 Use the SAME consistent key for quest #2
+    const addTransactionKey = "@quest_2_" + today;
+    const addTransactionDone = await AsyncStorage.getItem(addTransactionKey);
 
     const readyIds: string[] = [];
 
@@ -42,13 +39,6 @@ export const checkDailyQuests = async (): Promise<CheckResult> => {
       console.log("✅ 'Use App' already completed today");
     }
 
-    // ✅ Reset "Add 1 transaction" quest at midnight
-    if (lastTransactionReset !== today) {
-      await AsyncStorage.removeItem("@addTransactionCompleted");
-      await AsyncStorage.setItem("@addTransactionResetDate", today);
-      console.log("✨ 'Add 1 transaction' quest reset for today");
-    }
-
     // ✅ Check if "Add 1 transaction" quest is done
     if (addTransactionDone === "true") {
       readyIds.push("2");
@@ -61,23 +51,33 @@ export const checkDailyQuests = async (): Promise<CheckResult> => {
   }
 };
 
-// use a consistent key
-const ADD_TRANSACTION_KEY = "@addTransactionCompleted";
+// 🔹 Consistent key prefix for quest #2
+const ADD_TRANSACTION_KEY = "@quest_2_";
 
-// mark "Add 1 transaction" as completed
-export const completeAddTransactionQuest = async () => {
+// ✅ Use this ONLY when a user adds a transaction
+export const markTransactionQuestCompleted = async (): Promise<boolean> => {
   const today = new Date().toDateString();
-  await AsyncStorage.setItem(ADD_TRANSACTION_KEY, "true");
-  await AsyncStorage.setItem("@addTransactionResetDate", today);
-  console.log("🎉 'Add 1 transaction' quest completed!");
-};
-
-// check if completed
-export const markTransactionQuestCompleted = async () => {
-  const today = new Date().toDateString();
-  const completed = await AsyncStorage.getItem(ADD_TRANSACTION_KEY);
+  const key = ADD_TRANSACTION_KEY + today;
+  const completed = await AsyncStorage.getItem(key);
 
   if (completed === "true") return false; // already done
-  await completeAddTransactionQuest();
-  return true; // newly completed
+  await AsyncStorage.setItem(key, "true");
+  console.log(`🎉 'Add 1 transaction' quest completed for ${today}!`);
+  return true;
+};
+
+// ✅ Use this when checking (e.g., on app start)
+export const isTransactionQuestCompletedToday = async (): Promise<boolean> => {
+  const today = new Date().toDateString();
+  const key = ADD_TRANSACTION_KEY + today;
+  const completed = await AsyncStorage.getItem(key);
+  return completed === "true";
+};
+
+// ✅ Reset helper for testing
+export const resetAddTransactionQuest = async (): Promise<void> => {
+  const today = new Date().toDateString();
+  const key = ADD_TRANSACTION_KEY + today;
+  await AsyncStorage.removeItem(key);
+  console.log("🔄 Reset quest: 'Add 1 transaction' for today!");
 };

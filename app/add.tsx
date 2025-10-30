@@ -1,3 +1,7 @@
+import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
+import { SVG_ICONS } from "@/assets/constants/icons";
+import CategoryModal from "@/components/CategoryModal";
+import CategorySelection from "@/components/CategorySelection";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -9,11 +13,6 @@ import {
   View,
 } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
-
-import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
-import { SVG_ICONS } from "@/assets/constants/icons";
-import CategoryModal from "@/components/CategoryModal";
-import CategorySelection from "@/components/CategorySelection";
 
 import { useToast } from "@/components/ToastContext";
 import { markTransactionQuestCompleted } from "@/data/daily_quests_logic";
@@ -579,18 +578,21 @@ export default function Add() {
 
         console.log("Transaction saved successfully!");
 
-        // ✅ Complete the "Add 1 transaction" quest
-        //         const newReadyIds = await completeAddTransactionQuest(); // your logic to mark quest "2" complete
-        // if (newReadyIds.includes("2")) {
-        //   console.log("🎉 'Add 1 transaction' quest completed!");
+        // After saving transaction
+        // const newlyCompleted = await markTransactionQuestCompleted();
+        // console.log("🧭 Quest status (Add 1 transaction):", newlyCompleted);
 
-        //   // ✅ Notify Quests to update progress
-        //   onTransactionCompleted?.("2");
+        // if (newlyCompleted) {
+        //   console.log(
+        //     "🔥 Toast context is active:",
+        //     typeof showToast === "function"
+        //   );
         // }
 
-        // ✅ Mark the quest
-        const newlyCompleted = await markTransactionQuestCompleted();
-        if (newlyCompleted) {
+        const completed = await markTransactionQuestCompleted();
+        console.log("🧭 Quest status (Add 1 transaction):", completed);
+
+        if (completed) {
           showToast("🎉 Quest Completed: Add 1 transaction");
         }
 
