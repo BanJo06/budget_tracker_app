@@ -1,7 +1,11 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import ProgressBar from "@/components/ProgressBar";
 import { DailyQuest, DAILY_QUESTS } from "@/data/daily_quests_items";
-import { resetAddTransactionQuest } from "@/data/daily_quests_logic";
+import {
+  resetAddTransactionQuest,
+  resetUseApp5MinQuest,
+} from "@/data/daily_quests_logic";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
@@ -161,7 +165,12 @@ const DailyContent: React.FC<DailyContentProps> = ({
         className="mt-4 px-4"
       >
         <Text className="text-center text-[#8938E9] font-medium">
-          Reset Daily Quests
+          Reset Add 1 transaction
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={resetUseApp5MinQuest} className="mt-4 px-4">
+        <Text className="text-center text-[#8938E9] font-medium">
+          Reset Use the app for 5 minutes
         </Text>
       </TouchableOpacity>
     </View>

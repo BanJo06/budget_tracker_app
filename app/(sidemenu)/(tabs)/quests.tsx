@@ -1,6 +1,7 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { useToast } from "@/components/ToastContext";
 import {
+  checkAppUsageDuration,
   checkDailyQuests,
   isTransactionQuestCompletedToday,
 } from "@/data/daily_quests_logic";
@@ -56,6 +57,17 @@ export default function Quests() {
       console.log("🔥 Showing toast for 'Add 1 transaction'");
       showToast("🎉 Quest Completed: Add 1 transaction");
       await AsyncStorage.setItem(toastKey, today);
+    }
+
+    // ✅ Use App for 5 mins
+    const fiveMinKey = "@fiveMinQuestToastDate";
+    const fiveMinCompleted = await checkAppUsageDuration();
+    const lastToastDate3 = await AsyncStorage.getItem(fiveMinKey);
+
+    if (fiveMinCompleted && lastToastDate3 !== today) {
+      console.log("🔥 Showing toast for 'Use app for 5 minutes'");
+      showToast("🎉 Quest Completed: Use the app for 5 minutes");
+      await AsyncStorage.setItem(fiveMinKey, today);
     }
   };
 
