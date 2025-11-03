@@ -1,3 +1,4 @@
+import DonutChart from "@/components/DonutChart";
 import { useToast } from "@/components/ToastContext";
 import { checkDailyQuests } from "@/data/daily_quests_logic";
 import type {
@@ -26,10 +27,21 @@ import {
 import { SVG_ICONS } from "../../../assets/constants/icons";
 import PlannedBudgetModals from "../../../components/PlannedBudgetModals";
 import ProgressBar from "../../../components/ProgressBar";
-import ProgressRing from "../../../components/ProgressRing";
 import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent";
 import type { TabHomeScreenNavigationProp } from "../../../types";
 
+// const typeColors = {
+//   Spent: "#ff6667",
+//   Earned: "#42d7b5",
+//   Borrowed: "f8b591",
+//   Lend: "#1869ff"
+// }
+
+// const typeSpending = [
+//   {total: 20},
+//   {total: 30},
+//   {total: 50}
+// ]
 // =========================================================
 // 🟣 Main Screen (logic fixes applied)
 // =========================================================
@@ -48,6 +60,7 @@ export default function Index() {
 
   // FIX: Added currentProgress state as a placeholder
   const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentPieProgress, setCurrentPieProgress] = useState(0.2);
 
   const [selectedBudget, setSelectedBudget] = useState<PlannedBudget | null>(
     null
@@ -65,6 +78,28 @@ export default function Index() {
   const [useAppCompleted, setUseAppCompleted] = useState(false);
   const [useAppProgress, setUseAppProgress] = useState(0);
 
+  //Pie Graph
+  // const colorScheme = useColorScheme();
+  // const textColor = colorScheme === "dark" ? "#fff" : "#000";
+  // const percentBgColor = colorScheme === "dark" ? "#000000" : "#0ffff70"
+  // const screenWidth = Dimensions.get("screen").width;
+  // const size = screenWidth - 100;
+  // const strokeWidth = 35;
+  // const center = size / 2;
+  // const radius = (size - strokeWidth*2) / 2;
+  // const circumference = 2 * Math.PI * radius;
+
+  // const totalAmount = useMemo( () => typeSpending.reduce((sum, item) => sum + item.total, 0), [typeSpending]);
+
+  // const startingAngles = useMemo(() => {
+  //   let angle = -90;
+  //   return typeSpending.map((item) =>{
+  //     const currentAngle = angle;
+  //     const percentage = totalAmount ? (item.total / totalAmount) * 360 : 0
+  //   angle += percentage;
+  //   return currentAngle
+  //   });
+  // }, [typeSpending, totalAmount])
   // 🧩 Initialize DB + load accounts
   useEffect(() => {
     async function setupDatabaseAndLoadAccounts() {
@@ -400,16 +435,19 @@ export default function Index() {
 
         <View className="flex-row justify-between">
           {/* FIX: Use the 'currentProgress' state variable */}
-          <ProgressRing
-            progress={currentProgress}
-            radius={70}
-            strokeWidth={15}
-            progressColor="#8938E9"
-            backgroundColor="#EDE1FB"
-            duration={500}
-            showPercentage={true}
-          />
-
+          <View className="w-[140] h-[140] flex-col justify-center items-center">
+            {/* <ProgressRing
+              progress={currentProgress}
+              radius={70}
+              strokeWidth={15}
+              progressColor="#8938E9"
+              backgroundColor="#EDE1FB"
+              duration={500}
+              showPercentage={true}
+              textColor="#8938E9"
+            /> */}
+            <DonutChart />
+          </View>
           <View className="flex-col items-end justify-end pr-[10] pb-[6]">
             <View className="flex-row mb-[4] px-[8] py-[4] gap-[4] bg-[#EDE1FB] rounded-[16]">
               <SVG_ICONS.Insight width={16} height={16} />

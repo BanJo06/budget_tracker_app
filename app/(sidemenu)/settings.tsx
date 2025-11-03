@@ -1,7 +1,10 @@
-import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 
 export default function Settings() {
+  const [isRemindEverydayEnabled, setIsRemindEverydayEnabled] = useState(false);
+  const toggleRemindEveryday = () =>
+    setIsRemindEverydayEnabled((previousState) => !previousState);
   return (
     <View className="flex-1">
       <View className="pt-[28]">
@@ -61,21 +64,40 @@ export default function Settings() {
           </View>
 
           <View className="flex-col gap-4">
+            {/* 1. SWITCHABLE SETTING: Remind everyday */}
             <TouchableOpacity
               className="w-full active:bg-gray-400 py-[8]"
-              onPress={() => console.log("UI Mode pressed")}
+              // The onPress toggles the switch state
+              onPress={toggleRemindEveryday}
             >
-              <View className="px-[32] gap-2">
-                <Text className="text-[14px] font-medium">Remind everyday</Text>
-                <Text className="text-[14px] text-[#392F46] opacity-65">
-                  Remind to add expenses occasionally
-                </Text>
+              <View className="px-[32] flex-row items-center justify-between">
+                {/* Text Content Container (takes up space, but allows switch to sit right) */}
+                <View className="flex-shrink">
+                  <Text className="text-[14px] font-medium">
+                    Remind everyday
+                  </Text>
+                  <Text className="text-[14px] text-[#392F46] opacity-65">
+                    Remind to add expenses occasionally
+                  </Text>
+                </View>
+
+                {/* The Switch Component */}
+                <Switch
+                  // Set the current value from state
+                  value={isRemindEverydayEnabled}
+                  // Set the function to call when the switch is toggled
+                  onValueChange={toggleRemindEveryday}
+                  // Optional: Customize switch colors
+                  trackColor={{ false: "#767577", true: "#81b0ff" }} // Customize these colors if needed
+                  thumbColor={isRemindEverydayEnabled ? "#f5dd4b" : "#f4f3f4"}
+                />
               </View>
             </TouchableOpacity>
 
+            {/* 2. Notification settings (Existing TouchableOpacity) */}
             <TouchableOpacity
               className="w-full active:bg-gray-400 py-[16]"
-              onPress={() => console.log("Currency Position pressed")}
+              onPress={() => console.log("Notification settings pressed")}
             >
               <View className="px-[32]">
                 <Text className="text-[14px] font-medium">
