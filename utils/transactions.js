@@ -210,3 +210,55 @@ export const saveTransferTransaction = (
     throw new Error("Failed to save transfer transaction.");
   }
 };
+
+/**
+ * Calculates the date from N days ago in 'YYYY-MM-DD' format.
+ * @param {number} days The number of days to go back (e.g., 7 for one week).
+ * @returns {string} The date string N days ago.
+ */
+const getDateNDaysAgo = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  // Format as YYYY-MM-DD
+  return date.toISOString().split("T")[0];
+};
+
+/**
+ * Retrieves transactions from the last N days with associated details.
+ * @param {number} days The number of days to look back (e.g., 7).
+ * @returns {Array<Object>} An array of transaction objects with joined data.
+ */
+export const getTransactionsForLastNDays = (days) => {
+  try {
+    const db = getDb();
+    const startDate = getDateNDaysAgo(days);
+
+    const query = `
+            SELECT 
+                T.id, 
+                T.amount, 
+                T.type, 
+                T.description, 
+                T.date, 
+                T.account_id, 
+                T.category_id,
+                T.to_account_id,
+                C.name AS category_name, 
+                A.name AS account_name,
+                AT.name AS to_account_name
+            FROM transactions AS T
+            LEFT JOIN categories AS C ON T.category_id = C.id
+            LEFT JOIN accounts AS A ON T.account_id = A.id
+            LEFT JOIN accounts AS AT ON T.to_account_id = AT.id
+            WHERE T.date >= ? -- Filter by date from N days ago
+            ORDER BY T.date DESC;
+        `;
+    const transactions = db.getAllSync(query, [startDate]);
+
+    console.log(`Transactions fetched successfully for the last ${days} days.`);
+    return transactions;
+  } catch (error) {
+    console.error(`Error fetching transactions for last ${days} days:`, error);
+    throw new Error(`Failed to fetch transactions for last ${days} days.`);
+  }
+};

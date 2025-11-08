@@ -14,6 +14,8 @@ import {
   initDatabase,
   savePlannedBudgetTransaction,
 } from "@/utils/database";
+import { calculateWeeklySummary, formatCurrency } from "@/utils/stats";
+import { getAllTransactions } from "@/utils/transactions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
@@ -29,20 +31,9 @@ import { SVG_ICONS } from "../../../assets/constants/icons";
 import PlannedBudgetModals from "../../../components/PlannedBudgetModals";
 import ProgressBar from "../../../components/ProgressBar";
 import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent";
+import WeeklyTransactionsModal from "../../../components/WeeklyTransactionsModal";
 import type { TabHomeScreenNavigationProp } from "../../../types";
 
-// const typeColors = {
-//   Spent: "#ff6667",
-//   Earned: "#42d7b5",
-//   Borrowed: "f8b591",
-//   Lend: "#1869ff"
-// }
-
-// const typeSpending = [
-//   {total: 20},
-//   {total: 30},
-//   {total: 50}
-// ]
 // =========================================================
 // 🟣 Main Screen (logic fixes applied)
 // =========================================================
@@ -72,6 +63,18 @@ export default function Index() {
   const [isTransactionModalVisible, setIsTransactionModalVisible] =
     useState(false);
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
+
+  // regular transactions (income/expense/transfer)
+  const [transactions, setTransactions] = useState<any[]>([]);
+
+  // weekly modal state (if not already added)
+  const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
+  const [weeklyModalType, setWeeklyModalType] = useState<
+    "spent" | "earned" | null
+  >(null);
+  const [filteredWeeklyTransactions, setFilteredWeeklyTransactions] = useState<
+    any[]
+  >([]);
 
   const [transactionAmount, setTransactionAmount] = useState("");
 
@@ -313,6 +316,31 @@ export default function Index() {
     return progress > 1 ? 1 : progress;
   };
 
+  //Display data for Income and Expense
+  const [weeklySummary, setWeeklySummary] = useState({
+    spent: 0,
+    earned: 0,
+  });
+  const DAYS_TO_CHECK = 7;
+
+  useEffect(() => {
+    // A function to handle the async operation
+    const fetchSummary = async () => {
+      try {
+        // You might need to wrap this in a database provider/hook
+        // depending on how getDb() is exposed in your environment.
+        const summary = calculateWeeklySummary(DAYS_TO_CHECK);
+        setWeeklySummary(summary);
+      } catch (error) {
+        console.error("Failed to fetch weekly summary:", error);
+        // Set to default values on error
+        setWeeklySummary({ spent: 0, earned: 0 });
+      }
+    };
+
+    fetchSummary();
+  }, []); // Run only once on mount
+
   // ---------- Save transaction ----------
   useEffect(() => {
     if (selectedBudget?.id) {
@@ -384,6 +412,59 @@ export default function Index() {
     setCurrentProgress(overallProgress);
   }, [plannedBudgets, budgetTransactions]);
 
+  // For Expense and Income Modal
+  const loadRegularTransactions = async () => {
+    try {
+      const allTx = await getAllTransactions(); // <-- must return regular transactions
+      setTransactions(allTx);
+      console.log("🧾 Loaded regular transactions from DB:", allTx);
+    } catch (err) {
+      console.error("❌ Error loading regular transactions:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadRegularTransactions();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPlannedBudgets();
+      loadAllTransactions(); // your planned budget loader
+      loadRegularTransactions(); // NEW: load normal transactions too
+    }, [loadPlannedBudgets])
+  );
+
+  const getTransactionsLast7Days = (type: "spent" | "earned") => {
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    return transactions.filter((t) => {
+      // t.type should be 'expense' | 'income' on regular transactions
+      const date = new Date(t.date);
+      return (
+        date >= sevenDaysAgo &&
+        date <= now &&
+        ((type === "spent" && t.type === "expense") ||
+          (type === "earned" && t.type === "income"))
+      );
+    });
+  };
+
+  const openWeeklyModal = (type: "spent" | "earned") => {
+    const filtered = getTransactionsLast7Days(type);
+    setFilteredWeeklyTransactions(filtered);
+    setWeeklyModalType(type);
+    setWeeklyModalVisible(true);
+  };
+
+  const closeWeeklyModal = () => {
+    setWeeklyModalVisible(false);
+    setWeeklyModalType(null);
+    setFilteredWeeklyTransactions([]);
+  };
+
   // ---------- UI ----------
   return (
     <View className="items-center">
@@ -403,6 +484,13 @@ export default function Index() {
         toggleAccountsModal={toggleAccountsModal}
         isAccountsModalVisible={isAccountsModalVisible}
       />
+      <WeeklyTransactionsModal
+        visible={weeklyModalVisible}
+        onClose={closeWeeklyModal}
+        type={weeklyModalType}
+        transactions={filteredWeeklyTransactions}
+      />
+
       {/* === Header === */}
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
@@ -471,7 +559,8 @@ export default function Index() {
         </View>
       </View>
 
-      {/* === Expense & Income === */}
+      {/* === Expense & Income Banners === */}
+      {/* === Expense === */}
       <View
         className="w-[330] h-[80] my-[16] p-[16] bg-white rounded-[20]"
         style={{ elevation: 5 }}
@@ -482,14 +571,20 @@ export default function Index() {
             <Text className="text-[12px] text-[#392F46] opacity-65">
               Spent this week:
             </Text>
-            <Text className="text-[16px] font-medium">₱800.00</Text>
+            {/* Dynamically set the spent amount */}
+            <Text className="text-[16px] font-medium">
+              {formatCurrency(weeklySummary.spent)}
+            </Text>
           </View>
           <View className="flex-1 self-center items-end">
-            <SVG_ICONS.ArrowRight width={24} height={24} />
+            <TouchableOpacity onPress={() => openWeeklyModal("spent")}>
+              <SVG_ICONS.ArrowRight width={24} height={24} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
 
+      {/* === Income === */}
       <View
         className="w-[330] h-[80] p-[16] bg-white rounded-[20]"
         style={{ elevation: 5 }}
@@ -500,10 +595,15 @@ export default function Index() {
             <Text className="text-[12px] text-[#392F46] opacity-65">
               Earned this week:
             </Text>
-            <Text className="text-[16px] font-medium">₱1300.00</Text>
+            {/* Dynamically set the earned amount */}
+            <Text className="text-[16px] font-medium">
+              {formatCurrency(weeklySummary.earned)}
+            </Text>
           </View>
           <View className="flex-1 self-center items-end">
-            <SVG_ICONS.ArrowRight width={24} height={24} />
+            <TouchableOpacity onPress={() => openWeeklyModal("earned")}>
+              <SVG_ICONS.ArrowRight width={24} height={24} />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
