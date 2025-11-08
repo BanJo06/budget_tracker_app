@@ -1,17 +1,39 @@
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy"; // 👈 Use the legacy import
 import * as SQLite from "expo-sqlite";
 
-// const db = SQLite.openDatabaseSync("budget_tracker.db");
+// Database name and path
+const dbName = "budget_tracker.db";
+const sqliteDir = `${FileSystem.documentDirectory}SQLite`;
+const dbPath = `${sqliteDir}/${dbName}`;
 
-export const db = SQLite.openDatabaseSync("budget_tracker.db");
+// ✅ Ensure directory exists (without top-level await)
+(async () => {
+  try {
+    // Check if the directory exists using FileSystem.getInfoAsync
+    const dirInfo = await FileSystem.getInfoAsync(sqliteDir);
 
-// Get database file path
-export const getDatabaseFilePath = () => {
-  const dbName = "budget_tracker.db";
-  return `${FileSystem.documentDirectory}SQLite/${dbName}`;
-};
+    if (!dirInfo.exists) {
+      // Use the reliable makeDirectoryAsync from the legacy import
+      await FileSystem.makeDirectoryAsync(sqliteDir, {
+        intermediates: true,
+      });
+      console.log("📁 SQLite directory ensured.");
+    } else {
+      console.log("📁 SQLite directory already exists.");
+    }
+  } catch (err) {
+    // We expect this to no longer be reached, but keep the log just in case
+    console.error("⚠️ Error ensuring SQLite directory:", err);
+  }
+})();
 
-// Initialize database
+// ✅ Open (or create) database
+export const db = SQLite.openDatabaseSync(dbName);
+
+// === Utility ===
+export const getDatabaseFilePath = () => dbPath;
+
+// === Initialize Database ===
 export const initDatabase = async () => {
   try {
     console.log("Initializing database schema...");
@@ -38,7 +60,7 @@ export const initDatabase = async () => {
         }
       }
 
-      // Create all tables
+      // === Create all tables ===
       db.execSync(`
         CREATE TABLE IF NOT EXISTS accounts (
           id INTEGER PRIMARY KEY NOT NULL,
@@ -76,7 +98,6 @@ export const initDatabase = async () => {
           FOREIGN KEY (to_account_id) REFERENCES accounts(id)
         );
 
-        -- Remove category_id only from planned budgets and transactions
         CREATE TABLE IF NOT EXISTS planned_budgets (
           id INTEGER PRIMARY KEY NOT NULL,
           budget_name TEXT NOT NULL,
@@ -87,7 +108,6 @@ export const initDatabase = async () => {
           end_date TEXT NULL,
           is_ongoing INTEGER NOT NULL
         );
-        
 
         CREATE TABLE IF NOT EXISTS planned_budget_transactions (
           id INTEGER PRIMARY KEY NOT NULL,
@@ -100,7 +120,7 @@ export const initDatabase = async () => {
         );
       `);
 
-      // Ensure indexes exist
+      // === Create indexes ===
       if (
         !db.getFirstSync(
           "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_accounts_name';"
@@ -108,6 +128,7 @@ export const initDatabase = async () => {
       ) {
         db.execSync("CREATE UNIQUE INDEX idx_accounts_name ON accounts(name);");
       }
+
       if (
         !db.getFirstSync(
           "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_budgets_name';"
@@ -124,8 +145,17 @@ export const initDatabase = async () => {
   }
 };
 
-// Get database reference
+// === Database Reference ===
 export const getDb = () => db;
+
+export const getAccounts = () => {
+  try {
+    return db.getAllSync("SELECT * FROM accounts;");
+  } catch (error) {
+    console.error("Error getting accounts:", error);
+    throw new Error("Failed to retrieve accounts from the database.");
+  }
+};
 
 // Budgets
 export const getBudgets = () => {
@@ -164,6 +194,18 @@ export const saveBudget = (name, balance) => {
   } catch (error) {
     console.error(`Error saving budget '${name}':`, error);
     throw new Error(`Failed to save budget '${name}': ${error.message}`);
+  }
+};
+
+export const getDailyBudget = () => {
+  try {
+    const result = db.getFirstSync(
+      "SELECT balance FROM budgets WHERE name = 'Daily Budget' LIMIT 1;"
+    );
+    return result ? result.balance : 0;
+  } catch (error) {
+    console.error("Error getting daily budget:", error);
+    return 0;
   }
 };
 

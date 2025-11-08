@@ -377,15 +377,8 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
 export default function Budgets() {
   // Visual / state
   const [dailyBudget, setDailyBudget] = useState("0.00");
-  const [weeklyBudget, setWeeklyBudget] = useState("0.00");
-  const [monthlyBudget, setMonthlyBudget] = useState("0.00");
 
   const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] =
-    useState(false);
-
-  const [isWeeklyBudgetModalVisible, setWeeklyBudgetModalVisible] =
-    useState(false);
-  const [isMonthlyBudgetModalVisible, setMonthlyBudgetModalVisible] =
     useState(false);
 
   const [isAlertModalVisible, setAlertModalVisible] = useState(false);
@@ -443,8 +436,8 @@ export default function Budgets() {
 
   const loadAllBudgets = useCallback(() => {
     getAndSetBudgetValue("daily_budget", setDailyBudget);
-    getAndSetBudgetValue("weekly_budget", setWeeklyBudget);
-    getAndSetBudgetValue("monthly_budget", setMonthlyBudget);
+    // getAndSetBudgetValue("weekly_budget", setWeeklyBudget);
+    // getAndSetBudgetValue("monthly_budget", setMonthlyBudget);
   }, [getAndSetBudgetValue]);
 
   const loadPlannedBudgets = useCallback(async () => {
@@ -642,25 +635,7 @@ export default function Budgets() {
         title="Set Daily Budget"
         budgetType="daily_budget"
         currentBudget={dailyBudget}
-        onSave={handleSaveBudget}
-      />
-
-      <BudgetEditModal
-        isVisible={isWeeklyBudgetModalVisible}
-        onClose={() => setWeeklyBudgetModalVisible(false)}
-        title="Set Weekly Budget"
-        budgetType="weekly_budget"
-        currentBudget={weeklyBudget}
-        onSave={handleSaveBudget}
-      />
-
-      <BudgetEditModal
-        isVisible={isMonthlyBudgetModalVisible}
-        onClose={() => setMonthlyBudgetModalVisible(false)}
-        title="Set Monthly Budget"
-        budgetType="monthly_budget"
-        currentBudget={monthlyBudget}
-        onSave={handleSaveBudget}
+        onSave={(value) => handleSaveBudget("daily_budget", value)}
       />
 
       {/* ✅ General Budgets Section */}
@@ -672,16 +647,6 @@ export default function Budgets() {
             label: "Daily",
             value: dailyBudget,
             onPress: () => setDailyBudgetModalVisible(true),
-          },
-          {
-            label: "Weekly",
-            value: weeklyBudget,
-            onPress: () => setWeeklyBudgetModalVisible(true),
-          },
-          {
-            label: "Monthly",
-            value: monthlyBudget,
-            onPress: () => setMonthlyBudgetModalVisible(true),
           },
         ].map((b) => (
           <View
@@ -907,8 +872,8 @@ const BudgetEditModal: React.FC<{
   title: string;
   budgetType: string;
   currentBudget: string;
-  onSave: (budgetType: string, value: string) => void;
-}> = ({ isVisible, onClose, title, budgetType, currentBudget, onSave }) => {
+  onSave: (value: string) => void;
+}> = ({ isVisible, onClose, title, currentBudget, onSave }) => {
   const [inputValue, setInputValue] = useState(
     currentBudget === "0.00" ? "" : currentBudget
   );
@@ -919,7 +884,7 @@ const BudgetEditModal: React.FC<{
 
   const handleSave = () => {
     if (inputValue.trim() === "") return;
-    onSave(budgetType, inputValue);
+    onSave(inputValue);
     onClose();
   };
 

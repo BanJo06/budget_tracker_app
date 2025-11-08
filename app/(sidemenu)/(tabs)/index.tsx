@@ -9,6 +9,7 @@ import type {
 import { getAccounts } from "@/utils/accounts";
 import {
   getAllPlannedBudgetTransactions,
+  getDailyBudget,
   getPlannedBudgets,
   initDatabase,
   savePlannedBudgetTransaction,
@@ -78,6 +79,8 @@ export default function Index() {
   const [useAppCompleted, setUseAppCompleted] = useState(false);
   const [useAppProgress, setUseAppProgress] = useState(0);
 
+  const [dailyBudget, setDailyBudget] = useState(0);
+
   //Pie Graph
   // const colorScheme = useColorScheme();
   // const textColor = colorScheme === "dark" ? "#fff" : "#000";
@@ -107,6 +110,11 @@ export default function Index() {
         await initDatabase();
         const initialAccounts = await getAccounts();
         setAccounts(initialAccounts);
+
+        // ✅ Fetch daily budget
+        const dbValue = await getDailyBudget();
+        setDailyBudget(dbValue);
+
         setDbReady(true);
         // FIX: Set placeholder progress value to prevent crash
         setCurrentProgress(0.5);
@@ -446,7 +454,7 @@ export default function Index() {
               showPercentage={true}
               textColor="#8938E9"
             /> */}
-            <DonutChart />
+            <DonutChart progress={currentProgress} dailyBudget={dailyBudget} />
           </View>
           <View className="flex-col items-end justify-end pr-[10] pb-[6]">
             <View className="flex-row mb-[4] px-[8] py-[4] gap-[4] bg-[#EDE1FB] rounded-[16]">
