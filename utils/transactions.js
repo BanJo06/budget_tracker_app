@@ -9,8 +9,41 @@ import { getDb } from "@/utils/database";
  * @param {string} notes The transaction description.
  */
 
+// export const saveTransaction = (
+//   accountId,
+//   categoryId,
+//   amount,
+//   type,
+//   notes,
+//   date
+// ) => {
+//   const db = getDb();
+
+//   try {
+//     console.log("Attempting to save transaction with these parameters:");
+//     console.log({
+//       accountId,
+//       categoryId,
+//       amount,
+//       type,
+//       description: notes,
+//       date,
+//     });
+
+//     db.runSync(
+//       `INSERT INTO transactions (account_id, category_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+//       [accountId, categoryId, amount, type, notes, date]
+//     );
+//     console.log("Transaction saved successfully.");
+//   } catch (error) {
+//     console.error("Error saving transaction:", error);
+//     throw new Error("Failed to save transaction.");
+//   }
+// };
+
 export const saveTransaction = (
   accountId,
+  accountName,
   categoryId,
   amount,
   type,
@@ -19,26 +52,21 @@ export const saveTransaction = (
 ) => {
   const db = getDb();
 
-  try {
-    console.log("Attempting to save transaction with these parameters:");
-    console.log({
-      accountId,
-      categoryId,
-      amount,
-      type,
-      description: notes,
-      date,
-    });
+  db.runSync(
+    `INSERT INTO transactions (account_id, account_name, category_id, amount, type, description, date)
+     VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    [accountId, accountName, categoryId, amount, type, description, date]
+  );
 
-    db.runSync(
-      `INSERT INTO transactions (account_id, category_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
-      [accountId, categoryId, amount, type, notes, date]
-    );
-    console.log("Transaction saved successfully.");
-  } catch (error) {
-    console.error("Error saving transaction:", error);
-    throw new Error("Failed to save transaction.");
-  }
+  console.log("Transaction saved:", {
+    accountId,
+    accountName,
+    categoryId,
+    amount,
+    type,
+    description: notes,
+    date,
+  });
 };
 
 /**
@@ -260,5 +288,116 @@ export const getTransactionsForLastNDays = (days) => {
   } catch (error) {
     console.error(`Error fetching transactions for last ${days} days:`, error);
     throw new Error(`Failed to fetch transactions for last ${days} days.`);
+  }
+};
+
+/**
+ * Saves a planned budget transaction into the transactions table.
+ * This is separate from regular transactions to avoid conflicts.
+ * @param {number} accountId The ID of the associated account
+ * @param {number} plannedBudgetId The ID of the planned budget
+ * @param {number} amount The transaction amount
+ * @param {string} budgetName The name of the planned budget (used as description)
+ * @param {string} date The transaction date
+ */
+// export const savePlannedBudgetAsTransaction = (
+//   accountId,
+//   plannedBudgetId,
+//   amount,
+//   budgetName,
+//   date
+// ) => {
+//   const db = getDb();
+
+//   try {
+//     console.log("Saving planned budget as a transaction:", {
+//       accountId,
+//       plannedBudgetId,
+//       amount,
+//       budgetName,
+//       date,
+//     });
+
+//     db.runSync(
+//       `INSERT INTO transactions (account_id, category_id, amount, type, description, date)
+//        VALUES (?, ?, ?, ?, ?, ?);`,
+//       [accountId, null, amount, "expense", budgetName, date]
+//     );
+
+//     console.log("Planned budget transaction saved successfully.");
+//   } catch (error) {
+//     console.error("Error saving planned budget transaction:", error);
+//     // Do NOT throw here, so regular transactions won't be affected
+//   }
+// };
+
+// export const savePlannedBudgetAsTransaction = (
+//   accountId,
+//   plannedBudgetId,
+//   amount,
+//   budgetName,
+//   date
+// ) => {
+//   const db = getDb();
+
+//   try {
+//     console.log("Saving planned budget as a transaction:", {
+//       accountId,
+//       plannedBudgetId,
+//       amount,
+//       budgetName,
+//       date,
+//     });
+
+//     db.runSync(
+//       `INSERT INTO transactions
+//         (account_id, account_name, category_id, amount, type, description, date)
+//        VALUES (?, ?, ?, ?, ?, ?, ?);`,
+//       [
+//         null, // account_id is null for "Various Accounts"
+//         "Various Accounts", // account_name
+//         null, // category_id
+//         amount,
+//         "expense", // type
+//         budgetName,
+//         date,
+//       ]
+//     );
+
+//     console.log("Planned budget transaction saved successfully.");
+//   } catch (error) {
+//     console.error("Error saving planned budget transaction:", error);
+//     // Don't throw to avoid breaking normal transactions
+//   }
+// };
+
+export const savePlannedBudgetAsTransaction = (
+  accountId,
+  plannedBudgetId,
+  amount,
+  budgetName,
+  date
+) => {
+  const db = getDb();
+
+  try {
+    console.log("Saving planned budget as a transaction:", {
+      accountId,
+      plannedBudgetId,
+      amount,
+      budgetName,
+      date,
+    });
+
+    // ✅ Mark this transaction as "planned_budget"
+    db.runSync(
+      `INSERT INTO transactions (account_id, category_id, amount, type, description, date, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [accountId, null, amount, "expense", budgetName, date, "planned_budget"]
+    );
+
+    console.log("Planned budget transaction saved successfully.");
+  } catch (error) {
+    console.error("Error saving planned budget transaction:", error);
   }
 };

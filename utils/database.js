@@ -90,9 +90,11 @@ export const initDatabase = async () => {
           description TEXT,
           date TEXT NOT NULL,
           account_id INTEGER,
+          account_name TEXT,
           category_id INTEGER,
           icon_name TEXT,
           to_account_id INTEGER,
+          source TEXT,
           FOREIGN KEY (account_id) REFERENCES accounts(id),
           FOREIGN KEY (category_id) REFERENCES categories(id),
           FOREIGN KEY (to_account_id) REFERENCES accounts(id)

@@ -24,6 +24,7 @@ interface PlannedBudgetModalsProps {
   handleSaveTransaction: () => void;
   toggleAccountsModal: () => void;
   isAccountsModalVisible: boolean;
+  children?: React.ReactNode;
 }
 
 export default function PlannedBudgetModals({
@@ -41,6 +42,7 @@ export default function PlannedBudgetModals({
   handleSaveTransaction,
   toggleAccountsModal,
   isAccountsModalVisible,
+  children,
 }: PlannedBudgetModalsProps) {
   const getPlannedBudgetId = (t: any) =>
     t.planned_budget_id ?? t.budget_id ?? t.plannedBudgetId ?? null;

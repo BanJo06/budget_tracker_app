@@ -8,6 +8,7 @@ import type {
 } from "@/types/types";
 import { getAccounts } from "@/utils/accounts";
 import {
+  deletePlannedBudget,
   getAllPlannedBudgetTransactions,
   getBudget,
   getDailyBudget,
@@ -16,13 +17,17 @@ import {
   savePlannedBudgetTransaction,
 } from "@/utils/database";
 import { calculateWeeklySummary, formatCurrency } from "@/utils/stats";
-import { getAllTransactions } from "@/utils/transactions";
+import {
+  getAllTransactions,
+  savePlannedBudgetAsTransaction,
+} from "@/utils/transactions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -51,6 +56,12 @@ export default function Index() {
   const [plannedBudgetTransactions, setPlannedBudgetTransactions] = useState<
     PlannedBudgetTransaction[]
   >([]);
+  const [budgetCompleteModalVisible, setBudgetCompleteModalVisible] =
+    useState(false);
+  const [completedBudget, setCompletedBudget] = useState<PlannedBudget | null>(
+    null
+  );
+
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]); // regular income/expense
   const [dbReady, setDbReady] = useState(false);
@@ -88,6 +99,13 @@ export default function Index() {
   const options = ["Today", "This Week", "This Month"];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [insightText, setInsightText] = useState("");
+
+  const budgetLabel =
+    selectedIndex === 0
+      ? "Daily Budget"
+      : selectedIndex === 1
+      ? "Weekly Budget"
+      : "Monthly Budget";
 
   // ======================
   // Database load
@@ -145,6 +163,14 @@ export default function Index() {
   // ======================
   // Helpers
   // ======================
+
+  const getTotalSpentForPlannedBudget = (plannedBudgetId: number) => {
+    const budgetTx = plannedBudgetTransactions.filter(
+      (t) => t.planned_budget_id === plannedBudgetId
+    );
+    return budgetTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+  };
+
   const getPlannedBudgetId = (t: any) =>
     t.planned_budget_id ?? t.budget_id ?? t.plannedBudgetId ?? null;
 
@@ -161,6 +187,21 @@ export default function Index() {
       .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
     return Math.min(spentAmount / budgetAmount, 1);
+  };
+
+  const checkBudgetCompletion = async (plannedBudget) => {
+    if (!plannedBudget) return;
+
+    const totalSpent = getTotalSpentForPlannedBudget(plannedBudget.id);
+    const completionPercent = (totalSpent / plannedBudget.amount) * 100;
+
+    if (completionPercent >= 100 && !plannedBudget.completed) {
+      setCompletedBudget(plannedBudget);
+      setBudgetCompleteModalVisible(true);
+
+      // Mark in-memory to avoid multiple triggers
+      plannedBudget.completed = true;
+    }
   };
 
   const getTransactionsLast7Days = (type: "spent" | "earned") => {
@@ -233,8 +274,10 @@ export default function Index() {
   useEffect(() => {
     if (!dailyBudget) return;
 
-    // Only include expense transactions
-    const expenseTx = regularTransactions.filter((t) => t.type === "expense");
+    // Only include expense transactions (excluding planned budgets)
+    const expenseTx = regularTransactions.filter(
+      (t) => t.type === "expense" && t.source !== "planned_budget"
+    );
 
     const now = new Date();
 
@@ -453,24 +496,83 @@ export default function Index() {
   // ======================
   // Save Transaction
   // ======================
+
   const handleSaveTransaction = async () => {
     if (!transactionAmount || !selectedBudget)
       return alert("Please enter amount and select a budget.");
 
     try {
+      const amount = Number(transactionAmount);
+      const date = new Date().toISOString();
+      const accountId = selectedAccount?.id ? Number(selectedAccount.id) : null;
+
+      // ✅ Save to planned_budget_transactions only
       await savePlannedBudgetTransaction(
         selectedBudget.id,
-        Number(transactionAmount),
-        new Date().toISOString(),
-        selectedAccount?.id ?? null
+        amount,
+        date,
+        accountId
       );
+
+      // ✅ Check completion before reloading
+      const totalSpent =
+        getTotalSpentForPlannedBudget(selectedBudget.id) + amount;
+      if (totalSpent >= selectedBudget.amount) {
+        setCompletedBudget(selectedBudget);
+        setBudgetCompleteModalVisible(true);
+      }
+
+      // Reset input & close modal
       setTransactionAmount("");
       setSelectedAccount(null);
       setIsTransactionModalVisible(false);
 
-      await loadDatabase(); // reload all DB data
+      // ✅ Slight delay before reloading
+      setTimeout(loadDatabase, 500);
     } catch (err) {
-      console.error("❌ Error saving transaction:", err);
+      console.error("❌ Error saving planned budget transaction:", err);
+    }
+  };
+
+  // -----------------------------
+  // Handle Close Button in Budget Completed Modal
+  // -----------------------------
+  const handleCloseCompletedModal = async () => {
+    if (!completedBudget) return;
+
+    try {
+      // ✅ Ensure the account ID is a number
+      const accountId = accounts.length > 0 ? Number(accounts[0].id) : null;
+      if (accountId === null || isNaN(accountId)) return;
+
+      // ✅ Ensure amount is a number
+      const amount = Number(completedBudget.amount);
+      if (isNaN(amount)) return;
+
+      // ✅ Ensure planned budget ID is a number
+      const plannedBudgetId = Number(completedBudget.id);
+      if (isNaN(plannedBudgetId)) return;
+
+      const date = new Date().toISOString();
+
+      // ✅ Save the completed planned budget as a transaction
+      await savePlannedBudgetAsTransaction(
+        accountId, // 1️⃣ account ID (number)
+        plannedBudgetId, // 2️⃣ planned budget ID (number)
+        amount, // 3️⃣ amount
+        completedBudget.budget_name, // 4️⃣ description
+        date // 5️⃣ date
+      );
+
+      // ✅ Delete the planned budget after saving
+      await deletePlannedBudget(plannedBudgetId);
+
+      // ✅ Close modal and refresh
+      setBudgetCompleteModalVisible(false);
+      setCompletedBudget(null);
+      await loadDatabase();
+    } catch (err) {
+      console.error("❌ Error handling completed budget:", err);
     }
   };
 
@@ -507,6 +609,35 @@ export default function Index() {
         type={weeklyModalType}
         transactions={filteredWeeklyTransactions}
       />
+
+      {/* ✅ Budget Completed Modal */}
+      {budgetCompleteModalVisible && completedBudget && (
+        <Modal
+          animationType="slide"
+          transparent
+          visible={budgetCompleteModalVisible}
+          onRequestClose={() => setBudgetCompleteModalVisible(false)}
+        >
+          <View className="flex-1 justify-center items-center bg-black/50">
+            <View className="p-6 bg-white rounded-lg w-11/12 items-center">
+              <Text className="text-lg font-bold">🎉 Goal Completed!</Text>
+              <Text className="mt-2 text-center">
+                You have completed the planned budget:{" "}
+                <Text className="font-semibold">
+                  {completedBudget.budget_name}
+                </Text>
+              </Text>
+
+              <TouchableOpacity
+                className="mt-4 px-4 py-2 bg-purple-500 rounded"
+                onPress={handleCloseCompletedModal}
+              >
+                <Text className="text-white font-medium">Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
 
       {/* === Header === */}
       <ReusableRoundedBoxComponent>
@@ -575,6 +706,7 @@ export default function Index() {
               progress={scaledBudget > 0 ? amountSpent / scaledBudget : 0}
               dailyBudget={scaledBudget}
               spent={amountSpent}
+              label={budgetLabel}
             />
           </View>
           <View className="flex-col items-end justify-end pr-[10] pb-[6]">
