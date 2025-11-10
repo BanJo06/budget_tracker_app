@@ -66,7 +66,19 @@ const CustomDrawerContent = (props) => {
         }}
       />
 
-      {/* Export Records */}
+      {/* Backup Records */}
+      {/* <DrawerItem
+        label={"Backup"}
+        icon={({ size }) => (
+          // Placeholder for SVG_ICONS.ExportRecords
+          <Text style={{ fontSize: size }}>📄</Text>
+        )}
+        onPress={() => {
+          router.push("/backup");
+        }}
+      /> */}
+
+      {/* Add Late Records */}
       <DrawerItem
         label={"Add Late Records"}
         icon={({ size }) => (
@@ -152,6 +164,24 @@ export default function Layout() {
           ),
         })}
       />
+
+      {/* <Drawer.Screen
+        name="backup"
+        options={({ navigation }) => ({
+          drawerLabel: "Backup",
+          title: "Backup",
+          headerShown: true, // Show header for this screen
+          // Conditionally render the back button
+          headerLeft: () => (
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={{ paddingHorizontal: 15 }}
+            >
+              <Text style={{ fontSize: 24 }}>⬅️</Text>
+            </Pressable>
+          ),
+        })}
+      /> */}
 
       <Drawer.Screen
         name="addlaterecords"

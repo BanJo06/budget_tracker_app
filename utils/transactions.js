@@ -9,38 +9,6 @@ import { getDb } from "@/utils/database";
  * @param {string} notes The transaction description.
  */
 
-// export const saveTransaction = (
-//   accountId,
-//   categoryId,
-//   amount,
-//   type,
-//   notes,
-//   date
-// ) => {
-//   const db = getDb();
-
-//   try {
-//     console.log("Attempting to save transaction with these parameters:");
-//     console.log({
-//       accountId,
-//       categoryId,
-//       amount,
-//       type,
-//       description: notes,
-//       date,
-//     });
-
-//     db.runSync(
-//       `INSERT INTO transactions (account_id, category_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
-//       [accountId, categoryId, amount, type, notes, date]
-//     );
-//     console.log("Transaction saved successfully.");
-//   } catch (error) {
-//     console.error("Error saving transaction:", error);
-//     throw new Error("Failed to save transaction.");
-//   }
-// };
-
 export const saveTransaction = (
   accountId,
   accountName,

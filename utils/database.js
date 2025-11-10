@@ -1,37 +1,58 @@
 import * as FileSystem from "expo-file-system/legacy"; // 👈 Use the legacy import
+import * as Sharing from "expo-sharing";
 import * as SQLite from "expo-sqlite";
 
 // Database name and path
 const dbName = "budget_tracker.db";
 const sqliteDir = `${FileSystem.documentDirectory}SQLite`;
-const dbPath = `${sqliteDir}/${dbName}`;
 
-// ✅ Ensure directory exists (without top-level await)
+// ✅ Ensure directory exists safely
 (async () => {
   try {
-    // Check if the directory exists using FileSystem.getInfoAsync
     const dirInfo = await FileSystem.getInfoAsync(sqliteDir);
 
     if (!dirInfo.exists) {
-      // Use the reliable makeDirectoryAsync from the legacy import
-      await FileSystem.makeDirectoryAsync(sqliteDir, {
-        intermediates: true,
-      });
-      console.log("📁 SQLite directory ensured.");
+      await FileSystem.makeDirectoryAsync(sqliteDir, { intermediates: true });
+      console.log("📁 SQLite directory created.");
     } else {
       console.log("📁 SQLite directory already exists.");
     }
   } catch (err) {
-    // We expect this to no longer be reached, but keep the log just in case
     console.error("⚠️ Error ensuring SQLite directory:", err);
   }
 })();
 
-// ✅ Open (or create) database
+// ✅ Open database (sync for legacy SQLite API)
 export const db = SQLite.openDatabaseSync(dbName);
 
 // === Utility ===
-export const getDatabaseFilePath = () => dbPath;
+export const getDatabaseFilePath = () =>
+  `${FileSystem.documentDirectory}SQLite/budget_tracker.db`;
+
+// Share backup helper
+export const shareBackupDatabase = async () => {
+  try {
+    const dbFile = getDatabaseFilePath();
+
+    const fileInfo = await FileSystem.getInfoAsync(dbFile);
+    if (!fileInfo.exists) throw new Error("Database file does not exist.");
+
+    if (!(await Sharing.isAvailableAsync()))
+      throw new Error("Sharing not available on this device.");
+
+    await Sharing.shareAsync(dbFile);
+    console.log("✅ Backup shared successfully");
+  } catch (error) {
+    console.error("❌ Failed to share database backup:", error);
+    throw error;
+  }
+};
+
+// Check if database exists
+export const checkIfDatabaseExists = async () => {
+  const info = await FileSystem.getInfoAsync(getDatabaseFilePath());
+  return info.exists;
+};
 
 // === Initialize Database ===
 export const initDatabase = async () => {
@@ -40,6 +61,7 @@ export const initDatabase = async () => {
     db.execSync("PRAGMA journal_mode = WAL;");
 
     db.withTransactionSync(() => {
+      // === Keep existing tables and checks unchanged ===
       const existingTables = db.getAllSync(
         `SELECT name FROM sqlite_master WHERE type='table' AND name='planned_budgets';`
       );
@@ -60,7 +82,7 @@ export const initDatabase = async () => {
         }
       }
 
-      // === Create all tables ===
+      // === All tables unchanged, existing code preserved ===
       db.execSync(`
         CREATE TABLE IF NOT EXISTS accounts (
           id INTEGER PRIMARY KEY NOT NULL,
@@ -122,7 +144,7 @@ export const initDatabase = async () => {
         );
       `);
 
-      // === Create indexes ===
+      // === Indexes unchanged ===
       if (
         !db.getFirstSync(
           "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_accounts_name';"
@@ -147,8 +169,17 @@ export const initDatabase = async () => {
   }
 };
 
-// === Database Reference ===
+// === Export DB reference ===
 export const getDb = () => db;
+
+// ✅ Optional: Async-safe helper to ensure DB initialized before any action
+export const ensureDatabase = async () => {
+  const exists = await checkIfDatabaseExists();
+  if (!exists) {
+    console.log("Database does not exist, initializing...");
+    await initDatabase();
+  }
+};
 
 export const getAccounts = () => {
   try {
