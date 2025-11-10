@@ -1,19 +1,19 @@
 import * as FileSystem from "expo-file-system/legacy"; // 👈 Use the legacy import
-import * as Sharing from "expo-sharing";
 import * as SQLite from "expo-sqlite";
 
 // Database name and path
 const dbName = "budget_tracker.db";
 const sqliteDir = `${FileSystem.documentDirectory}SQLite`;
 
-// ✅ Ensure directory exists safely
 (async () => {
   try {
     const dirInfo = await FileSystem.getInfoAsync(sqliteDir);
 
     if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(sqliteDir, { intermediates: true });
-      console.log("📁 SQLite directory created.");
+      await FileSystem.makeDirectoryAsync(sqliteDir, {
+        intermediates: true,
+      });
+      console.log("📁 SQLite directory ensured.");
     } else {
       console.log("📁 SQLite directory already exists.");
     }
@@ -26,33 +26,7 @@ const sqliteDir = `${FileSystem.documentDirectory}SQLite`;
 export const db = SQLite.openDatabaseSync(dbName);
 
 // === Utility ===
-export const getDatabaseFilePath = () =>
-  `${FileSystem.documentDirectory}SQLite/budget_tracker.db`;
-
-// Share backup helper
-export const shareBackupDatabase = async () => {
-  try {
-    const dbFile = getDatabaseFilePath();
-
-    const fileInfo = await FileSystem.getInfoAsync(dbFile);
-    if (!fileInfo.exists) throw new Error("Database file does not exist.");
-
-    if (!(await Sharing.isAvailableAsync()))
-      throw new Error("Sharing not available on this device.");
-
-    await Sharing.shareAsync(dbFile);
-    console.log("✅ Backup shared successfully");
-  } catch (error) {
-    console.error("❌ Failed to share database backup:", error);
-    throw error;
-  }
-};
-
-// Check if database exists
-export const checkIfDatabaseExists = async () => {
-  const info = await FileSystem.getInfoAsync(getDatabaseFilePath());
-  return info.exists;
-};
+export const getDatabaseFilePath = () => dbPath;
 
 // === Initialize Database ===
 export const initDatabase = async () => {
