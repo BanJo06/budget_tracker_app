@@ -9,6 +9,7 @@ import type {
 import { getAccounts } from "@/utils/accounts";
 import {
   getAllPlannedBudgetTransactions,
+  getBudget,
   getDailyBudget,
   getPlannedBudgets,
   initDatabase,
@@ -42,32 +43,36 @@ export default function Index() {
   const router = useRouter();
   const { showToast } = useToast();
 
+  // ======================
+  // State
+  // ======================
   const [plannedBudgets, setPlannedBudgets] = useState<PlannedBudget[]>([]);
-  const [budgetTransactions, setBudgetTransactions] = useState<
+  const [regularTransactions, setRegularTransactions] = useState<any>([]);
+  const [plannedBudgetTransactions, setPlannedBudgetTransactions] = useState<
     PlannedBudgetTransaction[]
   >([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]); // regular income/expense
   const [dbReady, setDbReady] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // FIX: Added currentProgress state as a placeholder
+  const [dailyBudget, setDailyBudget] = useState(0);
+  const [scaledBudget, setScaledBudget] = useState(0);
+  const [amountSpent, setAmountSpent] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [currentProgress, setCurrentProgress] = useState(0);
-  const [currentPieProgress, setCurrentPieProgress] = useState(0.2);
 
   const [selectedBudget, setSelectedBudget] = useState<PlannedBudget | null>(
     null
   );
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [transactionAmount, setTransactionAmount] = useState("");
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isTransactionModalVisible, setIsTransactionModalVisible] =
     useState(false);
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
 
-  // regular transactions (income/expense/transfer)
-  const [transactions, setTransactions] = useState<any[]>([]);
-
-  // weekly modal state (if not already added)
   const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
   const [weeklyModalType, setWeeklyModalType] = useState<
     "spent" | "earned" | null
@@ -75,78 +80,285 @@ export default function Index() {
   const [filteredWeeklyTransactions, setFilteredWeeklyTransactions] = useState<
     any[]
   >([]);
+  const [weeklySummary, setWeeklySummary] = useState({ spent: 0, earned: 0 });
 
-  const [transactionAmount, setTransactionAmount] = useState("");
-
-  const [readyQuests, setReadyQuests] = useState<string[]>([]);
   const [useAppCompleted, setUseAppCompleted] = useState(false);
   const [useAppProgress, setUseAppProgress] = useState(0);
 
-  const [dailyBudget, setDailyBudget] = useState(0);
+  const options = ["Today", "This Week", "This Month"];
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [insightText, setInsightText] = useState("");
 
-  //Pie Graph
-  // const colorScheme = useColorScheme();
-  // const textColor = colorScheme === "dark" ? "#fff" : "#000";
-  // const percentBgColor = colorScheme === "dark" ? "#000000" : "#0ffff70"
-  // const screenWidth = Dimensions.get("screen").width;
-  // const size = screenWidth - 100;
-  // const strokeWidth = 35;
-  // const center = size / 2;
-  // const radius = (size - strokeWidth*2) / 2;
-  // const circumference = 2 * Math.PI * radius;
+  // ======================
+  // Database load
+  // ======================
+  const loadDatabase = async () => {
+    try {
+      await initDatabase();
+      const [allAccounts, allBudgets, plannedtransactions, allTx, daily] =
+        await Promise.all([
+          getAccounts(),
+          getPlannedBudgets(),
+          getAllPlannedBudgetTransactions(),
+          getAllTransactions(),
+          getDailyBudget(),
+        ]);
 
-  // const totalAmount = useMemo( () => typeSpending.reduce((sum, item) => sum + item.total, 0), [typeSpending]);
+      // Fetch the daily budget (assuming the name is "Daily Budget")
+      const dailyBudgetRow = await getBudget("daily_budget");
+      const dailyBudgetValue = dailyBudgetRow?.balance || 0;
 
-  // const startingAngles = useMemo(() => {
-  //   let angle = -90;
-  //   return typeSpending.map((item) =>{
-  //     const currentAngle = angle;
-  //     const percentage = totalAmount ? (item.total / totalAmount) * 360 : 0
-  //   angle += percentage;
-  //   return currentAngle
-  //   });
-  // }, [typeSpending, totalAmount])
-  // 🧩 Initialize DB + load accounts
-  useEffect(() => {
-    async function setupDatabaseAndLoadAccounts() {
-      try {
-        await initDatabase();
-        const initialAccounts = await getAccounts();
-        setAccounts(initialAccounts);
-
-        // ✅ Fetch daily budget
-        const dbValue = await getDailyBudget();
-        setDailyBudget(dbValue);
-
-        setDbReady(true);
-        // FIX: Set placeholder progress value to prevent crash
-        setCurrentProgress(0.5);
-      } catch (error) {
-        console.error(
-          "Error initializing database or loading accounts:",
-          error
-        );
-      }
+      setAccounts(allAccounts);
+      setPlannedBudgets(allBudgets);
+      setPlannedBudgetTransactions(plannedtransactions);
+      setRegularTransactions(allTx);
+      setDailyBudget(dailyBudgetValue);
+      setDbReady(true);
+    } catch (err) {
+      console.error("❌ Database initialization failed:", err);
+    } finally {
+      setLoading(false);
     }
-    setupDatabaseAndLoadAccounts();
+  };
+
+  const loadRegularTransactions = async () => {
+    try {
+      const allTx = await getAllTransactions();
+      setTransactions(allTx);
+    } catch (err) {
+      console.error("❌ Failed to load regular transactions:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadDatabase();
+    loadRegularTransactions();
   }, []);
 
-  //Troubleshoot for DailyQuests
-  // Reset code
-  // useEffect(() => {
-  //   const debugReset = async () => {
-  //     await AsyncStorage.multiRemove([
-  //       "@hasUsedApp",
-  //       "useAppQuestDate",
-  //       "useAppQuestTriggered",
-  //     ]);
-  //     console.log("🧹 Cleared AsyncStorage for testing first login");
-  //   };
+  useFocusEffect(
+    useCallback(() => {
+      loadDatabase();
+      loadRegularTransactions();
+    }, [])
+  );
 
-  //   debugReset();
-  // }, []);
+  // ======================
+  // Helpers
+  // ======================
+  const getPlannedBudgetId = (t: any) =>
+    t.planned_budget_id ?? t.budget_id ?? t.plannedBudgetId ?? null;
 
-  // 🧩 Handle Use App Quest
+  const getProgress = (
+    budget: PlannedBudget,
+    transactions: PlannedBudgetTransaction[]
+  ) => {
+    if (!budget) return 0;
+    const budgetAmount = Number(budget.amount || 0);
+    if (budgetAmount === 0) return 0;
+
+    const spentAmount = transactions
+      .filter((t) => getPlannedBudgetId(t) === budget.id)
+      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+
+    return Math.min(spentAmount / budgetAmount, 1);
+  };
+
+  const getTransactionsLast7Days = (type: "spent" | "earned") => {
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
+
+    return transactions.filter((t) => {
+      const date = new Date(t.date);
+      return (
+        date >= sevenDaysAgo &&
+        date <= now &&
+        ((type === "spent" && t.type === "expense") ||
+          (type === "earned" && t.type === "income"))
+      );
+    });
+  };
+
+  const openWeeklyModal = (type: "spent" | "earned") => {
+    setFilteredWeeklyTransactions(getTransactionsLast7Days(type));
+    setWeeklyModalType(type);
+    setWeeklyModalVisible(true);
+  };
+
+  const closeWeeklyModal = () => {
+    setFilteredWeeklyTransactions([]);
+    setWeeklyModalType(null);
+    setWeeklyModalVisible(false);
+  };
+
+  const toggleAccountsModal = () => setAccountsModalVisible((p) => !p);
+
+  // Today Overview
+  const isToday = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    return (
+      date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate()
+    );
+  };
+
+  useEffect(() => {
+    if (!dailyBudget) return;
+
+    const now = new Date();
+
+    const filteredTx = regularTransactions.filter((t) => {
+      const txDate = new Date(t.date);
+      return (
+        txDate.getFullYear() === now.getFullYear() &&
+        txDate.getMonth() === now.getMonth() &&
+        txDate.getDate() === now.getDate()
+      );
+    });
+
+    const totalSpentToday = filteredTx.reduce(
+      (sum, t) => sum + Number(t.amount || 0),
+      0
+    );
+
+    setAmountSpent(totalSpentToday);
+    setScaledBudget(dailyBudget); // ✅ use the dailyBudget directly
+  }, [dailyBudget, regularTransactions]);
+
+  // ======================
+  // Progress & Budget Overview
+  // ======================
+  useEffect(() => {
+    if (!dailyBudget) return;
+
+    // Only include expense transactions
+    const expenseTx = regularTransactions.filter((t) => t.type === "expense");
+
+    const now = new Date();
+
+    let startDate: Date;
+    switch (options[selectedIndex]) {
+      case "Today":
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case "This Week":
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - now.getDay());
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case "This Month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+
+    const filteredTx = expenseTx.filter((t) => {
+      const txDate = new Date(t.date);
+      return txDate >= startDate && txDate <= now;
+    });
+
+    const totalSpent = filteredTx.reduce(
+      (sum, t) => sum + Number(t.amount || 0),
+      0
+    );
+    setAmountSpent(totalSpent);
+
+    let newScaledBudget = dailyBudget;
+    if (options[selectedIndex] === "This Week")
+      newScaledBudget = dailyBudget * 7;
+    if (options[selectedIndex] === "This Month") {
+      const daysInMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+      newScaledBudget = dailyBudget * daysInMonth;
+    }
+    setScaledBudget(newScaledBudget);
+
+    // 🟣 Comparison logic (only expenseTx)
+    let prevStart: Date, prevEnd: Date;
+    if (options[selectedIndex] === "Today") {
+      prevStart = new Date(now);
+      prevStart.setDate(now.getDate() - 1);
+      prevStart.setHours(0, 0, 0, 0);
+      prevEnd = new Date(now);
+      prevEnd.setDate(now.getDate() - 1);
+      prevEnd.setHours(23, 59, 59, 999);
+    } else if (options[selectedIndex] === "This Week") {
+      prevEnd = new Date(startDate);
+      prevEnd.setDate(prevEnd.getDate() - 1);
+      prevStart = new Date(prevEnd);
+      prevStart.setDate(prevStart.getDate() - 6);
+    } else {
+      prevEnd = new Date(startDate);
+      prevEnd.setDate(0);
+      prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1);
+    }
+
+    const previousTx = expenseTx.filter((t) => {
+      const txDate = new Date(t.date);
+      return txDate >= prevStart && txDate <= prevEnd;
+    });
+
+    const previousSpent = previousTx.reduce(
+      (sum, t) => sum + Number(t.amount || 0),
+      0
+    );
+
+    const label =
+      options[selectedIndex] === "Today"
+        ? "yesterday"
+        : options[selectedIndex] === "This Week"
+        ? "last week"
+        : "last month";
+
+    setInsightText(calculateComparison(totalSpent, previousSpent, label));
+  }, [dailyBudget, regularTransactions, selectedIndex]);
+
+  // Calculate Comparison
+  const calculateComparison = (
+    currentAmount: number,
+    previousAmount: number,
+    periodLabel: string
+  ) => {
+    if (previousAmount === 0) return "No data for comparison.";
+
+    const difference = currentAmount - previousAmount;
+    const percentage = Math.abs((difference / previousAmount) * 100).toFixed(1);
+
+    if (difference > 0) {
+      return `You spent ${percentage}% more than ${periodLabel}`;
+    } else if (difference < 0) {
+      return `You spent ${percentage}% less than ${periodLabel}`;
+    } else {
+      return `You spent the same as ${periodLabel}`;
+    }
+  };
+
+  // ======================
+  // Weekly Summary
+  // ======================
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        setWeeklySummary(calculateWeeklySummary(7));
+      } catch (err) {
+        console.error("❌ Weekly summary failed:", err);
+        setWeeklySummary({ spent: 0, earned: 0 });
+      }
+    };
+    fetchSummary();
+  }, []);
+
+  // ======================
+  // Handle Daily Quest
+  // ======================
+
+  // // 🧩 Handle Use App Quest
   useEffect(() => {
     async function handleDailyQuestCheck() {
       const { readyIds } = await checkDailyQuests();
@@ -189,281 +401,86 @@ export default function Index() {
     };
     resetQuestIfNewDay();
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const freshAccounts = await getAccounts();
-        setAccounts(freshAccounts);
-      })();
-    }, [])
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const freshAccounts = await getAccounts();
-        setAccounts(freshAccounts);
-        console.log("🔄 Reloaded accounts:", freshAccounts);
-      })();
-    }, [])
-  );
-
-  const toggleAccountsModal = () => setAccountsModalVisible((p) => !p);
-
-  // Load all transactions (global)
-  const loadAllTransactions = async () => {
-    try {
-      const allTx = await getAllPlannedBudgetTransactions(); // get everything
-      setBudgetTransactions(allTx);
-      console.log("🧾 Loaded all transactions from DB:", allTx);
-    } catch (err) {
-      console.error("❌ Error loading transactions:", err);
-    }
-  };
-
-  // Load planned budgets
-  const loadPlannedBudgets = useCallback(async () => {
-    try {
-      setLoading(true);
-      await initDatabase();
-      const budgets = await getPlannedBudgets();
-      setPlannedBudgets(budgets);
-    } catch (error) {
-      console.error("Error loading planned budgets:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadPlannedBudgets();
-  }, [loadPlannedBudgets]);
+    const handleDailyQuestCheck = async () => {
+      const { readyIds } = await checkDailyQuests();
+      const today = new Date().toDateString();
+      const hasUsedApp = await AsyncStorage.getItem("@hasUsedApp");
+      const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
 
-  useFocusEffect(
-    useCallback(() => {
-      loadPlannedBudgets();
-      loadAllTransactions();
-    }, [loadPlannedBudgets])
-  );
-
-  // Also load all transactions once when component mounts (fallback)
-  useEffect(() => {
-    loadAllTransactions();
-  }, []);
-
-  // ---------- Progress calculation ----------
-  // tolerant key check: some DB rows might use planned_budget_id or budget_id
-  const getPlannedBudgetId = (t: any) =>
-    t.planned_budget_id ?? t.budget_id ?? t.plannedBudgetId ?? null;
-
-  // This function seems unused in the UI, but kept for reference
-  const calculateProgress = (budget: any, allTransactions: any[]) => {
-    if (!budget || !allTransactions) {
-      console.log("⚠️ [DEBUG] Missing budget or transactions input");
-      return 0;
-    }
-
-    const transactions = allTransactions.filter(
-      (t) => getPlannedBudgetId(t) === budget.id
-    );
-
-    console.log(
-      `🧮 [DEBUG] Budget "${budget.budget_name}" (${budget.id}) has`,
-      transactions.length,
-      "transactions"
-    );
-
-    if (!transactions || transactions.length === 0) {
-      console.log("ℹ️ [DEBUG] No transactions for this budget yet");
-      return 0;
-    }
-
-    const totalSaved = transactions.reduce(
-      (sum, t) => sum + parseFloat(t.amount || 0),
-      0
-    );
-    const goal = parseFloat(budget.amount || 0);
-    const progress = goal > 0 ? Math.min(totalSaved / goal, 1) : 0;
-
-    console.log(
-      `💰 [DEBUG] Total Saved = ₱${totalSaved.toFixed(
-        2
-      )} / Goal = ₱${goal.toFixed(2)} → Progress = ${(progress * 100).toFixed(
-        2
-      )}%`
-    );
-
-    return progress;
-  };
-
-  // FIX: Simplified and corrected the redundant getProgress logic
-  const getProgress = (
-    budget: PlannedBudget,
-    transactions: PlannedBudgetTransaction[]
-  ): number => {
-    if (!budget) return 0;
-    const budgetAmount = Number(budget.amount || 0);
-    if (budgetAmount === 0) return 0;
-
-    const spentAmount = transactions
-      .filter((t) => t.planned_budget_id === budget.id)
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-    const progress = spentAmount / budgetAmount;
-
-    // Return progress as a number between 0 and 1 (clamped)
-    return progress > 1 ? 1 : progress;
-  };
-
-  //Display data for Income and Expense
-  const [weeklySummary, setWeeklySummary] = useState({
-    spent: 0,
-    earned: 0,
-  });
-  const DAYS_TO_CHECK = 7;
-
-  useEffect(() => {
-    // A function to handle the async operation
-    const fetchSummary = async () => {
-      try {
-        // You might need to wrap this in a database provider/hook
-        // depending on how getDb() is exposed in your environment.
-        const summary = calculateWeeklySummary(DAYS_TO_CHECK);
-        setWeeklySummary(summary);
-      } catch (error) {
-        console.error("Failed to fetch weekly summary:", error);
-        // Set to default values on error
-        setWeeklySummary({ spent: 0, earned: 0 });
+      if (
+        readyIds.includes("1") ||
+        (hasUsedApp === "true" && lastUseApp === today)
+      ) {
+        setUseAppCompleted(true);
+        setUseAppProgress(1);
+      } else {
+        setUseAppCompleted(false);
+        setUseAppProgress(0);
       }
     };
+    handleDailyQuestCheck();
+  }, []);
 
-    fetchSummary();
-  }, []); // Run only once on mount
-
-  // ---------- Save transaction ----------
   useEffect(() => {
-    if (selectedBudget?.id) {
-      const transactions = budgetTransactions.filter(
-        (t) => getPlannedBudgetId(t) === selectedBudget.id
-      );
-      console.log("✅ [DEBUG] All transactions:", budgetTransactions);
-      console.log("✅ [DEBUG] Filtered for selected:", transactions);
-    }
-  }, [selectedBudget, budgetTransactions]);
+    const resetQuestIfNewDay = async () => {
+      const today = new Date().toDateString();
+      const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
+      if (lastUseApp !== today) {
+        await AsyncStorage.multiRemove(["@hasUsedApp", "useAppQuestDate"]);
+        setUseAppCompleted(false);
+        setUseAppProgress(0);
+      }
+    };
+    resetQuestIfNewDay();
+  }, []);
 
+  //Troubleshoot for DailyQuests
+  // Reset code
+  // useEffect(() => {
+  //   const debugReset = async () => {
+  //     await AsyncStorage.multiRemove([
+  //       "@hasUsedApp",
+  //       "useAppQuestDate",
+  //       "useAppQuestTriggered",
+  //     ]);
+  //     console.log("🧹 Cleared AsyncStorage for testing first login");
+  //   };
+
+  //   debugReset();
+  // }, []);
+
+  // ======================
+  // Save Transaction
+  // ======================
   const handleSaveTransaction = async () => {
-    if (!transactionAmount) {
-      alert("Please enter an amount.");
-      return;
-    }
-    if (!selectedBudget) {
-      alert("No planned budget selected.");
-      return;
-    }
+    if (!transactionAmount || !selectedBudget)
+      return alert("Please enter amount and select a budget.");
 
     try {
-      const currentDate = new Date().toISOString();
-
       await savePlannedBudgetTransaction(
         selectedBudget.id,
         Number(transactionAmount),
-        currentDate,
+        new Date().toISOString(),
         selectedAccount?.id ?? null
       );
-
-      console.log("✅ Transaction saved for:", selectedBudget.id);
-
-      // 🧩 FIXED — pass selectedBudget.id
-      const verify = await getAllPlannedBudgetTransactions(selectedBudget.id);
-      console.log("🧾 [VERIFY] All transactions in DB after save:", verify);
-
-      // Reset modal state
       setTransactionAmount("");
       setSelectedAccount(null);
       setIsTransactionModalVisible(false);
 
-      // Reload data
-      await loadAllTransactions();
-      await loadPlannedBudgets();
+      await loadDatabase(); // reload all DB data
     } catch (err) {
       console.error("❌ Error saving transaction:", err);
     }
   };
 
-  useEffect(() => {
-    if (plannedBudgets.length === 0) return;
-
-    const totalSpent = budgetTransactions.reduce(
-      (sum, t) => sum + Number(t.amount || 0),
-      0
-    );
-    const totalGoal = plannedBudgets.reduce(
-      (sum, b) => sum + Number(b.amount || 0),
-      0
-    );
-
-    const overallProgress = totalGoal > 0 ? totalSpent / totalGoal : 0;
-
-    console.log(
-      `📊 [DEBUG] totalSpent=${totalSpent}, totalGoal=${totalGoal}, progress=${overallProgress}`
-    );
-
-    setCurrentProgress(overallProgress);
-  }, [plannedBudgets, budgetTransactions]);
-
-  // For Expense and Income Modal
-  const loadRegularTransactions = async () => {
-    try {
-      const allTx = await getAllTransactions(); // <-- must return regular transactions
-      setTransactions(allTx);
-      console.log("🧾 Loaded regular transactions from DB:", allTx);
-    } catch (err) {
-      console.error("❌ Error loading regular transactions:", err);
-    }
-  };
-
-  useEffect(() => {
-    loadRegularTransactions();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadPlannedBudgets();
-      loadAllTransactions(); // your planned budget loader
-      loadRegularTransactions(); // NEW: load normal transactions too
-    }, [loadPlannedBudgets])
-  );
-
-  const getTransactionsLast7Days = (type: "spent" | "earned") => {
-    const now = new Date();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(now.getDate() - 7);
-
-    return transactions.filter((t) => {
-      // t.type should be 'expense' | 'income' on regular transactions
-      const date = new Date(t.date);
-      return (
-        date >= sevenDaysAgo &&
-        date <= now &&
-        ((type === "spent" && t.type === "expense") ||
-          (type === "earned" && t.type === "income"))
-      );
-    });
-  };
-
-  const openWeeklyModal = (type: "spent" | "earned") => {
-    const filtered = getTransactionsLast7Days(type);
-    setFilteredWeeklyTransactions(filtered);
-    setWeeklyModalType(type);
-    setWeeklyModalVisible(true);
-  };
-
-  const closeWeeklyModal = () => {
-    setWeeklyModalVisible(false);
-    setWeeklyModalType(null);
-    setFilteredWeeklyTransactions([]);
-  };
+  // ======================
+  // Navigation Handlers
+  // ======================
+  const handleLeftPress = () =>
+    setSelectedIndex((prev) => (prev === 0 ? options.length - 1 : prev - 1));
+  const handleRightPress = () =>
+    setSelectedIndex((prev) => (prev === options.length - 1 ? 0 : prev + 1));
 
   // ---------- UI ----------
   return (
@@ -472,7 +489,7 @@ export default function Index() {
         isBudgetModalVisible={isModalVisible}
         setIsBudgetModalVisible={setIsModalVisible}
         selectedBudget={selectedBudget}
-        budgetTransactions={budgetTransactions}
+        budgetTransactions={plannedBudgetTransactions}
         isTransactionModalVisible={isTransactionModalVisible}
         setIsTransactionModalVisible={setIsTransactionModalVisible}
         transactionAmount={transactionAmount}
@@ -520,17 +537,24 @@ export default function Index() {
       >
         <View className="pb-[20] flex-row justify-between">
           <Text className="text-[12px] font-medium self-center">Overview</Text>
-          <View className="flex-row justify-between gap-x-2">
-            <SVG_ICONS.ArrowLeft width={24} height={24} />
-            <Text className="text-[12px] font-medium self-center">
-              This Week
-            </Text>
-            <SVG_ICONS.ArrowRight width={24} height={24} />
+          <View className="flex-row justify-between">
+            <TouchableOpacity onPress={handleLeftPress}>
+              <SVG_ICONS.ArrowLeft width={24} height={24} />
+            </TouchableOpacity>
+
+            <View className="self-center" style={{ width: 70 }}>
+              <Text className="text-[12px] font-medium self-center">
+                {options[selectedIndex]}
+              </Text>
+            </View>
+
+            <TouchableOpacity onPress={handleRightPress}>
+              <SVG_ICONS.ArrowRight width={24} height={24} />
+            </TouchableOpacity>
           </View>
         </View>
 
         <View className="flex-row justify-between">
-          {/* FIX: Use the 'currentProgress' state variable */}
           <View className="w-[140] h-[140] flex-col justify-center items-center">
             {/* <ProgressRing
               progress={currentProgress}
@@ -542,18 +566,30 @@ export default function Index() {
               showPercentage={true}
               textColor="#8938E9"
             /> */}
-            <DonutChart progress={currentProgress} dailyBudget={dailyBudget} />
+            {/* <DonutChart
+              progress={scaledBudget > 0 ? amountSpent / scaledBudget : 0}
+              dailyBudget={scaledBudget}
+              spent={amountSpent}
+            /> */}
+            <DonutChart
+              progress={scaledBudget > 0 ? amountSpent / scaledBudget : 0}
+              dailyBudget={scaledBudget}
+              spent={amountSpent}
+            />
           </View>
           <View className="flex-col items-end justify-end pr-[10] pb-[6]">
             <View className="flex-row mb-[4] px-[8] py-[4] gap-[4] bg-[#EDE1FB] rounded-[16]">
               <SVG_ICONS.Insight width={16} height={16} />
               <Text className="text-[12px] text-[#8938E9]">Insight</Text>
             </View>
-            <Text className="text-[8px] text-[#392F46] opacity-65">
+            {/* <Text className="text-[8px] text-[#392F46] opacity-65">
               You spent 5% more
             </Text>
             <Text className="text-[8px] text-[#392F46] opacity-65">
               than last week
+            </Text> */}
+            <Text className="text-[8px] text-[#392F46] opacity-65 text-right">
+              {insightText}
             </Text>
           </View>
         </View>
@@ -635,7 +671,7 @@ export default function Index() {
                 activeOpacity={0.9}
                 onPress={() => {
                   console.log("📋 [DEBUG] Selected budget:", budget);
-                  const filtered = budgetTransactions.filter(
+                  const filtered = regularTransactions.filter(
                     (t) => getPlannedBudgetId(t) === budget.id
                   );
                   console.log(
@@ -681,14 +717,14 @@ export default function Index() {
                 <View className="py-[16] px-[20]">
                   {/* FIX: Use 'budget' instead of 'selectedBudget' for the current item */}
                   <ProgressBar
-                    progress={getProgress(budget, budgetTransactions)}
+                    progress={getProgress(budget, plannedBudgetTransactions)}
                   />
                   <View className="mt-[8]">
                     <Text className="text-[14px]">
                       Spent ₱
                       {(
                         Number(budget.amount) *
-                        Number(getProgress(budget, budgetTransactions))
+                        Number(getProgress(budget, plannedBudgetTransactions))
                       ).toFixed(0)}{" "}
                       from{" "}
                       <Text className="text-[14px] text-[#8938E9]">

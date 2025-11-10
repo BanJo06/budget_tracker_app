@@ -167,15 +167,28 @@ export const getBudgets = () => {
   }
 };
 
+// export const getBudget = (name) => {
+//   try {
+//     const row = db.getFirstSync("SELECT * FROM budgets WHERE name = ?;", [
+//       name,
+//     ]);
+//     return row || { name, balance: 0 };
+//   } catch (error) {
+//     console.error(`Error getting budget '${name}':`, error);
+//     throw new Error(`Failed to retrieve budget '${name}'.`);
+//   }
+// };
+
 export const getBudget = (name) => {
   try {
     const row = db.getFirstSync("SELECT * FROM budgets WHERE name = ?;", [
       name,
     ]);
+    console.log("Fetched budget row:", row);
     return row || { name, balance: 0 };
   } catch (error) {
     console.error(`Error getting budget '${name}':`, error);
-    throw new Error(`Failed to retrieve budget '${name}'.`);
+    return { name, balance: 0 };
   }
 };
 
@@ -376,5 +389,19 @@ export const getAllPlannedBudgetTransactions = (plannedBudgetId = null) => {
   } catch (error) {
     console.error("Error fetching planned budget transactions:", error);
     throw new Error("Failed to fetch planned budget transactions.");
+  }
+};
+
+// database.js
+export const getBudgetBalance = (name) => {
+  try {
+    const row = db.getFirstSync("SELECT balance FROM budgets WHERE name = ?;", [
+      name,
+    ]);
+    console.log("Fetched balance:", row?.balance); // Debug
+    return row?.balance ?? 0;
+  } catch (error) {
+    console.error(`Error getting balance for '${name}':`, error);
+    return 0; // fallback
   }
 };
