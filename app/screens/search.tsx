@@ -4,20 +4,27 @@ import { SVG_ICONS } from "@/assets/constants/icons";
 import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
 import { initDatabase } from "@/utils/database";
 import { getAllTransactions } from "@/utils/transactions";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Modal,
   Pressable,
   SectionList,
   Text,
-  TouchableOpacity,
+  TextInput,
   View,
 } from "react-native";
 
-export default function Records() {
+export default function SearchTransactions() {
   const [transactions, setTransactions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  // Changing header name
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: "Search Transactions" });
+  }, []);
 
   useEffect(() => {
     async function loadTransactions() {
@@ -33,6 +40,17 @@ export default function Records() {
     loadTransactions();
   }, []);
 
+  // Filter transactions by search query
+  const filteredTransactions = transactions.filter((transaction) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      transaction.description?.toLowerCase().includes(query) ||
+      transaction.category_name?.toLowerCase().includes(query) ||
+      transaction.account_name?.toLowerCase().includes(query) ||
+      (transaction.to_account_name?.toLowerCase().includes(query) ?? false)
+    );
+  });
+
   const groupTransactionsByDate = (transactionsList) => {
     const groupedData = {};
     transactionsList.forEach((transaction) => {
@@ -41,34 +59,21 @@ export default function Records() {
         weekday: "long",
         month: "long",
         day: "numeric",
-        year: "numeric", // include the year
+        year: "numeric",
       });
-      if (!groupedData[day]) {
-        groupedData[day] = [];
-      }
+      if (!groupedData[day]) groupedData[day] = [];
       groupedData[day].push(transaction);
     });
-
     return Object.keys(groupedData).map((date) => ({
       title: date,
       data: groupedData[date],
     }));
   };
 
-  const sections = groupTransactionsByDate(transactions);
-
-  if (transactions.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-gray-500">No transactions recorded yet.</Text>
-      </View>
-    );
-  }
+  const sections = groupTransactionsByDate(filteredTransactions);
 
   const renderModalContent = () => {
-    if (!selectedTransaction) {
-      return null;
-    }
+    if (!selectedTransaction) return null;
 
     const {
       type,
@@ -80,12 +85,12 @@ export default function Records() {
       account_name,
       to_account_name,
     } = selectedTransaction;
+
     const isIncome = type === "income";
     const isExpense = type === "expense";
     const isTransfer = type === "transfer";
     const amountPrefix = isIncome ? "+" : "-";
 
-    // Use Tailwind classes for colors and prefix/amount logic
     const amountColorClass = isIncome ? "text-[#8938E9]" : "text-black";
     const iconBgColorClass = isIncome
       ? "bg-[#8938E9]"
@@ -132,21 +137,12 @@ export default function Records() {
 
     return (
       <View className="m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]">
-        {/* Header with buttons */}
-        <View className="flex-row justify-between w-full mb-5">
-          <Pressable
-            className="p-2.5"
-            onPress={() => setSelectedTransaction(null)}
-          >
-            <SVG_ICONS.Category size={24} color="#000" />
-          </Pressable>
-          <View className="flex-row gap-2.5">
-            <Pressable className="p-2.5"></Pressable>
-            <Pressable className="p-2.5"></Pressable>
-          </View>
-        </View>
-
-        {/* Transaction details */}
+        <Pressable
+          className="self-end p-2.5"
+          onPress={() => setSelectedTransaction(null)}
+        >
+          <Text className="text-black text-lg">Close</Text>
+        </Pressable>
         <View className="items-center mb-5">
           <View
             className={`w-15 h-15 rounded-full justify-center items-center mb-2.5 ${iconBgColorClass}`}
@@ -184,24 +180,24 @@ export default function Records() {
   };
 
   return (
-    <View className="flex-1 bg-white px-8">
-      <View className="flex-row justify-end pt-4 pb-2">
-        <TouchableOpacity
-          onPress={() => router.push("/screens/search")}
-          className="w-[30px] h-[30px] rounded-full flex-row active:bg-[#F0E4FF]"
-        >
-          <SVG_ICONS.Search size={30} />
-        </TouchableOpacity>
-      </View>
+    <View className="flex-1 bg-white px-6 pt-4">
+      {/* Search Box */}
+      <TextInput
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Search transactions..."
+        className="h-[40] px-4 mb-4 border border-gray-300 rounded-full"
+        placeholderTextColor="#888"
+      />
 
-      {/* Use the styled SectionList */}
+      {/* SectionList */}
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id.toString()}
         renderSectionHeader={({ section: { title } }) => (
-          <View className="flex-col my-4">
+          <View className="flex-col my-2">
             <Text className="font-medium">{title}</Text>
-            <View className="h-[2px] bg-black rounded-full" />
+            <View className="h-[1px] bg-gray-300 rounded-full" />
           </View>
         )}
         renderItem={({ item }) => {
@@ -211,14 +207,12 @@ export default function Records() {
           let amountText;
           let amountColorClass;
 
-          // 1. Check the transaction type first.
           if (item.type === "income") {
             const categoryIconName = item.category_icon_name || "OtherIncome";
             const categoryName = item.category_name || "Other Income";
-
-            let foundIcon = CATEGORIES_INCOME_SVG_ICONS[categoryIconName];
-            IconComponent = foundIcon || SVG_ICONS.Category;
-
+            IconComponent =
+              CATEGORIES_INCOME_SVG_ICONS[categoryIconName] ||
+              SVG_ICONS.Category;
             iconBgColorClass = "bg-[#8938E9]";
             amountColorClass = "text-[#8938E9]";
             mainText = categoryName;
@@ -226,17 +220,15 @@ export default function Records() {
           } else if (item.type === "expense") {
             const categoryIconName = item.category_icon_name || "OtherExpenses";
             const categoryName = item.category_name || "Other Expenses";
-
-            let foundIcon = CATEGORIES_EXPENSES_SVG_ICONS[categoryIconName];
-            IconComponent = foundIcon || SVG_ICONS.Category;
-
+            IconComponent =
+              CATEGORIES_EXPENSES_SVG_ICONS[categoryIconName] ||
+              SVG_ICONS.Category;
             iconBgColorClass = "bg-black";
             amountColorClass = "text-black";
             mainText = categoryName;
             amountText = `-₱${item.amount.toFixed(2)}`;
           } else if (item.type === "transfer") {
             IconComponent = SVG_ICONS.Transfer;
-
             iconBgColorClass = "bg-gray-500";
             amountColorClass = "text-gray-500";
             mainText = `Transfer from ${item.account_name} to ${item.to_account_name}`;
@@ -268,16 +260,14 @@ export default function Records() {
           );
         }}
       />
-      {/* Modal for transaction details */}
+
+      {/* Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={!!selectedTransaction}
-        onRequestClose={() => {
-          setSelectedTransaction(null);
-        }}
+        onRequestClose={() => setSelectedTransaction(null)}
       >
-        {/* modalStyles.centeredView -> flex-1 justify-center items-center mt-5.5 bg-black/50 */}
         <View className="flex-1 justify-center items-center mt-[22px] bg-black/50">
           {renderModalContent()}
         </View>
