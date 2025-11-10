@@ -569,6 +569,7 @@ export default function Add() {
         );
         await saveTransaction(
           Number(fromAccountId),
+          selectedAccount.name,
           Number(categoryId),
           amount,
           transactionType,

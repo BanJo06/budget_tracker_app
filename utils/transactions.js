@@ -55,7 +55,7 @@ export const saveTransaction = (
   db.runSync(
     `INSERT INTO transactions (account_id, account_name, category_id, amount, type, description, date)
      VALUES (?, ?, ?, ?, ?, ?, ?);`,
-    [accountId, accountName, categoryId, amount, type, description, date]
+    [accountId, accountName, categoryId, amount, type, notes, date]
   );
 
   console.log("Transaction saved:", {
