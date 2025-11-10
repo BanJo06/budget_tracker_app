@@ -317,13 +317,32 @@ export const getPlannedBudgets = () => {
 export const deletePlannedBudget = (id) => {
   try {
     db.withTransactionSync(() => {
+      // 1️⃣ Get all transactions for this planned budget
+      const transactions = db.getAllSync(
+        "SELECT * FROM planned_budget_transactions WHERE planned_budget_id = ?;",
+        [id]
+      );
+
+      // 2️⃣ Restore account balances
+      transactions.forEach((tx) => {
+        if (tx.account_id) {
+          restoreAccountBalance(tx.account_id, tx.amount);
+        }
+      });
+
+      // 3️⃣ Delete transactions
       db.runSync(
         "DELETE FROM planned_budget_transactions WHERE planned_budget_id = ?;",
         [id]
       );
+
+      // 4️⃣ Delete the budget itself
       db.runSync("DELETE FROM planned_budgets WHERE id = ?;", [id]);
     });
-    console.log(`🗑️ Planned budget ID ${id} and its transactions deleted.`);
+
+    console.log(
+      `🗑️ Planned budget ID ${id} and its transactions deleted (balances restored).`
+    );
   } catch (error) {
     console.error(`Error deleting planned budget ID ${id}:`, error);
     throw new Error(`Failed to delete planned budget ID ${id}.`);
@@ -345,7 +364,13 @@ export const savePlannedBudgetTransaction = (
       `,
       [plannedBudgetId, parseFloat(amount), date, accountId || null]
     );
+
     console.log(`💾 Transaction saved for planned budget ${plannedBudgetId}`);
+
+    // ✅ Deduct from account if accountId is provided
+    if (accountId) {
+      updateAccountBalance(accountId, amount);
+    }
 
     // 🔍 Debug check
     const verify = db.getAllSync(
@@ -358,6 +383,50 @@ export const savePlannedBudgetTransaction = (
     throw new Error(
       `Failed to save planned budget transaction: ${error.message}`
     );
+  }
+};
+
+// Helper for updateAccount balance
+export const updateAccountBalance = (accountId, amount) => {
+  try {
+    const account = db.getFirstSync("SELECT * FROM accounts WHERE id = ?;", [
+      accountId,
+    ]);
+    if (!account) throw new Error("Account not found");
+
+    const newBalance = Number(account.balance) - Number(amount);
+
+    db.runSync("UPDATE accounts SET balance = ? WHERE id = ?;", [
+      newBalance,
+      accountId,
+    ]);
+
+    console.log(`💰 Account ${account.name} new balance: ₱${newBalance}`);
+  } catch (error) {
+    console.error("Error updating account balance:", error);
+    throw new Error(`Failed to update account balance: ${error.message}`);
+  }
+};
+
+// Restore Account Balance
+export const restoreAccountBalance = (accountId, amount) => {
+  try {
+    const account = db.getFirstSync("SELECT * FROM accounts WHERE id = ?;", [
+      accountId,
+    ]);
+    if (!account) throw new Error("Account not found");
+
+    const newBalance = Number(account.balance) + Number(amount);
+
+    db.runSync("UPDATE accounts SET balance = ? WHERE id = ?;", [
+      newBalance,
+      accountId,
+    ]);
+
+    console.log(`💰 Account ${account.name} restored balance: ₱${newBalance}`);
+  } catch (error) {
+    console.error("Error restoring account balance:", error);
+    throw new Error(`Failed to restore account balance: ${error.message}`);
   }
 };
 
