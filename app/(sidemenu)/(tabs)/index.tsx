@@ -110,6 +110,7 @@ export default function Index() {
   // ======================
   // Database load
   // ======================
+
   const loadDatabase = async () => {
     try {
       await initDatabase();
