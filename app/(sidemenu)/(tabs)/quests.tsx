@@ -1,4 +1,5 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
+import ReusableRoundedBoxComponent from "@/components/RoundedBoxComponent";
 import { useToast } from "@/components/ToastContext";
 import {
   checkAppUsageDuration,
@@ -7,10 +8,9 @@ import {
 } from "@/data/daily_quests_logic";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
-import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent";
 import DailyContent from "../../screens/daily";
 import WeeklyContent from "../../screens/weekly";
 
@@ -18,9 +18,16 @@ export default function Quests() {
   const [currentProgress, setCurrentProgress] = useState(0);
   const [selectedOption, setSelectedOption] = useState("daily");
   const [readyQuests, setReadyQuests] = useState<string[]>([]);
+  const [completedWeeklyQuestIds, setCompletedWeeklyQuestIds] = useState<
+    string[]
+  >([]);
   const { showToast } = useToast();
 
-  // 🔥 delay to ensure toast is visible (ToastProvider mounted)
+  const updateProgress = useCallback((value: number) => {
+    setCurrentProgress(value);
+    console.log("Parent currentProgress updated:", value);
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       initializeQuests();
@@ -29,16 +36,12 @@ export default function Quests() {
   }, []);
 
   const initializeQuests = async () => {
-    console.log("🎯 Running quest check...");
     const { readyIds } = await checkDailyQuests();
     setReadyQuests(readyIds);
 
-    const totalQuests = 3;
-    setCurrentProgress(readyIds.length / totalQuests);
-
     const today = new Date().toDateString();
 
-    // ✅ Use App Quest
+    // Show toast examples
     if (readyIds.includes("1")) {
       const toastKey = "@useAppQuestToastDate";
       const lastToastDate = await AsyncStorage.getItem(toastKey);
@@ -48,26 +51,20 @@ export default function Quests() {
       }
     }
 
-    // ✅ Add 1 Transaction Quest
     const transactionCompleted = await isTransactionQuestCompletedToday();
-    const toastKey = "@transactionQuestToastDate";
-    const lastToastDate = await AsyncStorage.getItem(toastKey);
-
-    if (transactionCompleted && lastToastDate !== today) {
-      console.log("🔥 Showing toast for 'Add 1 transaction'");
+    const toastKey2 = "@transactionQuestToastDate";
+    const lastToast2 = await AsyncStorage.getItem(toastKey2);
+    if (transactionCompleted && lastToast2 !== today) {
       showToast("🎉 Quest Completed: Add 1 transaction");
-      await AsyncStorage.setItem(toastKey, today);
+      await AsyncStorage.setItem(toastKey2, today);
     }
 
-    // ✅ Use App for 5 mins
-    const fiveMinKey = "@fiveMinQuestToastDate";
     const fiveMinCompleted = await checkAppUsageDuration();
-    const lastToastDate3 = await AsyncStorage.getItem(fiveMinKey);
-
-    if (fiveMinCompleted && lastToastDate3 !== today) {
-      console.log("🔥 Showing toast for 'Use app for 5 minutes'");
+    const toastKey3 = "@fiveMinQuestToastDate";
+    const lastToast3 = await AsyncStorage.getItem(toastKey3);
+    if (fiveMinCompleted && lastToast3 !== today) {
       showToast("🎉 Quest Completed: Use the app for 5 minutes");
-      await AsyncStorage.setItem(fiveMinKey, today);
+      await AsyncStorage.setItem(toastKey3, today);
     }
   };
 
@@ -76,7 +73,7 @@ export default function Quests() {
       return (
         <DailyContent
           currentProgress={currentProgress}
-          setCurrentProgress={setCurrentProgress}
+          setCurrentProgress={updateProgress}
           readyIds={readyQuests}
           showToast={showToast}
         />
@@ -87,7 +84,9 @@ export default function Quests() {
       return (
         <WeeklyContent
           currentProgress={currentProgress}
-          setCurrentProgress={setCurrentProgress}
+          setCurrentProgress={updateProgress}
+          showToast={showToast}
+          readyIds={completedWeeklyQuestIds}
         />
       );
     }

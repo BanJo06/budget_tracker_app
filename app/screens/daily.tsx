@@ -36,7 +36,8 @@ const DailyContent: React.FC<DailyContentProps> = ({
   readyIds,
 }) => {
   const [quests, setQuests] = useState<QuestState[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false); // ✅ prevents 0% flash
+  const [isLoaded, setIsLoaded] = useState(false); // prevents 0% flash
+  const [lastSentProgress, setLastSentProgress] = useState<number | null>(null);
 
   useEffect(() => {
     const initQuests = async () => {
@@ -62,9 +63,17 @@ const DailyContent: React.FC<DailyContentProps> = ({
         const completedCount = initialized.filter((q) => q.completed).length;
         const progress =
           DAILY_QUESTS.length > 0 ? completedCount / DAILY_QUESTS.length : 0;
-        setCurrentProgress(progress);
 
-        // ✅ Delay render until everything is ready
+        // Only update parent if different
+        if (
+          lastSentProgress === null ||
+          Math.abs(progress - lastSentProgress) > 0.0001
+        ) {
+          setCurrentProgress(progress);
+          setLastSentProgress(progress);
+        }
+
+        // Delay render until everything is ready
         setTimeout(() => setIsLoaded(true), 50);
       } catch (error) {
         console.error("Error initializing quests:", error);
@@ -73,16 +82,27 @@ const DailyContent: React.FC<DailyContentProps> = ({
     };
 
     initQuests();
+    // we intentionally do not include lastSentProgress in deps — initialization uses it as a guard above
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readyIds]);
 
-  // ✅ Keep progress synced with quest updates
+  // Keep progress synced with quest updates but guarded
   useEffect(() => {
-    if (!isLoaded) return; // skip until ready
+    if (!isLoaded) return;
     const completedCount = quests.filter((q) => q.completed).length;
     const total = quests.length;
     const progress = total > 0 ? completedCount / total : 0;
-    setCurrentProgress(progress);
-  }, [quests, isLoaded]);
+
+    // console.log("daily effect progress", progress);
+
+    if (
+      lastSentProgress === null ||
+      Math.abs(progress - lastSentProgress) > 0.0001
+    ) {
+      setCurrentProgress(progress);
+      setLastSentProgress(progress);
+    }
+  }, [quests, isLoaded, setCurrentProgress, lastSentProgress]);
 
   const handleComplete = (id: string) => {
     setQuests((prev) =>
@@ -99,7 +119,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
     Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 44;
 
   if (!isLoaded) {
-    // ✅ Optional loader — avoids flicker entirely
+    // Optional loader — avoids flicker entirely
     return (
       <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color="#8938E9" />

@@ -2,6 +2,10 @@ import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
 import CategoryModal from "@/components/CategoryModal";
 import CategorySelection from "@/components/CategorySelection";
+import {
+  getTransactionQuestProgress,
+  incrementTransactionQuestProgress,
+} from "@/data/weekly_quests_logic";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -354,6 +358,10 @@ export default function Add() {
   const [operator, setOperator] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Weekly quests
+  const [transactionProgress, setTransactionProgress] = useState(0); // 0-1
+  const [transactionCompleted, setTransactionCompleted] = useState(false);
+
   const [selectedOption, setSelectedOption] = useState<
     "expense" | "income" | "transfer"
   >("expense");
@@ -597,12 +605,37 @@ export default function Add() {
           showToast("🎉 Quest Completed: Add 1 transaction");
         }
 
+        console.log("Transaction saved successfully!");
+
+        // === 🧭 Weekly Quest: Add 50 Transactions ===
+        const { count, completed: weeklyCompleted } =
+          await incrementTransactionQuestProgress();
+        setTransactionProgress(count / 50);
+        setTransactionCompleted(weeklyCompleted);
+
+        if (weeklyCompleted) {
+          showToast("🎯 Weekly Quest Completed: Add 50 Transactions!");
+        } else {
+          showToast(`📈 Added ${count}/50 transactions this week`);
+        }
+
         router.replace("/(sidemenu)/(tabs)");
       } catch (error: any) {
         console.error("Failed to save transaction:", error?.message || error);
       }
     }
   };
+
+  useEffect(() => {
+    async function loadTransactionQuest() {
+      const { count, completed, progress } =
+        await getTransactionQuestProgress();
+      setTransactionProgress(progress);
+      setTransactionCompleted(completed);
+    }
+
+    loadTransactionQuest();
+  }, []);
 
   const options = [
     { label: "Income", value: "income" },

@@ -1,6 +1,8 @@
 import DonutChart from "@/components/DonutChart";
 import { useToast } from "@/components/ToastContext";
 import { checkDailyQuests } from "@/data/daily_quests_logic";
+import { WeeklyQuest, WEEKLY_QUESTS } from "@/data/weekly_quests_items";
+import { resetWeeklyProgressIfNeeded } from "@/data/weekly_quests_logic";
 import type {
   Account,
   PlannedBudget,
@@ -43,6 +45,11 @@ import type { TabHomeScreenNavigationProp } from "../../../types";
 // =========================================================
 // 🟣 Main Screen (logic fixes applied)
 // =========================================================
+
+interface QuestState extends WeeklyQuest {
+  readyToComplete?: boolean;
+}
+
 export default function Index() {
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const router = useRouter();
@@ -99,6 +106,13 @@ export default function Index() {
   const options = ["Today", "This Week", "This Month"];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [insightText, setInsightText] = useState("");
+
+  //Weekly Quests States
+  const [login7DaysProgress, setLogin7DaysProgress] = useState(0); // 0 to 7
+  const [login7DaysCompleted, setLogin7DaysCompleted] = useState(false);
+  const [quests, setQuests] = useState<WeeklyQuest[]>(() =>
+    WEEKLY_QUESTS.map((q) => ({ ...q }))
+  );
 
   const budgetLabel =
     selectedIndex === 0
@@ -268,6 +282,191 @@ export default function Index() {
     setAmountSpent(totalSpentToday);
     setScaledBudget(dailyBudget); // ✅ use the dailyBudget directly
   }, [dailyBudget, regularTransactions]);
+
+  //Weekly Quest Helpers
+  //Log-in for 7 days
+  // const handleLogin7DaysQuest = async () => {
+  //   const today = new Date().toDateString();
+
+  //   // Get last login info from AsyncStorage
+  //   const lastLoginDate = await AsyncStorage.getItem("@weeklyLoginLastDate");
+  //   const streak = Number(
+  //     (await AsyncStorage.getItem("@weeklyLoginStreak")) || "0"
+  //   );
+
+  //   let newStreak = streak;
+
+  //   if (lastLoginDate !== today) {
+  //     const yesterday = new Date();
+  //     yesterday.setDate(yesterday.getDate() - 1);
+
+  //     if (lastLoginDate === yesterday.toDateString()) {
+  //       newStreak = streak + 1; // consecutive day
+  //     } else {
+  //       newStreak = 1; // reset streak
+  //     }
+
+  //     // Save new values
+  //     await AsyncStorage.setItem("@weeklyLoginStreak", newStreak.toString());
+  //     await AsyncStorage.setItem("@weeklyLoginLastDate", today);
+  //   }
+
+  //   // Update internal progress (0–1)
+  //   setLogin7DaysProgress(Math.min(newStreak / 7, 1));
+
+  //   // Quest completed
+  //   if (newStreak >= 7 && !login7DaysCompleted) {
+  //     setLogin7DaysCompleted(true);
+  //     showToast("🎉 Weekly Quest Completed: Login for 7 days!");
+  //     setCurrentProgress((prev) =>
+  //       Math.min(prev + 1 / WEEKLY_QUESTS.length, 1)
+  //     );
+  //   }
+  // };
+  const [completedWeeklyQuestIds, setCompletedWeeklyQuestIds] = useState<
+    string[]
+  >([]);
+  const handleLogin7DaysQuest = async () => {
+    const DEBUG_LOGIN_STREAK = true; // enable debug mode
+
+    if (DEBUG_LOGIN_STREAK) {
+      // Simulate consecutive logins
+      let simulatedStreak = 6; // e.g., 6 days already logged
+      console.log("🛠 Simulated streak:", simulatedStreak);
+
+      // Increment one day (simulate login today)
+      simulatedStreak += 1;
+
+      // Save to AsyncStorage
+      await AsyncStorage.setItem(
+        "@weeklyLoginStreak",
+        simulatedStreak.toString()
+      );
+      await AsyncStorage.setItem(
+        "@weeklyLoginLastDate",
+        new Date().toDateString()
+      );
+
+      console.log("✅ Debug: New simulated streak:", simulatedStreak);
+
+      if (simulatedStreak >= 7) {
+        showToast("🎉 Weekly Quest Completed: Login for 7 days!");
+
+        // ✅ Update completed quests and main progress
+        setCompletedWeeklyQuestIds((prev) => [...prev, "login_7days"]);
+        setCurrentProgress((prev) =>
+          Math.min(prev + 1 / WEEKLY_QUESTS.length, 1)
+        );
+      }
+
+      return; // Skip the real login logic
+    }
+
+    // ...rest of normal logic
+  };
+
+  // useEffect(() => {
+  //   const initLoginQuest = async () => {
+  //     await handleLogin7DaysQuest();
+  //   };
+  //   initLoginQuest();
+  // }, []);
+
+  useEffect(() => {
+    const triggerLogin7DaysQuest = async () => {
+      try {
+        const today = new Date();
+        const todayStr = today.toDateString();
+
+        let streak =
+          Number(await AsyncStorage.getItem("@weeklyLoginStreak")) || 0;
+        const lastLoginStr = await AsyncStorage.getItem("@weeklyLastLoginDate");
+
+        console.log("📅 Today:", todayStr);
+        console.log("📌 Last Login:", lastLoginStr);
+        console.log("🔢 Current Streak (before check):", streak);
+
+        if (!lastLoginStr) {
+          // First login ever
+          streak = 1;
+          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
+          await AsyncStorage.setItem("@weeklyLastLoginDate", todayStr);
+          console.log("🌟 First login ever. Streak set to 1.");
+        } else if (lastLoginStr !== todayStr) {
+          // Not logged in today
+          const lastLoginDate = new Date(lastLoginStr);
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+
+          if (
+            lastLoginDate.getFullYear() === yesterday.getFullYear() &&
+            lastLoginDate.getMonth() === yesterday.getMonth() &&
+            lastLoginDate.getDate() === yesterday.getDate()
+          ) {
+            streak += 1;
+            console.log("✅ Consecutive login. Streak incremented.");
+          } else {
+            streak = 1;
+            console.log("🔄 Missed a day. Streak reset.");
+          }
+
+          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
+          await AsyncStorage.setItem("@weeklyLastLoginDate", todayStr);
+        } else if (streak === 0) {
+          // Already logged in today but streak = 0 → fix it
+          streak = 1;
+          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
+          console.log(
+            "⚡ Fix: Streak was 0 but user logged in today. Streak set to 1."
+          );
+        } else {
+          // Already logged in today, streak > 0 → do nothing
+          console.log("ℹ️ Already logged in today. Streak unchanged.");
+        }
+
+        // Update quests state
+        setQuests((prev) =>
+          prev.map((q) =>
+            q.id === "login_7days"
+              ? { ...q, progress: streak, completed: streak >= 7 }
+              : q
+          )
+        );
+
+        setLogin7DaysProgress(Math.min(streak / 7, 1));
+        setLogin7DaysCompleted(streak >= 7);
+
+        console.log(
+          `📊 Progress updated: ${streak}/7, Completed: ${streak >= 7}`
+        );
+
+        // Show toast only once
+        if (streak >= 7) {
+          const toastShown = await AsyncStorage.getItem(
+            "@login7DaysToastShown"
+          );
+          if (!toastShown) {
+            showToast("🎉 Congrats! You've completed the 7-Day Login Quest!");
+            await AsyncStorage.setItem("@login7DaysToastShown", "true");
+          }
+        }
+      } catch (err) {
+        console.error("❌ Error updating 7-day login quest:", err);
+      }
+    };
+
+    triggerLogin7DaysQuest();
+  }, []);
+  // run only once when component mounts
+
+  // Weekly Quest 2 Reset
+  useEffect(() => {
+    const initWeeklyReset = async () => {
+      await resetWeeklyProgressIfNeeded();
+    };
+
+    initWeeklyReset();
+  }, []);
 
   // ======================
   // Progress & Budget Overview
