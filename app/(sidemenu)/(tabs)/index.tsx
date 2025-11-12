@@ -1,8 +1,10 @@
 import DonutChart from "@/components/DonutChart";
+import { createNotificationChannel } from "@/components/notifications";
 import { useToast } from "@/components/ToastContext";
 import { checkDailyQuests } from "@/data/daily_quests_logic";
 import { WeeklyQuest, WEEKLY_QUESTS } from "@/data/weekly_quests_items";
 import { resetWeeklyProgressIfNeeded } from "@/data/weekly_quests_logic";
+
 import type {
   Account,
   PlannedBudget,
@@ -153,6 +155,10 @@ export default function Index() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    createNotificationChannel();
+  }, []);
 
   const loadRegularTransactions = async () => {
     try {

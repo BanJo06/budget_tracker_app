@@ -16,14 +16,24 @@ export const saveTransaction = (
   amount,
   type,
   notes,
-  date
+  date,
+  isLateRecord = false // ✅ NEW optional parameter
 ) => {
   const db = getDb();
 
   db.runSync(
-    `INSERT INTO transactions (account_id, account_name, category_id, amount, type, description, date)
-     VALUES (?, ?, ?, ?, ?, ?, ?);`,
-    [accountId, accountName, categoryId, amount, type, notes, date]
+    `INSERT INTO transactions (account_id, account_name, category_id, amount, type, description, date, source)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+    [
+      accountId,
+      accountName,
+      categoryId,
+      amount,
+      type,
+      notes,
+      date,
+      isLateRecord ? "late_record" : null,
+    ]
   );
 
   console.log("Transaction saved:", {
@@ -34,6 +44,7 @@ export const saveTransaction = (
     type,
     description: notes,
     date,
+    source: isLateRecord ? "late_record" : null,
   });
 };
 

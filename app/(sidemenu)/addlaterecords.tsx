@@ -9,9 +9,10 @@ import {
 } from "@/utils/accounts";
 import { initDatabase } from "@/utils/database";
 import { saveTransaction } from "@/utils/transactions";
-import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -24,7 +25,7 @@ import {
 import SwitchSelector from "react-native-switch-selector";
 import { seedDefaultCategories } from "../../database/categoryDefaultSelection";
 
-// Simplified NewAccountModal and AccountsModal components
+// ------------------ New Account Modal ------------------
 const NewAccountModal = ({ isVisible, onClose, onSave }) => {
   const [initialAmount, setInitialAmount] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -32,13 +33,11 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
 
   const handleSave = () => {
     const newAccountData = {
-      name: accountName,
+      name: accountName || "Untitled",
       balance: parseFloat(initialAmount) || 0,
       icon_name: selectedIcon,
     };
-    if (onSave) {
-      onSave(newAccountData);
-    }
+    if (onSave) onSave(newAccountData);
     onClose();
     setInitialAmount("");
     setAccountName("");
@@ -58,7 +57,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
           <View className="w-full flex-row gap-2 items-center mb-4">
             <Text>Initial Amount</Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
               placeholder="0"
               keyboardType="numeric"
               value={initialAmount}
@@ -68,7 +67,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
           <View className="w-full flex-row gap-2 items-center mb-6">
             <Text>Name</Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
               placeholder="Untitled"
               value={accountName}
               onChangeText={setAccountName}
@@ -90,7 +89,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
                   >
                     <IconComponent
                       size={24}
-                      color={selectedIcon === key ? "#8938E9" : "#000000"}
+                      color={selectedIcon === key ? "#8938E9" : "#000"}
                     />
                   </TouchableOpacity>
                 )
@@ -117,6 +116,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
   );
 };
 
+// ------------------ Accounts Modal ------------------
 const AccountsModal = ({
   isVisible,
   onClose,
@@ -125,10 +125,6 @@ const AccountsModal = ({
   onSelectAccount,
 }) => {
   const [isNewAccountModalVisible, setNewAccountModalVisible] = useState(false);
-
-  const toggleNewAccountModal = () => {
-    setNewAccountModalVisible(!isNewAccountModalVisible);
-  };
 
   return (
     <Modal
@@ -140,35 +136,36 @@ const AccountsModal = ({
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="bg-white p-6 rounded-lg w-11/12">
           <Text className="text-xl font-bold mb-4">Select Account</Text>
-          <ScrollView>
-            {accounts.map((account, index) => {
-              const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
-              return (
-                <TouchableOpacity
-                  key={index}
-                  className="w-full h-[50] px-4 flex-row justify-between items-center mb-2"
-                  onPress={() => {
-                    onSelectAccount(account);
-                    onClose();
-                  }}
-                >
-                  <View className="flex-row gap-2 items-center">
-                    <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
-                      {IconComponent && (
-                        <IconComponent size={24} color="white" />
-                      )}
+          <ScrollView keyboardShouldPersistTaps="handled">
+            {Array.isArray(accounts) &&
+              accounts.map((account, index) => {
+                const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    className="w-full h-[50] px-4 flex-row justify-between items-center mb-2"
+                    onPress={() => {
+                      onSelectAccount(account);
+                      onClose();
+                    }}
+                  >
+                    <View className="flex-row gap-2 items-center">
+                      <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
+                        {IconComponent && (
+                          <IconComponent size={24} color="white" />
+                        )}
+                      </View>
+                      <Text className="text-lg">{account.name}</Text>
                     </View>
-                    <Text className="text-lg">{account.name}</Text>
-                  </View>
-                  <Text className="text-[#8938E9] text-lg">
-                    ₱{account.balance.toFixed(2)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+                    <Text className="text-[#8938E9] text-lg">
+                      ₱{Number(account.balance || 0).toFixed(2)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
           </ScrollView>
           <TouchableOpacity
-            onPress={toggleNewAccountModal}
+            onPress={() => setNewAccountModalVisible(true)}
             className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg mt-4"
           >
             <View className="flex-row items-center justify-center gap-2">
@@ -178,9 +175,10 @@ const AccountsModal = ({
               </Text>
             </View>
           </TouchableOpacity>
+
           <NewAccountModal
             isVisible={isNewAccountModalVisible}
-            onClose={toggleNewAccountModal}
+            onClose={() => setNewAccountModalVisible(false)}
             onSave={onAddNewAccount}
           />
         </View>
@@ -189,29 +187,25 @@ const AccountsModal = ({
   );
 };
 
-export default function addlaterecords() {
-  const [selectedOption, setSelectedOption] = useState<"expense" | "income">(
+// ------------------ Main Add Transaction Component ------------------
+export default function AddLateRecords() {
+  const [transactionType, setTransactionType] = useState<"income" | "expense">(
     "expense"
   );
   const [initialAmount, setInitialAmount] = useState("");
   const [notes, setNotes] = useState("");
-  const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
-  const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
-  const [isDatePickerModalVisible, setDatePickerModalVisible] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
+  const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
 
   // Date state
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(
-    currentDate.getMonth() + 1
-  );
-  const [selectedDay, setSelectedDay] = useState(currentDate.getDate());
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
-    async function setupDatabaseAndLoadAccounts() {
+    async function setup() {
       try {
         await initDatabase();
         await seedDefaultCategories();
@@ -224,20 +218,8 @@ export default function addlaterecords() {
         );
       }
     }
-    setupDatabaseAndLoadAccounts();
+    setup();
   }, []);
-
-  const toggleAccountsModal = () => {
-    setAccountsModalVisible(!isAccountsModalVisible);
-  };
-
-  const toggleCategoriesModal = () => {
-    setCategoriesModalVisible(!isCategoriesModalVisible);
-  };
-
-  const toggleDatePickerModal = () => {
-    setDatePickerModalVisible(!isDatePickerModalVisible);
-  };
 
   const handleSelectAccount = (account) => {
     setSelectedAccount(account);
@@ -269,52 +251,63 @@ export default function addlaterecords() {
     setNotes("");
     setSelectedCategory(null);
     setSelectedAccount(null);
-    setSelectedOption("expense");
-    const current = new Date();
-    setSelectedMonth(current.getMonth() + 1);
-    setSelectedDay(current.getDate());
-    setSelectedYear(current.getFullYear());
-    console.log("Data cleared!");
+    setTransactionType("expense");
+    setDate(new Date());
   };
 
   const handleSave = async () => {
     const amount = parseFloat(initialAmount);
     const fromAccountId = selectedAccount?.id;
     const categoryId = selectedCategory?.id;
-    const transactionType = selectedOption;
     const transactionNotes = notes;
 
-    // Construct the Date object from the picker values
-    const date = new Date(selectedYear, selectedMonth - 1, selectedDay);
-    const transactionDate = date.toISOString();
-
-    if (isNaN(amount) || amount <= 0 || !fromAccountId || !categoryId) {
-      console.error(
-        "Invalid input. Please check amount, account, and category."
-      );
+    if (!fromAccountId || !categoryId || isNaN(amount) || amount <= 0) {
+      Alert.alert("Error", "Please check your inputs.");
       return;
     }
 
     try {
+      // Update balance in DB
       await updateAccountBalance(fromAccountId, amount, transactionType);
+
+      // Save transaction
       await saveTransaction(
         fromAccountId,
+        selectedAccount.name || "Unknown Account",
         categoryId,
         amount,
         transactionType,
         transactionNotes,
-        transactionDate
+        new Date().toISOString(),
+        true
       );
-      console.log("Transaction saved successfully!");
-      // Add navigation logic if needed
+
+      // Fetch updated accounts and update state
+      const updatedAccounts = await getAccounts();
+      setAccounts(updatedAccounts);
+
+      // Also update selectedAccount so the UI shows new balance
+      const updatedSelectedAccount = updatedAccounts.find(
+        (acc) => acc.id === fromAccountId
+      );
+      setSelectedAccount(updatedSelectedAccount);
+
+      Alert.alert("Success", "Transaction saved!");
+      handleClear(); // optional: clear the form
     } catch (error) {
       console.error("Failed to save transaction:", error.message);
+      Alert.alert("Error", "Failed to save transaction.");
     }
   };
 
   const handleSwitchChange = (value) => {
-    setSelectedOption(value);
+    setTransactionType(value);
     setSelectedCategory(null);
+  };
+
+  const onChangeDate = (event, selectedDate) => {
+    setShowDatePicker(Platform.OS === "ios"); // iOS keeps picker open
+    if (selectedDate) setDate(selectedDate);
   };
 
   const options = [
@@ -322,120 +315,64 @@ export default function addlaterecords() {
     { label: "Expense", value: "expense" },
   ];
 
-  // Helper functions for date picker
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
-
   return (
     <View className="flex-1 items-center justify-center bg-[#C3C3C3] p-8">
       <AccountsModal
         isVisible={isAccountsModalVisible}
-        onClose={toggleAccountsModal}
+        onClose={() => setAccountsModalVisible(false)}
         accounts={accounts}
         onAddNewAccount={handleAddNewAccount}
         onSelectAccount={handleSelectAccount}
       />
+
       <CategoryModal
+        key={`${transactionType}-${isCategoriesModalVisible}`}
         isVisible={isCategoriesModalVisible}
-        onClose={toggleCategoriesModal}
+        onClose={() => setCategoriesModalVisible(false)}
       >
         <CategorySelection
           onSelectCategory={handleSelectCategory}
           isVisible={isCategoriesModalVisible}
-          type={selectedOption === "expense" ? "expense" : "income"}
+          type={transactionType}
         />
       </CategoryModal>
-      {/* Date Picker Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isDatePickerModalVisible}
-        onRequestClose={toggleDatePickerModal}
-      >
-        <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white p-6 rounded-lg w-11/12">
-            <Text className="text-xl font-bold mb-4">Select Date</Text>
-            <View className="flex-row justify-between w-full">
-              {/* Month Picker */}
-              <View className="w-1/3">
-                <Picker
-                  selectedValue={selectedMonth}
-                  onValueChange={(itemValue) => setSelectedMonth(itemValue)}
-                >
-                  {months.map((month) => (
-                    <Picker.Item key={month} label={`${month}`} value={month} />
-                  ))}
-                </Picker>
-              </View>
-              {/* Day Picker */}
-              <View className="w-1/3">
-                <Picker
-                  selectedValue={selectedDay}
-                  onValueChange={(itemValue) => setSelectedDay(itemValue)}
-                >
-                  {days.map((day) => (
-                    <Picker.Item key={day} label={`${day}`} value={day} />
-                  ))}
-                </Picker>
-              </View>
-              {/* Year Picker */}
-              <View className="w-1/3">
-                <Picker
-                  selectedValue={selectedYear}
-                  onValueChange={(itemValue) => setSelectedYear(itemValue)}
-                >
-                  {years.map((year) => (
-                    <Picker.Item key={year} label={`${year}`} value={year} />
-                  ))}
-                </Picker>
-              </View>
-            </View>
-            <TouchableOpacity
-              className="mt-4 w-full h-10 rounded-lg bg-purple-600 justify-center items-center"
-              onPress={toggleDatePickerModal}
-            >
-              <Text className="uppercase text-white">Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
-      {/* Main UI */}
-      <View className="w-full h-[80%] bg-white rounded-[20] p-4">
-        <View className="items-center pb-7">
-          <Text className="text-[14px] font-medium">Add new transaction</Text>
-        </View>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "position"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-          className="flex-1"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1 w-full"
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-            {/* DATE PICKER BUTTON */}
+          <View className="w-full h-[80%] bg-white rounded-[20] p-4">
+            {/* Date Picker */}
             <View className="flex-row items-center justify-between pb-5">
               <Text>Date</Text>
               <TouchableOpacity
-                onPress={toggleDatePickerModal}
-                className="w-[126px] h-[39px] flex-row items-center justify-center bg-[orange] px-5 py-3 rounded-full active:bg-[blue] gap-2"
+                onPress={() => setShowDatePicker(true)}
+                className="w-[126px] h-[39px] flex-row items-center justify-center bg-[orange] px-5 py-3 rounded-full gap-2"
               >
                 <Text className="text-black text-[12px] font-medium">
-                  {new Date(
-                    selectedYear,
-                    selectedMonth - 1,
-                    selectedDay
-                  ).toLocaleDateString()}
+                  {date.toLocaleDateString()}
                 </Text>
                 <SVG_ICONS.ButtonArrowDown size={15} />
               </TouchableOpacity>
             </View>
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={onChangeDate}
+              />
+            )}
 
-            {/* ACCOUNT SELECT */}
+            {/* Account Select */}
             <View className="flex-row items-center justify-between pb-5">
               <Text>Account Select</Text>
               <TouchableOpacity
-                onPress={toggleAccountsModal}
+                onPress={() => setAccountsModalVisible(true)}
                 className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-full"
               >
                 <SVG_ICONS.Account size={16} color="white" />
@@ -445,7 +382,7 @@ export default function addlaterecords() {
               </TouchableOpacity>
             </View>
 
-            {/* CASH FLOW */}
+            {/* Cash Flow */}
             <View className="flex-row items-center pb-5">
               <Text>Cash Flow</Text>
               <View className="flex-1 ml-[110]">
@@ -453,13 +390,13 @@ export default function addlaterecords() {
                   options={options}
                   initial={1}
                   onPress={handleSwitchChange}
-                  backgroundColor={"#F0E4FF"}
-                  textColor={"#000000"}
-                  selectedColor={"#ffffff"}
-                  buttonColor={"#7a44cf"}
-                  hasPadding={true}
+                  backgroundColor="#F0E4FF"
+                  textColor="#000000"
+                  selectedColor="#ffffff"
+                  buttonColor="#7a44cf"
+                  hasPadding
                   borderRadius={30}
-                  borderColor={"#F0E4FF"}
+                  borderColor="#F0E4FF"
                   height={40}
                   textStyle={{ fontSize: 12, fontWeight: "500" }}
                   selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
@@ -467,11 +404,11 @@ export default function addlaterecords() {
               </View>
             </View>
 
-            {/* CATEGORY PICKER */}
+            {/* Category Select */}
             <View className="flex-row items-center justify-between pb-5">
               <Text>Category Select</Text>
               <TouchableOpacity
-                onPress={toggleCategoriesModal}
+                onPress={() => setCategoriesModalVisible(true)}
                 className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-full"
               >
                 <SVG_ICONS.Category size={16} color="white" />
@@ -481,7 +418,7 @@ export default function addlaterecords() {
               </TouchableOpacity>
             </View>
 
-            {/* AMOUNT INPUT */}
+            {/* Amount & Notes */}
             <View className="flex-col gap-2 justify-between pb-5">
               <Text>Amount</Text>
               <TextInput
@@ -493,14 +430,12 @@ export default function addlaterecords() {
               />
             </View>
 
-            {/* NOTES */}
             <View className="flex-col gap-2 justify-between pb-5">
               <Text>Notes</Text>
               <TextInput
                 className="w-full h-20 border-2 border-gray-300 rounded-lg p-2 bg-purple-100"
                 placeholder="Write a note"
-                multiline={true}
-                numberOfLines={3}
+                multiline
                 maxLength={100}
                 value={notes}
                 onChangeText={setNotes}
@@ -508,7 +443,7 @@ export default function addlaterecords() {
               />
             </View>
 
-            {/* CLEAR AND SAVE BUTTON */}
+            {/* Buttons */}
             <View className="flex-row justify-end gap-4">
               <TouchableOpacity
                 className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
@@ -516,7 +451,6 @@ export default function addlaterecords() {
               >
                 <Text className="uppercase text-purple-600">Clear</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
                 onPress={handleSave}
@@ -524,9 +458,9 @@ export default function addlaterecords() {
                 <Text className="uppercase text-white">Save</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

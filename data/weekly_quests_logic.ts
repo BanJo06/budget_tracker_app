@@ -5,11 +5,6 @@ import { AppState } from "react-native";
 const LOGIN_7DAYS_KEY = "@weeklyLoginStreak";
 const TRANSACTION_QUEST_KEY = "weekly_transaction_quest_count";
 
-const WEEKLY_APP_USAGE_KEY = "@weekly_app_usage";
-const WEEKLY_APP_USAGE_LAST_KEY = "@weekly_app_usage_last";
-
-const USAGE_GOAL_SECONDS = 40 * 60; // 40 minutes
-
 export const recordLogin = async () => {
   const today = new Date().toDateString();
   let logins: string[] = [];
@@ -31,7 +26,28 @@ export const getLoginProgress = async () => {
   return logins.length;
 };
 
-export async function incrementTransactionQuestProgress() {
+// export async function incrementTransactionQuestProgress() {
+//   const raw = await AsyncStorage.getItem("@weeklyTransactionCount");
+//   const currentCount = Number(raw) || 0;
+
+//   const newCount = currentCount + 1;
+//   const completed = newCount >= 50;
+
+//   await AsyncStorage.setItem("@weeklyTransactionCount", newCount.toString());
+
+//   return { count: newCount, completed };
+// }
+
+export async function incrementTransactionQuestProgress(isLateRecord = false) {
+  if (isLateRecord) {
+    // 🚫 Skip incrementing for late records
+    const raw = await AsyncStorage.getItem("@weeklyTransactionCount");
+    const currentCount = Number(raw) || 0;
+    const completed = currentCount >= 50;
+    return { count: currentCount, completed };
+  }
+
+  // ✅ Normal transaction flow
   const raw = await AsyncStorage.getItem("@weeklyTransactionCount");
   const currentCount = Number(raw) || 0;
 
@@ -212,7 +228,7 @@ const updateWeeklyUsageTime = async (showToast?: (msg: string) => void) => {
 
   // console.log(
   //   `📊 +${elapsed.toFixed(1)}s → Weekly Total: ${newTotal.toFixed(1)}s`
-  // );
+  // );`
 
   // Check if quest done
   const today = getMondayDateString();

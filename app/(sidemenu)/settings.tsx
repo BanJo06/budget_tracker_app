@@ -1,10 +1,81 @@
+import {
+  cancelAllScheduledNotifications,
+  requestNotificationPermission,
+  scheduleDailyNotification,
+  sendTestNotification,
+} from "@/components/notifications";
 import React, { useState } from "react";
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Button,
+  Linking,
+  Platform,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+// Function to open app notification settings
+const openNotificationSettings = () => {
+  if (Platform.OS === "android") {
+    Linking.openSettings();
+  } else {
+    console.log("Notification settings are only available on Android.");
+  }
+};
+
+// const openNotificationSettings = () => {
+//   if (Platform.OS === "android") {
+//     const packageName = "com.yourapp.package"; // <- Replace with your Android package name
+//     Linking.openURL(`app-settings:`);
+//     // Or the more direct method:
+//     Linking.openSettings(); // general app settings if Intent fails
+
+//     // Directly to app notification settings
+//     Linking.openURL(
+//       `android-app://com.android.settings.action.APP_NOTIFICATION_SETTINGS?app_package=${packageName}`
+//     ).catch(() => {
+//       // fallback
+//       Linking.openSettings();
+//     });
+//   } else {
+//     console.log("Notification settings are only available on Android.");
+//   }
+// };
 
 export default function Settings() {
   const [isRemindEverydayEnabled, setIsRemindEverydayEnabled] = useState(false);
-  const toggleRemindEveryday = () =>
-    setIsRemindEverydayEnabled((previousState) => !previousState);
+  const toggleRemindEveryday = async () => {
+    const newValue = !isRemindEverydayEnabled;
+    setIsRemindEverydayEnabled(newValue);
+
+    if (newValue) {
+      const hasPermission = await requestNotificationPermission();
+      if (hasPermission) {
+        await scheduleDailyNotification(); // schedule daily local notification
+        // await sendTestNotification(); // optional: immediate test notification
+      } else {
+        Alert.alert(
+          "Permission denied",
+          "Cannot schedule notifications without permission."
+        );
+        setIsRemindEverydayEnabled(false);
+      }
+    } else {
+      await cancelAllScheduledNotifications();
+    }
+  };
+
+  const handleTestNotification = async () => {
+    const result = await sendTestNotification();
+    if (result)
+      Alert.alert("Test Scheduled", "Notification should appear in 5 seconds!");
+    else
+      Alert.alert("Permission Error", "Permission denied for notifications.");
+  };
+
   return (
     <View className="flex-1">
       <View className="pt-[28]">
@@ -83,12 +154,9 @@ export default function Settings() {
 
                 {/* The Switch Component */}
                 <Switch
-                  // Set the current value from state
                   value={isRemindEverydayEnabled}
-                  // Set the function to call when the switch is toggled
                   onValueChange={toggleRemindEveryday}
-                  // Optional: Customize switch colors
-                  trackColor={{ false: "#767577", true: "#81b0ff" }} // Customize these colors if needed
+                  trackColor={{ false: "#767577", true: "#81b0ff" }}
                   thumbColor={isRemindEverydayEnabled ? "#f5dd4b" : "#f4f3f4"}
                 />
               </View>
@@ -97,7 +165,7 @@ export default function Settings() {
             {/* 2. Notification settings (Existing TouchableOpacity) */}
             <TouchableOpacity
               className="w-full active:bg-gray-400 py-[16]"
-              onPress={() => console.log("Notification settings pressed")}
+              onPress={openNotificationSettings}
             >
               <View className="px-[32]">
                 <Text className="text-[14px] font-medium">
@@ -125,6 +193,11 @@ export default function Settings() {
               <Text className="text-[14px] font-medium">Privacy Policy</Text>
             </View>
           </TouchableOpacity>
+
+          <Button
+            title="FIRE TEST NOTIFICATION"
+            onPress={handleTestNotification} // <-- Use the function you defined above
+          />
         </View>
       </View>
     </View>

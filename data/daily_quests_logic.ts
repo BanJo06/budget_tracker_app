@@ -65,14 +65,45 @@ export const checkDailyQuests = async (): Promise<CheckResult> => {
 const ADD_TRANSACTION_KEY = "@quest_2_";
 
 // ✅ Use this ONLY when a user adds a transaction
-export const markTransactionQuestCompleted = async (): Promise<boolean> => {
-  const today = new Date().toDateString();
-  const key = ADD_TRANSACTION_KEY + today;
+// export const markTransactionQuestCompleted = async (): Promise<boolean> => {
+//   const today = new Date().toDateString();
+//   const key = ADD_TRANSACTION_KEY + today;
+//   const completed = await AsyncStorage.getItem(key);
+
+//   if (completed === "true") return false; // already done
+//   await AsyncStorage.setItem(key, "true");
+//   console.log(`🎉 'Add 1 transaction' quest completed for ${today}!`);
+//   return true;
+// };
+
+// ✅ Use this ONLY when a user adds a transaction for *today*
+export const markTransactionQuestCompleted = async (
+  transactionDate?: string
+): Promise<boolean> => {
+  const today = new Date();
+  const todayDateString = today.toDateString();
+
+  // 🧭 If a date was provided, check if it's a past record
+  if (transactionDate) {
+    const txDate = new Date(transactionDate);
+    if (
+      txDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    ) {
+      // ⛔ It's a late record — don't mark the quest
+      console.log(
+        `⏳ Skipped quest completion for past transaction on ${txDate.toDateString()}`
+      );
+      return false;
+    }
+  }
+
+  const key = ADD_TRANSACTION_KEY + todayDateString;
   const completed = await AsyncStorage.getItem(key);
 
-  if (completed === "true") return false; // already done
+  if (completed === "true") return false; // already completed today
+
   await AsyncStorage.setItem(key, "true");
-  console.log(`🎉 'Add 1 transaction' quest completed for ${today}!`);
+  console.log(`🎉 'Add 1 transaction' quest completed for ${todayDateString}!`);
   return true;
 };
 

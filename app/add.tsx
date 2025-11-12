@@ -570,6 +570,8 @@ export default function Add() {
       }
 
       try {
+        const transactionDate = new Date().toISOString(); // ✅ store date once
+
         await updateAccountBalance(
           Number(fromAccountId),
           amount,
@@ -582,32 +584,20 @@ export default function Add() {
           amount,
           transactionType,
           transactionNotes,
-          new Date().toISOString()
+          transactionDate // ✅ reuse same date
         );
 
         console.log("Transaction saved successfully!");
 
-        // After saving transaction
-        // const newlyCompleted = await markTransactionQuestCompleted();
-        // console.log("🧭 Quest status (Add 1 transaction):", newlyCompleted);
-
-        // if (newlyCompleted) {
-        //   console.log(
-        //     "🔥 Toast context is active:",
-        //     typeof showToast === "function"
-        //   );
-        // }
-
-        const completed = await markTransactionQuestCompleted();
+        // ✅ Daily Quest
+        const completed = await markTransactionQuestCompleted(transactionDate);
         console.log("🧭 Quest status (Add 1 transaction):", completed);
 
         if (completed) {
           showToast("🎉 Quest Completed: Add 1 transaction");
         }
 
-        console.log("Transaction saved successfully!");
-
-        // === 🧭 Weekly Quest: Add 50 Transactions ===
+        // ✅ Weekly Quest
         const { count, completed: weeklyCompleted } =
           await incrementTransactionQuestProgress();
         setTransactionProgress(count / 50);
