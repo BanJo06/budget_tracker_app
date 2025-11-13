@@ -304,52 +304,53 @@ export default function Categories() {
 
   // Main content wrapped in ScrollView
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      {/* Income Categories Section */}
-      <View className="p-8">
-        <Text className="text-xl font-bold mb-1">Income categories</Text>
-        <View className="border-t-2 border-black mt-1"></View>
+    <View style={{ flex: 1 }}>
+      {/* Scrollable content */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Income Categories */}
+        <View className="p-8">
+          <Text className="text-xl font-bold mb-1">Income categories</Text>
+          <View className="border-t-2 border-black mt-1"></View>
+          {incomeCategories.length === 0 ? (
+            <Text className="pt-4 text-gray-500">
+              No income categories found.
+            </Text>
+          ) : (
+            incomeCategories.map((category) => (
+              <CategoryItem
+                key={category.id}
+                category={category}
+                IconMap={CATEGORIES_INCOME_SVG_ICONS}
+              />
+            ))
+          )}
+        </View>
 
-        {incomeCategories.length === 0 ? (
-          <Text className="pt-4 text-gray-500">
-            No income categories found.
-          </Text>
-        ) : (
-          incomeCategories.map((category) => (
-            <CategoryItem
-              key={category.id}
-              category={category}
-              IconMap={CATEGORIES_INCOME_SVG_ICONS}
-            />
-          ))
-        )}
-      </View>
-      <View className="border-b border-gray-200"></View>
-      {/* Expense Categories Section */}
-      <View className="py-4 px-8">
-        <Text className="text-xl font-bold mb-1">Expense categories</Text>
-        <View className="border-t-2 border-black mt-1"></View>
+        {/* Expense Categories */}
+        <View className="py-4 px-8">
+          <Text className="text-xl font-bold mb-1">Expense categories</Text>
+          <View className="border-t-2 border-black mt-1"></View>
+          {expenseCategories.length === 0 ? (
+            <Text className="pt-4 text-gray-500">
+              No expense categories found.
+            </Text>
+          ) : (
+            expenseCategories.map((category) => (
+              <CategoryItem
+                key={category.id}
+                category={category}
+                IconMap={CATEGORIES_EXPENSES_SVG_ICONS}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
 
-        {expenseCategories.length === 0 ? (
-          <Text className="pt-4 text-gray-500">
-            No expense categories found.
-          </Text>
-        ) : (
-          expenseCategories.map((category) => (
-            <CategoryItem
-              key={category.id}
-              category={category}
-              IconMap={CATEGORIES_EXPENSES_SVG_ICONS}
-            />
-          ))
-        )}
-      </View>
-
-      {/* Button container with increased bottom padding */}
-      <View className="px-8 pb-8">
+      {/* Fixed Add Button */}
+      <View className="px-8 py-4 mb-[40] border-t border-gray-200 bg-white">
         <TouchableOpacity
           onPress={toggleNewCategoryModal}
-          className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg mt-4"
+          className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg"
         >
           <View className="flex-row items-center justify-center gap-2">
             <SVG_ICONS.SmallAdd size={15} color="#8938E9" />
@@ -358,13 +359,15 @@ export default function Categories() {
             </Text>
           </View>
         </TouchableOpacity>
+
+        {/* New Category Modal */}
         <NewCategoryModal
           isVisible={isNewCategoryModalVisible}
           onClose={toggleNewCategoryModal}
           onSave={handleSaveNewCategory}
         />
       </View>
-    </ScrollView>
+    </View>
   );
 }
 

@@ -68,7 +68,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({
   };
 
   return (
-    <ScrollView className="w-full h-full">
+    <ScrollView className="w-full h-full mt-4">
       {categories.map(renderCategoryItem)}
     </ScrollView>
   );

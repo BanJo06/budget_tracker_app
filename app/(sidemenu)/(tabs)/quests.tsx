@@ -6,8 +6,9 @@ import {
   checkDailyQuests,
   isTransactionQuestCompletedToday,
 } from "@/data/daily_quests_logic";
+import { TabHomeScreenNavigationProp } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
@@ -15,6 +16,7 @@ import DailyContent from "../../screens/daily";
 import WeeklyContent from "../../screens/weekly";
 
 export default function Quests() {
+  const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const [currentProgress, setCurrentProgress] = useState(0);
   const [selectedOption, setSelectedOption] = useState("daily");
   const [readyQuests, setReadyQuests] = useState<string[]>([]);
@@ -104,10 +106,12 @@ export default function Quests() {
           </View>
 
           <View className="flex-row items-center justify-center">
-            <SVG_ICONS.SideMenu
-              size={30}
-              style={{ position: "absolute", left: 0 }}
-            />
+            <TouchableOpacity
+              className="w-[30px] h-[30px] rounded-full flex-row absolute left-0 active:bg-[#F0E4FF]"
+              onPress={() => navigation.openDrawer()}
+            >
+              <SVG_ICONS.SideMenu width={30} height={30} />
+            </TouchableOpacity>
             <Text className="text-[16px] font-medium text-white">Quests</Text>
 
             <TouchableOpacity
