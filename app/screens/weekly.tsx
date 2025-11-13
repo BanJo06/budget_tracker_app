@@ -105,7 +105,17 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
         (await AsyncStorage.getItem("@weeklyLoginStreak")) || "0"
       );
       setLogin7DaysProgress(Math.min(streak / 7, 1));
-      if (streak >= 7) setLogin7DaysCompleted(true);
+      const completed = streak >= 7;
+      setLogin7DaysCompleted(completed);
+
+      // ✅ Immediately mark as completed in quests
+      setQuests((prev) =>
+        prev.map((q) =>
+          q.id === "login_7days"
+            ? { ...q, completed, readyToComplete: false, progress: streak }
+            : q
+        )
+      );
     };
     loadLoginStreak();
   }, []);
@@ -121,10 +131,12 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
         setTransactionProgress(Math.min(count / 50, 1));
         setTransactionCompleted(completed);
 
-        // Update quest card visually
+        // ✅ Immediately update quest completion
         setQuests((prev) =>
           prev.map((q) =>
-            q.id === "2" ? { ...q, progress: count, completed } : q
+            q.id === "add_50_transactions"
+              ? { ...q, progress: count, completed, readyToComplete: false }
+              : q
           )
         );
       } catch (err) {
@@ -204,27 +216,53 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
         "@weekly_use_app_40min_total"
       );
       const totalSeconds = totalStr ? parseFloat(totalStr) : 0;
-      setAppUsageProgress(Math.min(totalSeconds / 2400, 1)); // 40*60 seconds
-      const completed = await checkWeeklyAppUsageCompleted();
+
+      const completed = totalSeconds >= 2400;
+
+      setAppUsageProgress(Math.min(totalSeconds / 2400, 1));
       setAppUsageCompleted(completed);
 
-      // Update the quest card in UI
+      // ✅ Immediately update quest UI
       setQuests((prev) =>
         prev.map((q) =>
           q.id === "use_app_40min"
-            ? { ...q, progress: totalSeconds, completed }
+            ? {
+                ...q,
+                progress: totalSeconds,
+                completed,
+                readyToComplete: false,
+              }
             : q
         )
       );
+
+      // ✅ Instant persist (no need to wait for timer)
+      if (completed) {
+        const today = new Date();
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(today.setDate(diff));
+        const mondayKey = "@weekly_use_app_40min_" + monday.toDateString();
+
+        const alreadySet = await AsyncStorage.getItem(mondayKey);
+        if (alreadySet !== "true") {
+          await AsyncStorage.setItem(mondayKey, "true");
+          console.log("✅ Quest immediately marked complete in UI + storage");
+        }
+      }
     };
 
-    // Start weekly timer
-    startWeeklyAppUsageTimer(showToast);
+    // Run immediately once
+    updateWeeklyAppUsage();
 
-    // Poll every 3 seconds to update progress bar
+    // Start timer and poll progress every 3s
+    startWeeklyAppUsageTimer(showToast);
     const interval = setInterval(updateWeeklyAppUsage, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      stopWeeklyAppUsageTimer();
+      clearInterval(interval);
+    };
   }, []);
 
   const handleComplete = (id: string) => {

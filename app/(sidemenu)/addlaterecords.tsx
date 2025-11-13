@@ -278,7 +278,7 @@ export default function AddLateRecords() {
         amount,
         transactionType,
         transactionNotes,
-        new Date().toISOString(),
+        date.toISOString(),
         true
       );
 

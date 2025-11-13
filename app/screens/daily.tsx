@@ -5,12 +5,14 @@ import {
   resetAddTransactionQuest,
   resetUseApp5MinQuest,
 } from "@/data/daily_quests_logic";
+import { addCoins } from "@/utils/coins";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
+  Modal,
   Platform,
   StatusBar,
   Text,
@@ -36,14 +38,19 @@ const DailyContent: React.FC<DailyContentProps> = ({
   readyIds,
 }) => {
   const [quests, setQuests] = useState<QuestState[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false); // prevents 0% flash
+  const [isLoaded, setIsLoaded] = useState(false);
   const [lastSentProgress, setLastSentProgress] = useState<number | null>(null);
+  const [rewardClaimed, setRewardClaimed] = useState(false);
+  const [showRewardModal, setShowRewardModal] = useState(false);
 
   useEffect(() => {
     const initQuests = async () => {
       try {
         const today = new Date().toDateString();
         const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
+        const rewardStatus = await AsyncStorage.getItem("dailyRewardClaimed");
+
+        setRewardClaimed(rewardStatus === today); // only once per day
 
         const initialized = DAILY_QUESTS.map((q) => {
           const completedFromReadyIds = readyIds.includes(q.id);
@@ -59,12 +66,10 @@ const DailyContent: React.FC<DailyContentProps> = ({
 
         setQuests(initialized);
 
-        // Calculate progress once after initialization
         const completedCount = initialized.filter((q) => q.completed).length;
         const progress =
           DAILY_QUESTS.length > 0 ? completedCount / DAILY_QUESTS.length : 0;
 
-        // Only update parent if different
         if (
           lastSentProgress === null ||
           Math.abs(progress - lastSentProgress) > 0.0001
@@ -73,7 +78,6 @@ const DailyContent: React.FC<DailyContentProps> = ({
           setLastSentProgress(progress);
         }
 
-        // Delay render until everything is ready
         setTimeout(() => setIsLoaded(true), 50);
       } catch (error) {
         console.error("Error initializing quests:", error);
@@ -82,18 +86,13 @@ const DailyContent: React.FC<DailyContentProps> = ({
     };
 
     initQuests();
-    // we intentionally do not include lastSentProgress in deps — initialization uses it as a guard above
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readyIds]);
 
-  // Keep progress synced with quest updates but guarded
   useEffect(() => {
     if (!isLoaded) return;
     const completedCount = quests.filter((q) => q.completed).length;
     const total = quests.length;
     const progress = total > 0 ? completedCount / total : 0;
-
-    // console.log("daily effect progress", progress);
 
     if (
       lastSentProgress === null ||
@@ -103,6 +102,21 @@ const DailyContent: React.FC<DailyContentProps> = ({
       setLastSentProgress(progress);
     }
   }, [quests, isLoaded, setCurrentProgress, lastSentProgress]);
+
+  // 🎁 Detect when progress hits 100%
+  useEffect(() => {
+    const checkReward = async () => {
+      if (currentProgress === 1 && !rewardClaimed) {
+        const today = new Date().toDateString();
+        await AsyncStorage.setItem("dailyRewardClaimed", today);
+        await addCoins(10); // 🪙 Add 10 coins here
+        setRewardClaimed(true);
+        setShowRewardModal(true);
+        showToast("🎉 You earned 10 coins!");
+      }
+    };
+    checkReward();
+  }, [currentProgress, rewardClaimed, showToast]);
 
   const handleComplete = (id: string) => {
     setQuests((prev) =>
@@ -119,7 +133,6 @@ const DailyContent: React.FC<DailyContentProps> = ({
     Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 44;
 
   if (!isLoaded) {
-    // Optional loader — avoids flicker entirely
     return (
       <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color="#8938E9" />
@@ -129,6 +142,28 @@ const DailyContent: React.FC<DailyContentProps> = ({
 
   return (
     <View className="flex-1 w-full">
+      {/* 🎁 Reward Modal */}
+      <Modal visible={showRewardModal} transparent animationType="fade">
+        <View className="flex-1 items-center justify-center bg-black/50">
+          <View className="bg-white w-[80%] p-6 rounded-2xl items-center">
+            <SVG_ICONS.DailyReward width={70} height={90} />
+            <Text className="text-xl font-bold mt-4 text-[#8938E9]">
+              🎉 Daily Reward!
+            </Text>
+            <Text className="text-base mt-2 text-center">
+              You’ve completed all daily quests and earned{" "}
+              <Text className="font-bold">10 coins</Text>!
+            </Text>
+            <TouchableOpacity
+              className="mt-5 bg-[#8938E9] px-5 py-2 rounded-xl"
+              onPress={() => setShowRewardModal(false)}
+            >
+              <Text className="text-white font-medium">OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Progress Bar */}
       <View className="flex-col items-end px-[32] gap-[6] pt-[16] pb-[32] mt-[20]">
         <View className="pr-6 mb-2">
@@ -179,7 +214,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
         ))}
       </View>
 
-      {/* Reset Button */}
+      {/* Reset Buttons (for debugging) */}
       <TouchableOpacity
         onPress={resetAddTransactionQuest}
         className="mt-4 px-4"
