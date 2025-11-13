@@ -193,10 +193,10 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
 
   return (
     <ScrollView
-      contentContainerStyle={{ alignItems: "center", paddingHorizontal: 20 }}
+      contentContainerStyle={{ alignItems: "center", paddingHorizontal: 32 }}
     >
       {/* Graph Overview */}
-      <View className="w-[330px] h-[220px] p-5 mt-4 mb-4 bg-white rounded-2xl shadow-md">
+      <View className="w-full h-[220px] p-5 mt-4 mb-4 bg-white rounded-2xl shadow-md">
         <View className="flex-row justify-between">
           <Text className="text-black font-medium">Income</Text>
         </View>
@@ -204,7 +204,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
         <View className="flex-row justify-between items-center mt-4">
           <PieChart
             data={pieData}
-            width={screenWidth * 0.5}
+            width={screenWidth * 0.5} // Chart size remains
             height={150}
             chartConfig={chartConfig}
             accessor="population"
@@ -229,7 +229,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       </View>
 
       {/* Summary Cards */}
-      <View className="flex-row justify-center gap-2 mx-1">
+      <View className="flex-row justify-between w-full gap-3">
         {["Day", "Week", "Month"].map((label, idx) => {
           const value = [
             incomeData.totalDay,
@@ -239,12 +239,12 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
           return (
             <View
               key={label}
-              className="w-26 h-22 p-5 bg-white rounded-2xl shadow-md flex-col justify-center items-center"
+              className="flex-1 h-22 p-5 bg-white rounded-2xl shadow-md items-center"
             >
               <Text className="text-[#392F46] opacity-60 text-base">
                 {label}
               </Text>
-              <Text className="text-[#4ADE80] font-bold text-base">
+              <Text className="text-[#8938E9] font-bold text-base">
                 {getCurrencyFormatted(value)}
               </Text>
             </View>
@@ -253,9 +253,9 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       </View>
 
       {/* Category List */}
-      <View className="flex-col mt-8 gap-4">
+      <View className="flex-col mt-8 gap-4 w-full">
         {incomeData.filteredCategories.map((category, index) => (
-          <View key={index} className="flex-row gap-4 w-[330px] items-center">
+          <View key={index} className="flex-row gap-4 items-center w-full">
             <View
               className="w-12 h-12 rounded-full"
               style={{ backgroundColor: getCategoryColor(category.name) }}
