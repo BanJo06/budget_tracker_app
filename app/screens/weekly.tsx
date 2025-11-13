@@ -9,6 +9,7 @@ import {
 } from "@/data/weekly_quests_logic";
 import { addCoins } from "@/utils/coins";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useColorScheme } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -48,6 +49,9 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
   showToast,
   readyIds = [],
 }) => {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   const [quests, setQuests] = useState<QuestState[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -305,7 +309,7 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
   if (!isLoaded) {
     return (
-      <View className="flex-1 items-center justify-center">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-[#121212]">
         <ActivityIndicator size="large" color="#FF6B6B" />
       </View>
     );
@@ -325,16 +329,30 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
   };
 
   return (
-    <View className="flex-1 w-full">
-      {/* Weekly Reward Modal */}
+    <View
+      className={`flex-1 w-full ${isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"}`}
+    >
+      {/* Reward Modal */}
       <Modal visible={showRewardModal} transparent animationType="fade">
         <View className="flex-1 items-center justify-center bg-black/50">
-          <View className="bg-white w-[80%] p-6 rounded-2xl items-center">
+          <View
+            className={`w-[80%] p-6 rounded-2xl items-center ${
+              isDark ? "bg-[#1E1E1E]" : "bg-white"
+            }`}
+          >
             <SVG_ICONS.DailyReward width={70} height={90} />
-            <Text className="text-xl font-bold mt-4 text-[#8938E9]">
+            <Text
+              className={`text-xl font-bold mt-4 ${
+                isDark ? "text-[#C8A6FF]" : "text-[#8938E9]"
+              }`}
+            >
               🎉 Weekly Reward!
             </Text>
-            <Text className="text-base mt-2 text-center">
+            <Text
+              className={`text-base mt-2 text-center ${
+                isDark ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               You’ve completed all weekly quests and earned{" "}
               <Text className="font-bold">30 coins</Text>!
             </Text>
@@ -348,78 +366,104 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
         </View>
       </Modal>
 
-      {/* Progress Bar */}
-      <View className="flex-col items-end px-[32] gap-[6] pt-[16] pb-[32] mt-[20]">
+      {/* Progress Header */}
+      <View className="flex-col items-end px-[32] pt-[16] pb-[32] mt-[20]">
         <View className="pr-6 mb-2">
           <SVG_ICONS.DailyReward width={50} height={66} />
         </View>
         <ProgressBar progress={progress} />
-        <Text className="text-gray-500 text-sm mt-1">
+        <Text
+          className={`text-sm mt-1 ${
+            isDark ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           {(progress * 100).toFixed(0)}%
         </Text>
       </View>
 
-      {/* Quest List */}
-      <View className="px-[32] space-y-4 gap-4">
-        {quests.map((quest, index) => (
-          <View
-            key={quest.id}
-            className="rounded-[10] px-[16] py-[8]"
-            style={{
-              height: quest.id === "3" ? 70 : 100,
-              backgroundColor: quest.completed ? "#8938E9" : "#FFFFFF",
-              elevation: 5,
-            }}
-          >
-            <Text
-              className={`text-[16px] font-medium ${
-                quest.completed ? "text-white" : "text-black"
-              }`}
+      {/* Quest Cards */}
+      <View className="px-[32] space-y-4 gap-4 pb-[60]">
+        {quests.map((quest) => {
+          const isCompleted = quest.completed;
+          const cardBg = isCompleted
+            ? "#8938E9"
+            : isDark
+            ? "#1E1E1E"
+            : "#FFFFFF";
+          const textColor = isCompleted
+            ? "text-white"
+            : isDark
+            ? "text-gray-100"
+            : "text-black";
+
+          const cardHeight = quest.id === "use_app_40min" ? 70 : 100;
+
+          return (
+            <View
+              key={quest.id}
+              className={`rounded-[10] px-[16] py-[8]`}
+              style={{
+                backgroundColor: cardBg,
+                elevation: 4,
+                height: cardHeight,
+              }}
             >
-              {quest.title}
-            </Text>
+              <Text className={`text-[16px] font-medium ${textColor}`}>
+                {quest.title}
+              </Text>
 
-            {/* Internal progress bar only for login_7days */}
-            {quest.id === "login_7days" && !quest.completed && (
-              <View className="mt-6">
-                <ProgressBar progress={login7DaysProgress} />
-                <Text className="text-sm text-gray-500 mt-1">
-                  {Math.min(Math.round(login7DaysProgress * 7), 7)}/7 days
-                </Text>
-              </View>
-            )}
-
-            {/* Add 50 transactions progress bar */}
-            {quest.id === "add_50_transactions" && !quest.completed && (
-              <View className="mt-6">
-                <ProgressBar progress={transactionProgress} />
-                <Text className="text-sm text-gray-500 mt-1">
-                  {Math.min(Math.round(transactionProgress * 50), 50)}/50
-                  transactions
-                </Text>
-              </View>
-            )}
-
-            {/* Internal progress bar for Use App 40 Minutes */}
-            {quest.id === "use_app_40min" && !quest.completed && (
-              <View className="mt-6">
-                <ProgressBar progress={appUsageProgress} />
-                <Text className="text-sm text-gray-500 mt-1">
-                  {Math.min(Math.round(appUsageProgress * 40), 40)}/40 minutes
-                </Text>
-              </View>
-            )}
-
-            {/* ✅ Single “Done” badge for completed quests */}
-            {quest.completed && (
-              <View className="items-end flex-1 justify-end mt-2">
-                <View className="w-[71px] h-[27px] flex-row justify-center bg-white px-[8] py-[6] rounded-[10]">
-                  <Text className="text-[#8938E9] text-[12px]">Done</Text>
+              {/* Progress bars for quests */}
+              {quest.id === "login_7days" && !quest.completed && (
+                <View className="mt-6">
+                  <ProgressBar progress={login7DaysProgress} />
+                  <Text
+                    className={`text-sm mt-1 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    {Math.min(Math.round(login7DaysProgress * 7), 7)}/7 days
+                  </Text>
                 </View>
-              </View>
-            )}
-          </View>
-        ))}
+              )}
+
+              {quest.id === "add_50_transactions" && !quest.completed && (
+                <View className="mt-6">
+                  <ProgressBar progress={transactionProgress} />
+                  <Text
+                    className={`text-sm mt-1 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    {Math.min(Math.round(transactionProgress * 50), 50)}/50
+                    transactions
+                  </Text>
+                </View>
+              )}
+
+              {/* Internal progress bar for Use App 40 Minutes */}
+              {quest.id === "use_app_40min" && !quest.completed && (
+                <View className="mt-6">
+                  <ProgressBar progress={appUsageProgress} />
+                  <Text
+                    className={`text-sm mt-1 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    {Math.min(Math.round(appUsageProgress * 40), 40)}/40 minutes
+                  </Text>
+                </View>
+              )}
+
+              {isCompleted && (
+                <View className="items-end flex-1 justify-end mt-2">
+                  <View className="w-[71px] h-[27px] flex-row justify-center bg-white px-[8] py-[6] rounded-[10]">
+                    <Text className="text-[#8938E9] text-[12px]">Done</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          );
+        })}
 
         {/* <TouchableOpacity
           className="px-4 py-2 bg-purple-500 rounded"

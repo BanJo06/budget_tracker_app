@@ -208,7 +208,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
 
               {quest.completed && (
                 <View className="w-[71px] h-[27px] flex-row justify-center bg-white dark:bg-[#2E2E2E] px-[8] py-[6] rounded-[10]">
-                  <Text className="text-[#8938E9] text-[12px] dark:text-[#BB86FC]">
+                  <Text className="text-[#8938E9] text-[12px] dark:text-white">
                     Done
                   </Text>
                 </View>

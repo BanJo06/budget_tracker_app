@@ -1,11 +1,15 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { getCoins } from "@/utils/coins"; // 🪙 import helper
 import { router, useFocusEffect } from "expo-router";
+import { useColorScheme } from "nativewind";
 import React, { useCallback, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import ReusableRoundedBoxComponent from "../components/RoundedBoxComponent";
 
 export default function Shop() {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   const [coins, setCoins] = useState<number>(0);
 
   useFocusEffect(
@@ -19,7 +23,9 @@ export default function Shop() {
   );
 
   return (
-    <View>
+    <View
+      className={`flex-1 w-full ${isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"}`}
+    >
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
           <View className="flex-row items-center gap-[4] pb-[16]">
@@ -52,9 +58,17 @@ export default function Shop() {
       </ReusableRoundedBoxComponent>
 
       {/* ... existing Shop items */}
-      <View className="flex-col m-8">
+      <View
+        className={`flex-col m-8 ${isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"}`}
+      >
         <View className="gap-2">
-          <Text className="text-[16px] font-medium">App Icons</Text>
+          <Text
+            className={`text-sm mt-1 ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            App Icons
+          </Text>
           <View className="h-[2] bg-black rounded-full" />
 
           <View className="flex-row gap-10">
@@ -63,7 +77,13 @@ export default function Shop() {
                 <View className="w-[70] h-[70] rounded-[10] bg-orange-400"></View>
                 <View className="flex-row gap-2 items-center">
                   <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
-                  <Text>100</Text>
+                  <Text
+                    className={`text-sm mt-1 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    100
+                  </Text>
                 </View>
               </View>
             ))}
@@ -77,10 +97,22 @@ export default function Shop() {
             { name: "Eye-Catching Icons", price: 250 },
           ].map((item) => (
             <View key={item.name} className="flex-row justify-between">
-              <Text>{item.name}</Text>
+              <Text
+                className={`text-sm mt-1 ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                {item.name}
+              </Text>
               <View className="flex-row gap-2 items-center">
                 <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
-                <Text>{item.price}</Text>
+                <Text
+                  className={`text-sm mt-1 ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  {item.price}
+                </Text>
               </View>
             </View>
           ))}
