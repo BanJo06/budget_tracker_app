@@ -7,9 +7,16 @@ import {
   startWeeklyAppUsageTimer,
   stopWeeklyAppUsageTimer,
 } from "@/data/weekly_quests_logic";
+import { addCoins } from "@/utils/coins";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Modal,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 function resetWeeklyLoginQuest(quests: QuestState[]): QuestState[] {
   return quests.map((quest) => {
@@ -52,6 +59,9 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
   const [appUsageProgress, setAppUsageProgress] = useState(0); // 0 to 1
   const [appUsageCompleted, setAppUsageCompleted] = useState(false);
+
+  const [rewardClaimed, setRewardClaimed] = useState(false);
+  const [showRewardModal, setShowRewardModal] = useState(false);
 
   const lastProgressRef = useRef(0);
 
@@ -265,6 +275,24 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
     };
   }, []);
 
+  // Weekly reward logic
+  useEffect(() => {
+    const checkWeeklyReward = async () => {
+      const total = quests.length;
+      const completed = quests.filter((q) => q.completed).length;
+      const progress = total > 0 ? completed / total : 0;
+
+      if (progress === 1 && !rewardClaimed) {
+        await AsyncStorage.setItem("weeklyRewardClaimed", "true");
+        await addCoins(30); // +30 coins
+        setRewardClaimed(true);
+        setShowRewardModal(true);
+        showToast("🎉 You earned 30 coins for completing weekly quests!");
+      }
+    };
+    checkWeeklyReward();
+  }, [quests, rewardClaimed, showToast]);
+
   const handleComplete = (id: string) => {
     setQuests((prev) =>
       prev.map((q) =>
@@ -298,6 +326,28 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
   return (
     <View className="flex-1 w-full">
+      {/* Weekly Reward Modal */}
+      <Modal visible={showRewardModal} transparent animationType="fade">
+        <View className="flex-1 items-center justify-center bg-black/50">
+          <View className="bg-white w-[80%] p-6 rounded-2xl items-center">
+            <SVG_ICONS.DailyReward width={70} height={90} />
+            <Text className="text-xl font-bold mt-4 text-[#8938E9]">
+              🎉 Weekly Reward!
+            </Text>
+            <Text className="text-base mt-2 text-center">
+              You’ve completed all weekly quests and earned{" "}
+              <Text className="font-bold">30 coins</Text>!
+            </Text>
+            <TouchableOpacity
+              className="mt-5 bg-[#8938E9] px-5 py-2 rounded-xl"
+              onPress={() => setShowRewardModal(false)}
+            >
+              <Text className="text-white font-medium">OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Progress Bar */}
       <View className="flex-col items-end px-[32] gap-[6] pt-[16] pb-[32] mt-[20]">
         <View className="pr-6 mb-2">
