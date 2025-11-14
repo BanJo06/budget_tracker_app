@@ -1,6 +1,7 @@
 import { TabHomeScreenNavigationProp } from "@/types";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation } from "expo-router";
+import { useColorScheme } from "nativewind";
 import React, { useState } from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
@@ -11,6 +12,7 @@ import ExpenseContent from "../../screens/expense";
 import IncomeContent from "../../screens/income";
 
 export default function Graphs() {
+  const { colorScheme, setColorScheme } = useColorScheme();
   // State to hold the currently selected value ('expense' or 'income')
   const [selectedOption, setSelectedOption] = useState("expense");
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -59,14 +61,16 @@ export default function Graphs() {
   };
 
   return (
-    <View className="flex-1 items-center bg-gray-50">
+    <View className="flex-1 items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
       {/* Top Box */}
       <ReusableRoundedBoxComponent style={{ marginHorizontal: 20 }}>
         <View className="flex-col px-[32] pt-[8]">
           {/* Header */}
           <View className="flex-row items-center gap-[4] pb-[16]">
             <View className="w-[25] h-[25] bg-white"></View>
-            <Text className="font-medium text-white">Budget Tracker</Text>
+            <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+              Budget Tracker
+            </Text>
           </View>
 
           {/* Title */}
@@ -77,7 +81,9 @@ export default function Graphs() {
             >
               <SVG_ICONS.SideMenu width={30} height={30} />
             </TouchableOpacity>
-            <Text className="text-[16px] font-medium text-white">Graphs</Text>
+            <Text className="text-[16px] font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+              Graphs
+            </Text>
           </View>
 
           {/* Switch + Date Picker */}
@@ -87,8 +93,8 @@ export default function Graphs() {
               initial={0}
               onPress={(value) => setSelectedOption(value)}
               textColor="#000"
-              selectedColor="#fff"
-              buttonColor="#7a44cf"
+              selectedColor={colorScheme === "dark" ? "#fff" : "#000"}
+              buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
               hasPadding
               borderRadius={30}
               borderColor="#fff"

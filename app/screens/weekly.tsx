@@ -386,10 +386,12 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
         {quests.map((quest) => {
           const isCompleted = quest.completed;
           const cardBg = isCompleted
-            ? "#8938E9"
+            ? isDark
+              ? "#2A2A2A" // dark mode completed background (dark gray)
+              : "#8938E9" // light mode completed background (violet)
             : isDark
-            ? "#1E1E1E"
-            : "#FFFFFF";
+            ? "#1E1E1E" // dark mode uncompleted background
+            : "#FFFFFF"; // light mode uncompleted background
           const textColor = isCompleted
             ? "text-white"
             : isDark
@@ -456,8 +458,18 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
               {isCompleted && (
                 <View className="items-end flex-1 justify-end mt-2">
-                  <View className="w-[71px] h-[27px] flex-row justify-center bg-white px-[8] py-[6] rounded-[10]">
-                    <Text className="text-[#8938E9] text-[12px]">Done</Text>
+                  <View
+                    className={`w-[71px] h-[27px] flex-row justify-center ${
+                      isDark ? "bg-[#121212]" : "bg-white"
+                    } px-[8] py-[6] rounded-[10]`}
+                  >
+                    <Text
+                      className={`text-[12px] ${
+                        isDark ? "text-white" : "text-[#8938E9]"
+                      }`}
+                    >
+                      Done
+                    </Text>
                   </View>
                 </View>
               )}

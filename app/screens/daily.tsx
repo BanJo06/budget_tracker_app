@@ -38,6 +38,8 @@ const DailyContent: React.FC<DailyContentProps> = ({
   readyIds,
 }) => {
   const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   const [quests, setQuests] = useState<QuestState[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [lastSentProgress, setLastSentProgress] = useState<number | null>(null);
@@ -142,7 +144,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
   }
 
   return (
-    <View className="flex-1 bg-white dark:bg-[#121212]">
+    <View className="flex-1 bg-white dark:bg-bgPrimary-dark">
       {/* 🎁 Reward Modal */}
       <Modal visible={showRewardModal} transparent animationType="fade">
         <View className="flex-1 items-center justify-center bg-black/50">
@@ -171,7 +173,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
           <SVG_ICONS.DailyReward width={50} height={66} />
         </View>
         <ProgressBar progress={currentProgress} />
-        <Text className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+        <Text className="text-gray-500 dark:text-textPrimary-dark text-sm mt-1">
           {(currentProgress * 100).toFixed(0)}%
         </Text>
       </View>
@@ -181,17 +183,27 @@ const DailyContent: React.FC<DailyContentProps> = ({
         {quests.map((quest) => (
           <View
             key={quest.id}
-            className={`h-[80] rounded-[10] px-[16] py-[8] ${
-              quest.completed
-                ? "bg-[#8938E9]"
-                : "bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-gray-700"
-            }`}
-            style={{ elevation: 5 }}
+            className="h-[80] rounded-[10] px-[16] py-[8] border-gray-200 dark:border-gray-700"
+            style={{
+              elevation: 5,
+              backgroundColor: quest.completed
+                ? isDark
+                  ? "#2A2A2A"
+                  : "#8938E9"
+                : isDark
+                ? "#1E1E1E"
+                : "#FFFFFF",
+            }}
           >
             <Text
               className={`text-[16px] font-medium ${
-                quest.completed ? "text-white" : "text-black dark:text-gray-100"
-              }`}
+                quest.completed
+                  ? "text-white"
+                  : isDark
+                  ? "text-gray-100"
+                  : "text-black"
+              }
+              `}
             >
               {quest.title}
             </Text>
@@ -207,8 +219,16 @@ const DailyContent: React.FC<DailyContentProps> = ({
               )}
 
               {quest.completed && (
-                <View className="w-[71px] h-[27px] flex-row justify-center bg-white dark:bg-[#2E2E2E] px-[8] py-[6] rounded-[10]">
-                  <Text className="text-[#8938E9] text-[12px] dark:text-white">
+                <View
+                  className={`w-[71px] h-[27px] flex-row justify-center ${
+                    isDark ? "bg-[#121212]" : "bg-white"
+                  } px-[8] py-[6] rounded-[10]`}
+                >
+                  <Text
+                    className={`text-[12px] ${
+                      isDark ? "text-white" : "text-[#8938E9]"
+                    }`}
+                  >
                     Done
                   </Text>
                 </View>

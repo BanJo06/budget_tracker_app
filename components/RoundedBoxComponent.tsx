@@ -77,7 +77,6 @@ const RoundedBoxComponent = React.forwardRef<
       innerContent: {
         width: "100%",
         height: "100%",
-        backgroundColor: "#8938E9",
         borderBottomLeftRadius: 40,
         borderBottomRightRadius: 40,
         overflow: "hidden",
@@ -105,7 +104,10 @@ const RoundedBoxComponent = React.forwardRef<
           barStyle={statusBarStyle}
           translucent={true}
         />
-        <View style={styles.innerContent}>
+        <View
+          style={styles.innerContent}
+          className="bg-accent-light dark:bg-accent-dark"
+        >
           <View style={styles.contentWrapper}>{children}</View>
         </View>
       </View>

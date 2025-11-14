@@ -64,7 +64,7 @@ export default function Shop() {
         <View className="gap-2">
           <Text
             className={`text-sm mt-1 ${
-              isDark ? "text-gray-400" : "text-gray-500"
+              isDark ? "text-gray-300" : "text-gray-500"
             }`}
           >
             App Icons
@@ -79,7 +79,7 @@ export default function Shop() {
                   <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
                   <Text
                     className={`text-sm mt-1 ${
-                      isDark ? "text-gray-400" : "text-gray-500"
+                      isDark ? "text-gray-300" : "text-gray-500"
                     }`}
                   >
                     100
@@ -99,7 +99,7 @@ export default function Shop() {
             <View key={item.name} className="flex-row justify-between">
               <Text
                 className={`text-sm mt-1 ${
-                  isDark ? "text-gray-400" : "text-gray-500"
+                  isDark ? "text-gray-300" : "text-gray-500"
                 }`}
               >
                 {item.name}
@@ -108,7 +108,7 @@ export default function Shop() {
                 <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
                 <Text
                   className={`text-sm mt-1 ${
-                    isDark ? "text-gray-400" : "text-gray-500"
+                    isDark ? "text-gray-300" : "text-gray-500"
                   }`}
                 >
                   {item.price}

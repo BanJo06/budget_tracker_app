@@ -9,6 +9,7 @@ import {
 import { TabHomeScreenNavigationProp } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useNavigation } from "expo-router";
+import { useColorScheme } from "nativewind";
 import React, { useCallback, useEffect, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
@@ -16,6 +17,8 @@ import DailyContent from "../../screens/daily";
 import WeeklyContent from "../../screens/weekly";
 
 export default function Quests() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const [currentProgress, setCurrentProgress] = useState(0);
   const [selectedOption, setSelectedOption] = useState("daily");
@@ -30,12 +33,71 @@ export default function Quests() {
     console.log("Parent currentProgress updated:", value);
   }, []);
 
+  // Load saved UI mode on mount
+  useEffect(() => {
+    const loadUIMode = async () => {
+      try {
+        const savedMode = await AsyncStorage.getItem("uiMode");
+        if (savedMode === "dark") {
+          setColorScheme("dark");
+        } else {
+          setColorScheme("light");
+        }
+      } catch (error) {
+        console.log("Failed to load UI mode:", error);
+      }
+    };
+
+    loadUIMode();
+  }, []);
+
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     initializeQuests();
+  //   }, 400);
+  //   return () => clearTimeout(timer);
+  // }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      initializeQuests();
+      initializeQuests(); // already async
     }, 400);
+
     return () => clearTimeout(timer);
   }, []);
+
+  // const initializeQuests = async () => {
+  //   const { readyIds } = await checkDailyQuests();
+  //   setReadyQuests(readyIds);
+
+  //   const today = new Date().toDateString();
+
+  //   // Show toast examples
+  //   if (readyIds.includes("1")) {
+  //     const toastKey = "@useAppQuestToastDate";
+  //     const lastToastDate = await AsyncStorage.getItem(toastKey);
+  //     if (lastToastDate !== today) {
+  //       showToast("🎉 Quest Completed: Use App");
+  //       await AsyncStorage.setItem(toastKey, today);
+  //     }
+  //   }
+
+  //   const transactionCompleted = await isTransactionQuestCompletedToday();
+  //   const toastKey2 = "@transactionQuestToastDate";
+  //   const lastToast2 = await AsyncStorage.getItem(toastKey2);
+  //   if (transactionCompleted && lastToast2 !== today) {
+  //     showToast("🎉 Quest Completed: Add 1 transaction");
+  //     await AsyncStorage.setItem(toastKey2, today);
+  //   }
+
+  //   const fiveMinCompleted = await checkAppUsageDuration();
+  //   const toastKey3 = "@fiveMinQuestToastDate";
+  //   const lastToast3 = await AsyncStorage.getItem(toastKey3);
+  //   if (fiveMinCompleted && lastToast3 !== today) {
+  //     showToast("🎉 Quest Completed: Use the app for 5 minutes");
+  //     await AsyncStorage.setItem(toastKey3, today);
+  //   }
+  // };
 
   const initializeQuests = async () => {
     const { readyIds } = await checkDailyQuests();
@@ -43,7 +105,6 @@ export default function Quests() {
 
     const today = new Date().toDateString();
 
-    // Show toast examples
     if (readyIds.includes("1")) {
       const toastKey = "@useAppQuestToastDate";
       const lastToastDate = await AsyncStorage.getItem(toastKey);
@@ -97,12 +158,14 @@ export default function Quests() {
   };
 
   return (
-    <View className="flex-1 bg-[#f0f0f0]">
+    <View className="flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
           <View className="flex-row items-center gap-[4] pb-[16]">
             <View className="w-[25] h-[25] bg-white" />
-            <Text className="font-medium text-white">Budget Tracker</Text>
+            <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+              Budget Tracker
+            </Text>
           </View>
 
           <View className="flex-row items-center justify-center">
@@ -112,7 +175,9 @@ export default function Quests() {
             >
               <SVG_ICONS.SideMenu width={30} height={30} />
             </TouchableOpacity>
-            <Text className="text-[16px] font-medium text-white">Quests</Text>
+            <Text className="text-[16px] font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+              Quests
+            </Text>
 
             <TouchableOpacity
               onPress={() => router.push("/shop")}
@@ -130,9 +195,9 @@ export default function Quests() {
               ]}
               initial={0}
               onPress={(value) => setSelectedOption(value)}
-              textColor="#000"
-              selectedColor="#fff"
-              buttonColor="#7a44cf"
+              textColor={"#000"}
+              selectedColor={colorScheme === "dark" ? "#fff" : "#000"}
+              buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
               hasPadding
               borderRadius={30}
               borderColor="#fff"

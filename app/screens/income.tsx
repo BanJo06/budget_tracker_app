@@ -1,4 +1,5 @@
 import { getDb } from "@/utils/database";
+import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import { Dimensions, ScrollView, Text, View } from "react-native";
 import { PieChart } from "react-native-chart-kit";
@@ -80,6 +81,8 @@ const getYears = () => {
 };
 
 export default function IncomeContent({ month, year }: IncomeContentProps) {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
   const [period, setPeriod] = useState("month");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -194,11 +197,14 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
   return (
     <ScrollView
       contentContainerStyle={{ alignItems: "center", paddingHorizontal: 32 }}
+      className="bg-bgPrimary-light dark:bg-bgPrimary-dark"
     >
       {/* Graph Overview */}
-      <View className="w-full h-[220px] p-5 mt-4 mb-4 bg-white rounded-2xl shadow-md">
+      <View className="w-full h-[220px] p-5 mt-4 mb-4 rounded-2xl shadow-md bg-card-light dark:bg-card-dark">
         <View className="flex-row justify-between">
-          <Text className="text-black font-medium">Income</Text>
+          <Text className="font-medium text-textPrimary-light dark:text-textPrimary-dark">
+            Income
+          </Text>
         </View>
 
         <View className="flex-row justify-between items-center mt-4">
@@ -219,7 +225,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
                   className="w-3 h-3 rounded-full mr-1"
                   style={{ backgroundColor: getCategoryColor(category.name) }}
                 />
-                <Text className="text-xs">
+                <Text className="text-xs text-textPrimary-light dark:text-textPrimary-dark">
                   {category.name} ({category.percentage.toFixed(0)}%)
                 </Text>
               </View>
@@ -239,12 +245,12 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
           return (
             <View
               key={label}
-              className="flex-1 h-22 p-5 bg-white rounded-2xl shadow-md items-center"
+              className="flex-1 h-22 p-5 rounded-2xl shadow-md items-center bg-card-light dark:bg-card-dark"
             >
-              <Text className="text-[#392F46] opacity-60 text-base">
+              <Text className="opacity-60 text-base text-textPrimary-light dark:text-textPrimary-dark">
                 {label}
               </Text>
-              <Text className="text-[#8938E9] font-bold text-base">
+              <Text className="font-bold text-base text-accent-light dark:text-textPrimary-dark">
                 {getCurrencyFormatted(value)}
               </Text>
             </View>
@@ -261,14 +267,18 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
               style={{ backgroundColor: getCategoryColor(category.name) }}
             />
             <View className="justify-center gap-1">
-              <Text className="text-base font-medium">{category.name}</Text>
-              <Text className="text-[#392F46] opacity-60 text-xs">Cash</Text>
+              <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
+                {category.name}
+              </Text>
+              <Text className="opacity-60 text-xs text-textSecondary-light dark:text-textSecondary-dark">
+                Cash
+              </Text>
             </View>
             <View className="flex-1 flex-col justify-end items-end gap-1">
-              <Text className="text-base font-medium">
+              <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
                 {getCurrencyFormatted(category.amount)}
               </Text>
-              <Text className="text-[#392F46] opacity-60 text-xs">
+              <Text className="opacity-60 text-xs text-textSecondary-light dark:text-textSecondary-dark">
                 {category.percentage.toFixed(0)}%
               </Text>
             </View>
