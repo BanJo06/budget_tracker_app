@@ -106,10 +106,17 @@ export default function ExportTransactionsCSV() {
   };
 
   return (
-    <View style={{ padding: 20 }}>
-      <Text>From:</Text>
+    <View
+      style={{ padding: 20 }}
+      className="flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark"
+    >
+      <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+        From:
+      </Text>
       <TouchableOpacity onPress={() => setShowFromPicker(true)}>
-        <Text>{fromDate.toDateString()}</Text>
+        <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+          {fromDate.toDateString()}
+        </Text>
       </TouchableOpacity>
       {showFromPicker && (
         <DateTimePicker
@@ -123,9 +130,13 @@ export default function ExportTransactionsCSV() {
         />
       )}
 
-      <Text>To:</Text>
+      <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+        To:
+      </Text>
       <TouchableOpacity onPress={() => setShowToPicker(true)}>
-        <Text>{toDate.toDateString()}</Text>
+        <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+          {toDate.toDateString()}
+        </Text>
       </TouchableOpacity>
       {showToPicker && (
         <DateTimePicker
@@ -142,14 +153,15 @@ export default function ExportTransactionsCSV() {
       <TouchableOpacity
         style={{
           marginTop: 20,
-          backgroundColor: "#4CAF50",
           padding: 15,
           borderRadius: 8,
         }}
+        className="bg-button-light dark:bg-button-dark"
         onPress={handleExport}
       >
         <Text
-          style={{ color: "white", textAlign: "center", fontWeight: "bold" }}
+          style={{ textAlign: "center", fontWeight: "bold" }}
+          className="text-textInsidePrimary-light dark:text-textInsidePrimary-dark"
         >
           Export to CSV
         </Text>

@@ -1,15 +1,35 @@
-import { ACCOUNTS_SVG_ICONS } from '@/assets/constants/accounts_icons';
-import { SVG_ICONS } from '@/assets/constants/icons';
-import { addAccount, deleteAccount, getAccounts, updateAccount } from '@/utils/accounts';
-import { initDatabase } from '@/utils/database';
-import React, { useEffect, useState } from 'react';
-import { Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
+import { SVG_ICONS } from "@/assets/constants/icons";
+import {
+  addAccount,
+  deleteAccount,
+  getAccounts,
+  updateAccount,
+} from "@/utils/accounts";
+import { initDatabase } from "@/utils/database";
+import { useColorScheme } from "nativewind";
+import React, { useEffect, useState } from "react";
+import {
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 // A simplified NewAccountModal component
 const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
-  const [initialAmount, setInitialAmount] = useState(accountToEdit ? String(accountToEdit.balance) : "");
-  const [accountName, setAccountName] = useState(accountToEdit ? accountToEdit.name : "");
-  const [selectedIcon, setSelectedIcon] = useState(accountToEdit ? accountToEdit.icon_name : null);
+  const [initialAmount, setInitialAmount] = useState(
+    accountToEdit ? String(accountToEdit.balance) : ""
+  );
+  const [accountName, setAccountName] = useState(
+    accountToEdit ? accountToEdit.name : ""
+  );
+  const [selectedIcon, setSelectedIcon] = useState(
+    accountToEdit ? accountToEdit.icon_name : null
+  );
 
   useEffect(() => {
     if (accountToEdit) {
@@ -50,7 +70,9 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
     >
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">{accountToEdit ? "Edit Account" : "Add new account"}</Text>
+          <Text className="text-xl font-bold mb-4">
+            {accountToEdit ? "Edit Account" : "Add new account"}
+          </Text>
           {/* Initial Amount Input */}
           <View className="w-full flex-row gap-2 items-center mb-4">
             <Text>Initial Amount</Text>
@@ -81,10 +103,11 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
                   <TouchableOpacity
                     key={key}
                     onPress={() => setSelectedIcon(key)}
-                    className={`p-2 rounded-full border-2 ${selectedIcon === key
-                      ? "border-purple-600"
-                      : "border-gray-300"
-                      }`}
+                    className={`p-2 rounded-full border-2 ${
+                      selectedIcon === key
+                        ? "border-purple-600"
+                        : "border-gray-300"
+                    }`}
                   >
                     <IconComponent
                       size={24}
@@ -117,7 +140,13 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
 };
 
 // Confirmation modal component
-const ConfirmationModal = ({ isVisible, onClose, onConfirm, title, message }) => {
+const ConfirmationModal = ({
+  isVisible,
+  onClose,
+  onConfirm,
+  title,
+  message,
+}) => {
   return (
     <Modal
       animationType="fade"
@@ -149,8 +178,8 @@ const ConfirmationModal = ({ isVisible, onClose, onConfirm, title, message }) =>
   );
 };
 
-
 export default function Accounts() {
+  const { colorScheme, setColorScheme } = useColorScheme();
   const [accounts, setAccounts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [menuState, setMenuState] = useState({
@@ -161,7 +190,8 @@ export default function Accounts() {
   });
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [accountToEdit, setAccountToEdit] = useState(null);
-  const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
+  const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] =
+    useState(false);
 
   const fetchAccounts = async () => {
     setRefreshing(true);
@@ -234,7 +264,13 @@ export default function Accounts() {
       // Handle edit logic
       console.log("Updating account:", accountData.name);
       try {
-        updateAccount(accountToEdit.id, accountData.name, accountType, accountData.balance, accountData.icon_name);
+        updateAccount(
+          accountToEdit.id,
+          accountData.name,
+          accountType,
+          accountData.balance,
+          accountData.icon_name
+        );
       } catch (error) {
         console.error("Failed to update account:", error);
       }
@@ -242,7 +278,12 @@ export default function Accounts() {
       // Handle create new account logic
       console.log("Saving new account:", accountData.name);
       try {
-        addAccount(accountData.name, accountType, accountData.balance, accountData.icon_name);
+        addAccount(
+          accountData.name,
+          accountType,
+          accountData.balance,
+          accountData.icon_name
+        );
       } catch (error) {
         console.error("Failed to save new account:", error);
       }
@@ -260,33 +301,46 @@ export default function Accounts() {
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={fetchAccounts} />
-        }>
-        <View className='m-8'>
-          <Text className='text-[14px] font-medium'>My Accounts</Text>
-          <View className='flex-col mt-4 gap-2'>
+        }
+      >
+        <View className="m-8">
+          <Text className="text-[14px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
+            My Accounts
+          </Text>
+          <View className="flex-col mt-4 gap-2">
             {accounts.length > 0 ? (
               accounts.map((account) => {
                 const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
                 return (
                   <View
                     key={account.id}
-                    className='w-full h-[70] px-4 py-[10] bg-white rounded-[10] flex-row justify-between items-center'
+                    className="w-full h-[70] px-4 py-[10] rounded-[10] flex-row justify-between items-center bg-card-light dark:bg-card-dark"
                     style={{ elevation: 5 }}
                   >
-                    <View className='flex-row gap-2 items-center'>
-                      <View className='w-[50] h-[50] rounded-full bg-[#8938E9] justify-center items-center'>
-                        {IconComponent && <IconComponent size={24} color="white" />}
+                    <View className="flex-row gap-2 items-center">
+                      <View className="w-[50] h-[50] rounded-full bg-[#8938E9] justify-center items-center">
+                        {IconComponent && (
+                          <IconComponent size={24} color="white" />
+                        )}
                       </View>
-                      <View className='flex-col gap-1'>
-                        <Text className="text-lg font-semibold">{account.name}</Text>
-                        <View className='flex-row gap-2'>
-                          <Text className="text-sm">Balance:</Text>
-                          <Text className='text-sm text-[#8938E9]'>₱{parseFloat(account.balance).toFixed(2)}</Text>
+                      <View className="flex-col gap-1">
+                        <Text className="text-lg font-semibold text-textPrimary-light dark:text-textPrimary-dark">
+                          {account.name}
+                        </Text>
+                        <View className="flex-row gap-2">
+                          <Text className="text-sm text-textPrimary-light dark:text-textPrimary-dark">
+                            Balance:
+                          </Text>
+                          <Text className="text-sm text-textHighlight-light dark:text-textHighlight-dark">
+                            ₱{parseFloat(account.balance).toFixed(2)}
+                          </Text>
                         </View>
                       </View>
                     </View>
                     <View>
-                      <TouchableOpacity onPress={(event) => handleEllipsisPress(event, account)}>
+                      <TouchableOpacity
+                        onPress={(event) => handleEllipsisPress(event, account)}
+                      >
                         <SVG_ICONS.Ellipsis width={24} height={24} />
                       </TouchableOpacity>
                     </View>
@@ -294,15 +348,24 @@ export default function Accounts() {
                 );
               })
             ) : (
-              <Text className="text-gray-500 text-center mt-4">No accounts found. Add a new one!</Text>
+              <Text className="text-center mt-4 text-textPrimary-light dark:text-textPrimary-dark">
+                No accounts found. Add a new one!
+              </Text>
             )}
           </View>
-          <TouchableOpacity onPress={() => { setIsModalVisible(true); setAccountToEdit(null); }}>
-            <View className='flex-row mt-6 gap-8 justify-center'>
-              <View className='w-[180] h-[36] px-4 py-2 border-[#8938E9] rounded-[10] border justify-center'>
-                <View className='flex-row items-center gap-2'>
-                  <View className='w-[20] h-[20] rounded-full border border-[#8938E9]'></View>
-                  <Text className='text-[#8938E9]'>Add New Account</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setIsModalVisible(true);
+              setAccountToEdit(null);
+            }}
+          >
+            <View className="flex-row mt-6 gap-8 justify-center">
+              <View className="w-[180] h-[36] px-4 py-2  rounded-[10] border justify-center border-button-light dark:border-button-dark">
+                <View className="flex-row items-center gap-2">
+                  <View className="w-[20] h-[20] rounded-full border border-[#8938E9]"></View>
+                  <Text className="text-button-light dark:text-button-dark">
+                    Add New Account
+                  </Text>
                 </View>
               </View>
             </View>
@@ -311,17 +374,17 @@ export default function Accounts() {
       </ScrollView>
       {menuState.isVisible && (
         <TouchableOpacity
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
           onPress={() => setMenuState({ ...menuState, isVisible: false })}
           activeOpacity={1}
         >
           <View
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: menuState.y,
               left: menuState.x - 40,
             }}
-            className='bg-white rounded-lg border border-gray-200'
+            className="bg-white rounded-lg border border-gray-200"
           >
             <TouchableOpacity onPress={handleEdit} className="p-3">
               <Text className="text-lg">Edit</Text>

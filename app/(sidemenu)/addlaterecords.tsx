@@ -51,7 +51,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
       visible={isVisible}
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-center items-center bg-black/50">
+      <View className="flex-1 justify-center items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
         <View className="bg-white p-6 rounded-lg w-11/12">
           <Text className="text-xl font-bold mb-4">Add new account</Text>
           <View className="w-full flex-row gap-2 items-center mb-4">
@@ -316,7 +316,7 @@ export default function AddLateRecords() {
   ];
 
   return (
-    <View className="flex-1 items-center justify-center bg-[#C3C3C3] p-8">
+    <View className="flex-1 items-center justify-center p-8 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <AccountsModal
         isVisible={isAccountsModalVisible}
         onClose={() => setAccountsModalVisible(false)}
@@ -345,10 +345,12 @@ export default function AddLateRecords() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="w-full h-[80%] bg-white rounded-[20] p-4">
+          <View className="w-full h-[80%] bg-card-light dark:bg-card-dark rounded-[20] p-4">
             {/* Date Picker */}
             <View className="flex-row items-center justify-between pb-5">
-              <Text>Date</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                Date
+              </Text>
               <TouchableOpacity
                 onPress={() => setShowDatePicker(true)}
                 className="w-[126px] h-[39px] flex-row items-center justify-center bg-[orange] px-5 py-3 rounded-full gap-2"
@@ -370,7 +372,9 @@ export default function AddLateRecords() {
 
             {/* Account Select */}
             <View className="flex-row items-center justify-between pb-5">
-              <Text>Account Select</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                Account Select
+              </Text>
               <TouchableOpacity
                 onPress={() => setAccountsModalVisible(true)}
                 className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-full"
@@ -384,7 +388,9 @@ export default function AddLateRecords() {
 
             {/* Cash Flow */}
             <View className="flex-row items-center pb-5">
-              <Text>Cash Flow</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                Cash Flow
+              </Text>
               <View className="flex-1 ml-[110]">
                 <SwitchSelector
                   options={options}
@@ -406,7 +412,9 @@ export default function AddLateRecords() {
 
             {/* Category Select */}
             <View className="flex-row items-center justify-between pb-5">
-              <Text>Category Select</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                Category Select
+              </Text>
               <TouchableOpacity
                 onPress={() => setCategoriesModalVisible(true)}
                 className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-full"
@@ -420,9 +428,11 @@ export default function AddLateRecords() {
 
             {/* Amount & Notes */}
             <View className="flex-col gap-2 justify-between pb-5">
-              <Text>Amount</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                Amount
+              </Text>
               <TextInput
-                className="h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+                className="h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-card-light dark:bg-card-dark"
                 placeholder="0"
                 keyboardType="numeric"
                 value={initialAmount}
@@ -431,9 +441,11 @@ export default function AddLateRecords() {
             </View>
 
             <View className="flex-col gap-2 justify-between pb-5">
-              <Text>Notes</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                Notes
+              </Text>
               <TextInput
-                className="w-full h-20 border-2 border-gray-300 rounded-lg p-2 bg-purple-100"
+                className="w-full h-20 border-2 border-gray-300 rounded-lg p-2 bg-card-light dark:bg-card-dark"
                 placeholder="Write a note"
                 multiline
                 maxLength={100}
@@ -446,16 +458,20 @@ export default function AddLateRecords() {
             {/* Buttons */}
             <View className="flex-row justify-end gap-4">
               <TouchableOpacity
-                className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+                className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
                 onPress={handleClear}
               >
-                <Text className="uppercase text-purple-600">Clear</Text>
+                <Text className="uppercase text-button-light dark:text-button-dark">
+                  Clear
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
+                className="w-24 h-10 rounded-lg justify-center items-center bg-button-light dark:bg-button-dark"
                 onPress={handleSave}
               >
-                <Text className="uppercase text-white">Save</Text>
+                <Text className="uppercase text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

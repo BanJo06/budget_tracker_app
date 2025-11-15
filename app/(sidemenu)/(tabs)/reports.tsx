@@ -1,6 +1,7 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { TabHomeScreenNavigationProp } from "@/types";
 import { useNavigation } from "expo-router";
+import { useColorScheme } from "nativewind";
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
@@ -11,6 +12,9 @@ import BudgetsContent from "../../screens/budgets";
 import RecordsContent from "../../screens/records";
 
 export default function Reports() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   const [selectedReportTab, setSelectedReportTab] = useState<
     "records" | "budgets" | "accounts"
   >("records");
@@ -36,7 +40,7 @@ export default function Reports() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#f0f0f0" }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#FFFFFF" }}>
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
           <View className="flex-row items-center gap-[4] pb-[16]">
@@ -60,8 +64,8 @@ export default function Reports() {
               initial={0}
               onPress={(value) => setSelectedReportTab(value)}
               textColor={"#000000"}
-              selectedColor={"#ffffff"}
-              buttonColor={"#7a44cf"}
+              selectedColor={colorScheme === "dark" ? "#fff" : "#000"}
+              buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
               hasPadding={true}
               borderRadius={30}
               borderColor={"#ffffff"}

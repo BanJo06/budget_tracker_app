@@ -1,3 +1,4 @@
+import { ThemeContext } from "@/assets/constants/theme-provider";
 import DonutChart from "@/components/DonutChart";
 import { createNotificationChannel } from "@/components/notifications";
 import { useToast } from "@/components/ToastContext";
@@ -27,8 +28,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useColorScheme } from "nativewind";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
+  Dimensions,
   FlatList,
   Modal,
   StyleSheet,
@@ -52,6 +55,11 @@ interface QuestState extends WeeklyQuest {
 }
 
 export default function Index() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const { mode } = useContext(ThemeContext);
+  const backgroundColor = mode === "dark" ? "#121212" : "#FFFFFF";
+  const screenHeight = Dimensions.get("window").height;
+
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const router = useRouter();
   const { showToast } = useToast();
@@ -791,7 +799,7 @@ export default function Index() {
 
   // ---------- UI ----------
   return (
-    <View className="items-center">
+    <View className="items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <PlannedBudgetModals
         isBudgetModalVisible={isModalVisible}
         setIsBudgetModalVisible={setIsModalVisible}
@@ -868,18 +876,20 @@ export default function Index() {
 
       {/* === Overview === */}
       <View
-        className="w-[330] h-[220] -mt-[46] p-[20] bg-white rounded-[20]"
+        className="w-[330] h-[220] -mt-[46] p-[20] rounded-[20] bg-card-light dark:bg-card-dark"
         style={{ elevation: 5 }}
       >
         <View className="pb-[20] flex-row justify-between">
-          <Text className="text-[12px] font-medium self-center">Overview</Text>
+          <Text className="text-[12px] font-medium self-center text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+            Overview
+          </Text>
           <View className="flex-row justify-between">
             <TouchableOpacity onPress={handleLeftPress}>
               <SVG_ICONS.ArrowLeft width={24} height={24} />
             </TouchableOpacity>
 
             <View className="self-center" style={{ width: 70 }}>
-              <Text className="text-[12px] font-medium self-center">
+              <Text className="text-[12px] font-medium self-center text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
                 {options[selectedIndex]}
               </Text>
             </View>
@@ -925,7 +935,7 @@ export default function Index() {
             <Text className="text-[8px] text-[#392F46] opacity-65">
               than last week
             </Text> */}
-            <Text className="text-[8px] text-[#392F46] opacity-65 text-right">
+            <Text className="text-[8px] opacity-65 text-right text-textHighlight-light dark:text-textHighlight-dark">
               {insightText}
             </Text>
           </View>
@@ -935,17 +945,17 @@ export default function Index() {
       {/* === Expense & Income Banners === */}
       {/* === Expense === */}
       <View
-        className="w-[330] h-[80] my-[16] p-[16] bg-white rounded-[20]"
+        className="w-[330] h-[80] my-[16] p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
         style={{ elevation: 5 }}
       >
         <View className="flex-row">
           <View className="w-[48] h-[48] bg-[#8938E9] rounded-[16]" />
           <View className="pl-[20] gap-[6] self-center">
-            <Text className="text-[12px] text-[#392F46] opacity-65">
+            <Text className="text-[12px] opacity-65 text-right text-textSecondary-light dark:text-textSecondary-dark">
               Spent this week:
             </Text>
             {/* Dynamically set the spent amount */}
-            <Text className="text-[16px] font-medium">
+            <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
               {formatCurrency(weeklySummary.spent)}
             </Text>
           </View>
@@ -959,17 +969,17 @@ export default function Index() {
 
       {/* === Income === */}
       <View
-        className="w-[330] h-[80] p-[16] bg-white rounded-[20]"
+        className="w-[330] h-[80] p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
         style={{ elevation: 5 }}
       >
         <View className="flex-row">
           <View className="w-[48] h-[48] bg-[#8938E9] rounded-[16]" />
           <View className="pl-[20] gap-[6] self-center">
-            <Text className="text-[12px] text-[#392F46] opacity-65">
+            <Text className="text-[12px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
               Earned this week:
             </Text>
             {/* Dynamically set the earned amount */}
-            <Text className="text-[16px] font-medium">
+            <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
               {formatCurrency(weeklySummary.earned)}
             </Text>
           </View>
@@ -983,15 +993,28 @@ export default function Index() {
 
       {/* === Planned Budgets Section === */}
       <View
+        style={{
+          backgroundColor: backgroundColor,
+          minHeight: screenHeight * 0.3,
+        }}
         className="w-full mt-[32] mb-[16] pl-[32]"
-        style={{ overflow: "visible" }}
       >
-        <Text className="font-medium text-[16px] mb-[8]">Planned Budgets</Text>
+        <Text
+          className={`font-medium text-[16px] mb-[8] ${
+            mode === "dark" ? "text-white" : "text-black"
+          }`}
+        >
+          Planned Budgets
+        </Text>
 
         {loading ? (
-          <Text className="text-gray-500">Loading planned budgets...</Text>
+          <Text className={mode === "dark" ? "text-gray-300" : "text-gray-500"}>
+            Loading planned budgets...
+          </Text>
         ) : plannedBudgets.length === 0 ? (
-          <Text className="text-gray-500">No planned budgets yet.</Text>
+          <Text className={mode === "dark" ? "text-gray-300" : "text-gray-500"}>
+            No planned budgets yet.
+          </Text>
         ) : (
           <FlatList
             horizontal
@@ -1007,18 +1030,12 @@ export default function Index() {
               <TouchableOpacity
                 activeOpacity={0.9}
                 onPress={() => {
-                  console.log("📋 [DEBUG] Selected budget:", budget);
-                  const filtered = regularTransactions.filter(
-                    (t) => getPlannedBudgetId(t) === budget.id
-                  );
-                  console.log(
-                    `🧾 [DEBUG] Found ${filtered.length} transactions for this budget:`,
-                    filtered
-                  );
                   setSelectedBudget(budget);
                   setIsModalVisible(true);
                 }}
-                className="w-[280] h-[140] bg-white rounded-[20]"
+                className={`w-[280] h-[140] rounded-[20] ${
+                  mode === "dark" ? "bg-card-dark" : "bg-card-light"
+                }`}
                 style={{
                   elevation: 6,
                   shadowColor: "#000",
@@ -1044,7 +1061,7 @@ export default function Index() {
                         backgroundColor: budget.color_name || "#FCC21B",
                       }}
                     />
-                    <Text className="text-[14px] text-[#392F46]">
+                    <Text className="text-[14px] text-[#392F46] dark:text-textInsidePrimary-dark">
                       {budget.budget_name || "Unnamed Budget"}
                     </Text>
                   </View>
@@ -1057,14 +1074,14 @@ export default function Index() {
                     progress={getProgress(budget, plannedBudgetTransactions)}
                   />
                   <View className="mt-[8]">
-                    <Text className="text-[14px]">
+                    <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark">
                       Spent ₱
                       {(
                         Number(budget.amount) *
                         Number(getProgress(budget, plannedBudgetTransactions))
                       ).toFixed(0)}{" "}
                       from{" "}
-                      <Text className="text-[14px] text-[#8938E9]">
+                      <Text className="text-[14px] text-textHighlight-light dark:text-textHighlight-dark">
                         ₱{Number(budget.amount).toFixed(0)}
                       </Text>
                     </Text>
@@ -1079,3 +1096,8 @@ export default function Index() {
     </View>
   );
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

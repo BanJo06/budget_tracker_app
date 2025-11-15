@@ -37,7 +37,7 @@ interface CategoryItemProps {
 const CategoryItem: React.FC<CategoryItemProps> = ({ category, IconMap }) => {
   const IconComponent = IconMap[category.icon_name];
   return (
-    <View className="pt-4 flex-row items-center justify-between">
+    <View className="pt-4 flex-row items-center justify-between bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <View className="flex-row gap-4 items-center">
         {/* Category Icon Container */}
         <View className="w-[50] h-[50] rounded-full bg-[#8938E9] justify-center items-center">
@@ -47,7 +47,9 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, IconMap }) => {
             <Text style={{ color: "#FFFFFF" }}>?</Text>
           )}
         </View>
-        <Text className="text-base">{category.name}</Text>
+        <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark">
+          {category.name}
+        </Text>
       </View>
 
       {/* Ellipsis/Menu Icon */}
@@ -304,13 +306,18 @@ export default function Categories() {
 
   // Main content wrapped in ScrollView
   return (
-    <View style={{ flex: 1 }}>
+    <View
+      style={{ flex: 1 }}
+      className="bg-bgPrimary-light dark:bg-bgPrimary-dark"
+    >
       {/* Scrollable content */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* Income Categories */}
         <View className="p-8">
-          <Text className="text-xl font-bold mb-1">Income categories</Text>
-          <View className="border-t-2 border-black mt-1"></View>
+          <Text className="text-xl font-bold mb-1 text-textPrimary-light dark:text-textPrimary-dark">
+            Income categories
+          </Text>
+          <View className="border-t-2 mt-1 border-textPrimary-light dark:border-textPrimary-dark"></View>
           {incomeCategories.length === 0 ? (
             <Text className="pt-4 text-gray-500">
               No income categories found.
@@ -328,8 +335,10 @@ export default function Categories() {
 
         {/* Expense Categories */}
         <View className="py-4 px-8">
-          <Text className="text-xl font-bold mb-1">Expense categories</Text>
-          <View className="border-t-2 border-black mt-1"></View>
+          <Text className="text-xl font-bold mb-1 text-textPrimary-light dark:text-textPrimary-dark">
+            Expense categories
+          </Text>
+          <View className="border-t-2 mt-1 border-textPrimary-light dark:border-textPrimary-dark"></View>
           {expenseCategories.length === 0 ? (
             <Text className="pt-4 text-gray-500">
               No expense categories found.

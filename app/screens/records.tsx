@@ -5,6 +5,7 @@ import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
 import { initDatabase } from "@/utils/database";
 import { getAllTransactions } from "@/utils/transactions";
 import { router } from "expo-router";
+import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 
 export default function Records() {
+  const { colorScheme, setColorScheme } = useColorScheme();
   const [transactions, setTransactions] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
 
@@ -131,7 +133,7 @@ export default function Records() {
     });
 
     return (
-      <View className="m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]">
+      <View className="m-5 rounded-xl p-9 items-center shadow-lg w-[90%] bg-bgPrimary-light dark:bg-bgPrimary-dark">
         {/* Header with buttons */}
         <View className="flex-row justify-between w-full mb-5">
           <Pressable
@@ -184,7 +186,7 @@ export default function Records() {
   };
 
   return (
-    <View className="flex-1 bg-white px-8">
+    <View className="flex-1 px-8 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <View className="flex-row justify-end pt-4 pb-2">
         <TouchableOpacity
           onPress={() => router.push("/screens/search")}
@@ -200,8 +202,10 @@ export default function Records() {
         keyExtractor={(item) => item.id.toString()}
         renderSectionHeader={({ section: { title } }) => (
           <View className="flex-col my-4">
-            <Text className="font-medium">{title}</Text>
-            <View className="h-[2px] bg-black rounded-full" />
+            <Text className="font-medium text-textPrimary-light dark:text-textPrimary-dark">
+              {title}
+            </Text>
+            <View className="h-[2px] bg-textPrimary-light dark:bg-textPrimary-dark rounded-full" />
           </View>
         )}
         renderItem={({ item }) => {
@@ -255,12 +259,16 @@ export default function Records() {
               </View>
               <View className="flex-1 flex-col justify-center gap-1">
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-base font-medium">{mainText}</Text>
-                  <Text className={`text-base font-bold ${amountColorClass}`}>
+                  <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
+                    {mainText}
+                  </Text>
+                  <Text
+                    className={`text-base font-bold ${amountColorClass} dark:text-textPrimary-dark`}
+                  >
                     {amountText}
                   </Text>
                 </View>
-                <Text className="text-sm text-gray-500">
+                <Text className="text-sm text-textPrimary-light dark:text-textPrimary-dark">
                   {item.description}
                 </Text>
               </View>

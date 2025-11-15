@@ -1,5 +1,6 @@
 import { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { router, Tabs } from "expo-router"; // Import 'router' here
+import { useColorScheme } from "nativewind";
 import React from "react";
 import { Pressable, View } from "react-native";
 import "../../../app/globals.css";
@@ -70,19 +71,25 @@ const AddTabBarButton: React.FC<AddButtonProps> = ({
 
 // --- Your Layout Component ---
 const _Layout = () => {
+  const { colorScheme } = useColorScheme();
+
+  // Define tab colors dynamically
+  const tabBarBackground = colorScheme === "dark" ? "#121212" : "#FFFFFF";
+  const tabBarActiveTint = colorScheme === "dark" ? "#BB86FC" : "#8938E9";
+  const tabBarInactiveTint = colorScheme === "dark" ? "#888" : "#000";
+  const tabBarBorderTop = colorScheme === "dark" ? "#333" : "#EEEEEE";
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#8938E9", // Example: Tomato Red for active
-        tabBarInactiveTintColor: "#000000", // Example: Gray for inactive
+        tabBarActiveTintColor: tabBarActiveTint,
+        tabBarInactiveTintColor: tabBarInactiveTint,
         tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontSize: 10,
-        },
+        tabBarLabelStyle: { fontSize: 10 },
         tabBarStyle: {
-          backgroundColor: "#FFFFFF", // Example background for the tab bar itself
+          backgroundColor: tabBarBackground,
           borderTopWidth: 1,
-          borderTopColor: "#EEEEEE",
+          borderTopColor: tabBarBorderTop,
         },
       }}
     >

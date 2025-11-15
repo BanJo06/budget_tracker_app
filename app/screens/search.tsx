@@ -5,6 +5,7 @@ import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
 import { initDatabase } from "@/utils/database";
 import { getAllTransactions } from "@/utils/transactions";
 import { useNavigation } from "@react-navigation/native";
+import { useColorScheme } from "nativewind";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Modal,
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 
 export default function SearchTransactions() {
+  const { colorScheme, setColorScheme } = useColorScheme();
   const [transactions, setTransactions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
@@ -136,7 +138,7 @@ export default function SearchTransactions() {
     });
 
     return (
-      <View className="m-5 bg-white rounded-xl p-9 items-center shadow-lg w-[90%]">
+      <View className="m-5 rounded-xl p-9 items-center shadow-lg w-[90%] bg-bgPrimary-light dark:bg-bgPrimary-dark">
         <Pressable
           className="self-end p-2.5"
           onPress={() => setSelectedTransaction(null)}
@@ -180,13 +182,13 @@ export default function SearchTransactions() {
   };
 
   return (
-    <View className="flex-1 bg-white px-6 pt-4">
+    <View className="flex-1 px-6 pt-4 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       {/* Search Box */}
       <TextInput
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Search transactions..."
-        className="h-[40] px-4 mb-4 border border-gray-300 rounded-full"
+        className="h-[40] px-4 mb-4 border rounded-full border-search-light dark:border-search-dark"
         placeholderTextColor="#888"
       />
 
@@ -196,8 +198,10 @@ export default function SearchTransactions() {
         keyExtractor={(item) => item.id.toString()}
         renderSectionHeader={({ section: { title } }) => (
           <View className="flex-col my-2">
-            <Text className="font-medium">{title}</Text>
-            <View className="h-[1px] bg-gray-300 rounded-full" />
+            <Text className="font-medium text-textPrimary-light dark:text-textPrimary-dark">
+              {title}
+            </Text>
+            <View className="h-[1px] rounded-full bg-textPrimary-light dark:bg-textPrimary-dark" />
           </View>
         )}
         renderItem={({ item }) => {
@@ -247,12 +251,16 @@ export default function SearchTransactions() {
               </View>
               <View className="flex-1 flex-col justify-center gap-1">
                 <View className="flex-row justify-between items-center">
-                  <Text className="text-base font-medium">{mainText}</Text>
-                  <Text className={`text-base font-bold ${amountColorClass}`}>
+                  <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
+                    {mainText}
+                  </Text>
+                  <Text
+                    className={`text-base font-bold ${amountColorClass} dark:text-textPrimary-dark`}
+                  >
                     {amountText}
                   </Text>
                 </View>
-                <Text className="text-sm text-gray-500">
+                <Text className="text-sm text-textSecondary-light dark:text-textSecondary-dark">
                   {item.description}
                 </Text>
               </View>

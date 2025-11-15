@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Button,
   Modal,
   Platform,
   ScrollView,
@@ -31,6 +30,7 @@ import {
   savePlannedBudget,
 } from "@/utils/database";
 import { useFocusEffect } from "@react-navigation/native";
+import { useColorScheme } from "nativewind";
 import { TouchableWithoutFeedback } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
 
@@ -375,6 +375,8 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
 };
 
 export default function Budgets() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+
   // Visual / state
   const [dailyBudget, setDailyBudget] = useState("0.00");
 
@@ -604,7 +606,7 @@ export default function Budgets() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
+      <View className="flex-1 justify-center items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
         <ActivityIndicator size="large" color="#007bff" />
         <Text className="mt-2 text-yellow-400">
           Loading application and budgets...
@@ -614,7 +616,7 @@ export default function Budgets() {
   }
 
   return (
-    <View className="m-8">
+    <View className="m-8 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <GeneralBudgetsModal
         isVisible={isAlertModalVisible}
         onClose={() => setAlertModalVisible(false)}
@@ -639,7 +641,9 @@ export default function Budgets() {
       />
 
       {/* ✅ General Budgets Section */}
-      <Text className="text-sm font-medium">General Budgets</Text>
+      <Text className="text-sm font-medium text-textPrimary-light dark:text-textPrimary-dark">
+        General Budgets
+      </Text>
 
       <View className="mt-4 space-y-2 gap-4">
         {[
@@ -651,20 +655,28 @@ export default function Budgets() {
         ].map((b) => (
           <View
             key={b.label}
-            className="w-full h-18 p-4 bg-white rounded-lg flex-row justify-between items-center shadow-md"
+            className="w-full h-18 p-4 rounded-lg flex-row justify-between items-center shadow-md bg-card-light dark:bg-card-dark"
           >
             <View>
-              <Text>{b.label}</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                {b.label}
+              </Text>
               <View className="flex-row gap-2">
-                <Text>Budget:</Text>
-                <Text className="text-purple-600">₱{b.value}</Text>
+                <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                  Budget:
+                </Text>
+                <Text className="text-accent-light dark:text-textPrimary-dark">
+                  ₱{b.value}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
-              className="w-16 h-6 px-2 py-1 border rounded-md items-center justify-center"
+              className="w-18 h-8 px-2 py-1 border rounded-md items-center justify-center border-button-light dark:border-button-dark"
               onPress={b.onPress}
             >
-              <Text className="text-xs">Change</Text>
+              <Text className="text-textPrimary-light dark:text-textPrimary-dark text-[10px]">
+                Change
+              </Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -672,7 +684,9 @@ export default function Budgets() {
 
       {/* ✅ Planned Budgets Section */}
       <View className="mt-11">
-        <Text className="text-sm font-medium">Planned Budgets</Text>
+        <Text className="text-sm font-medium text-textPrimary-light dark:text-textPrimary-dark">
+          Planned Budgets
+        </Text>
       </View>
 
       <TouchableWithoutFeedback onPress={() => setOpenMenuId(null)}>
@@ -831,12 +845,14 @@ export default function Budgets() {
 
           {/* ✅ “Add New Budget” button included in scroll */}
           <TouchableOpacity
-            className="w-[137px] h-[136px] p-2 border border-purple-600 rounded-lg justify-center items-center"
+            className="w-[137px] h-[136px] p-2 border rounded-lg justify-center items-center border-button-light dark:border-button-dark"
             onPress={() => setNewPlannedBudgetVisible(true)}
           >
             <View className="items-center gap-4">
-              <View className="w-8 h-8 rounded-full border border-purple-600" />
-              <Text className="text-purple-600">Add New Budget</Text>
+              <View className="w-8 h-8 rounded-full border border-button-light dark:border-button-dark" />
+              <Text className="text-button-light dark:text-button-dark">
+                Add New Budget
+              </Text>
             </View>
           </TouchableOpacity>
         </ScrollView>
@@ -853,14 +869,14 @@ export default function Budgets() {
         initialData={selectedBudget}
       />
 
-      <View className="mt-4">
+      {/* <View className="mt-4">
         <Button
           title="Share Database File"
           color="#6f42c1"
           onPress={shareDatabaseFile}
           disabled={!dbInitialized || !canShare}
         />
-      </View>
+      </View> */}
     </View>
   );
 }
