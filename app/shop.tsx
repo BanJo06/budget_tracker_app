@@ -1,16 +1,35 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
+import { usePurchase } from "@/components/PurchaseContext";
 import { getCoins } from "@/utils/coins"; // 🪙 import helper
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import { useColorScheme } from "nativewind";
 import React, { useCallback, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Modal, Text, TouchableOpacity, View } from "react-native";
 import ReusableRoundedBoxComponent from "../components/RoundedBoxComponent";
+
+type ShopItem = {
+  name: string;
+  price: number;
+};
 
 export default function Shop() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const [coins, setCoins] = useState<number>(0);
+  const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
+  const { hasPurchasedDarkMode, setHasPurchasedDarkMode } = usePurchase();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const shopItems: ShopItem[] = [
+    { name: "Dark Mode", price: 1 },
+    { name: "Themes", price: 250 },
+    { name: "Eye-Catching Icons", price: 250 },
+    { name: "Skip Daily Quest", price: 250 },
+    { name: "Skip Weekly Quest", price: 250 },
+  ];
 
   useFocusEffect(
     useCallback(() => {
@@ -21,6 +40,52 @@ export default function Shop() {
       loadCoins();
     }, [])
   );
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadPurchases = async () => {
+        const purchased = await AsyncStorage.getItem("purchasedDarkMode");
+        setHasPurchasedDarkMode(purchased === "true");
+      };
+      loadPurchases();
+    }, [])
+  );
+
+  const handlePurchase = async (item: ShopItem) => {
+    if (coins >= item.price) {
+      setCoins((prev) => prev - item.price);
+
+      if (item.name === "Dark Mode") {
+        setHasPurchasedDarkMode(true);
+        await AsyncStorage.setItem("purchasedDarkMode", "true");
+      }
+
+      setMessage(`You purchased "${item.name}" successfully!`);
+    } else {
+      setMessage("Insufficient Funds");
+    }
+
+    setModalVisible(true);
+  };
+
+  const resetPurchases = async () => {
+    try {
+      // Reset Dark Mode purchase
+      setHasPurchasedDarkMode(false);
+      await AsyncStorage.removeItem("purchasedDarkMode");
+
+      // You can reset other items similarly:
+      // await AsyncStorage.removeItem("purchasedThemes");
+      // await AsyncStorage.removeItem("purchasedIcons");
+
+      // Optionally reset coins
+      setCoins(1000); // or whatever default starting coins
+
+      Alert.alert("Shop Reset", "All purchases have been reset!");
+    } catch (error) {
+      console.log("Failed to reset purchases:", error);
+    }
+  };
 
   return (
     <View
@@ -59,7 +124,9 @@ export default function Shop() {
 
       {/* ... existing Shop items */}
       <View
-        className={`flex-col m-8 ${isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"}`}
+        className={`flex-col mx-8 mt-4 ${
+          isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"
+        }`}
       >
         <View className="gap-2">
           <Text
@@ -89,18 +156,34 @@ export default function Shop() {
             ))}
           </View>
         </View>
+      </View>
 
-        <View className="flex-col mt-8 gap-4">
-          {[
-            { name: "Dark Mode", price: 150 },
-            { name: "Themes", price: 250 },
-            { name: "Eye-Catching Icons", price: 250 },
-            { name: "Skip Daily Quest", price: 250 },
-            { name: "Skip Weekly Quest", price: 250 },
-          ].map((item) => (
-            <View key={item.name} className="flex-row justify-between">
+      <View
+        className={`flex-col mx-8 mt-4 ${
+          isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"
+        }`}
+      >
+        <Text
+          className={`text-sm mt-1 ${
+            isDark ? "text-gray-300" : "text-gray-500"
+          }`}
+        >
+          Shop Items
+        </Text>
+        <View className="h-[2] bg-black rounded-full mb-4" />
+
+        <View className="flex-col gap-4">
+          {shopItems.map((item) => (
+            <TouchableOpacity
+              key={item.name}
+              className="flex-row justify-between p-4 bg-gray-200 dark:bg-gray-700 rounded-lg"
+              onPress={() => {
+                setSelectedItem(item);
+                handlePurchase(item);
+              }}
+            >
               <Text
-                className={`text-sm mt-1 ${
+                className={`text-sm ${
                   isDark ? "text-gray-300" : "text-gray-500"
                 }`}
               >
@@ -109,17 +192,47 @@ export default function Shop() {
               <View className="flex-row gap-2 items-center">
                 <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
                 <Text
-                  className={`text-sm mt-1 ${
+                  className={`text-sm ${
                     isDark ? "text-gray-300" : "text-gray-500"
                   }`}
                 >
                   {item.price}
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
+        <TouchableOpacity
+          className="mt-6 bg-red-500 p-3 rounded-lg"
+          onPress={resetPurchases}
+        >
+          <Text className="text-white text-center font-medium">
+            Reset Shop Purchases
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[80%]">
+            <Text className="text-center text-lg text-black dark:text-white">
+              {message}
+            </Text>
+            <TouchableOpacity
+              className="mt-4 bg-purple-500 rounded-lg p-3"
+              onPress={() => setModalVisible(false)}
+            >
+              <Text className="text-center text-white">OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

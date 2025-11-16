@@ -73,6 +73,7 @@
 // }
 
 import { ThemeProvider } from "@/assets/constants/theme-provider";
+import { PurchaseProvider } from "@/components/PurchaseContext";
 import { ToastProvider, useToast } from "@/components/ToastContext";
 import { startAppUsageTimer } from "@/data/daily_quests_logic";
 import { startWeeklyAppUsageTimer } from "@/data/weekly_quests_logic";
@@ -131,20 +132,21 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      {/* loads saved UI mode globally */}
-      <LoadUIMode />
-      <ToastProvider>
-        <AppSetupAndTimers />
-        <Stack>
-          <Stack.Screen
-            name="(sidemenu)"
-            options={{ headerShown: false, animation: "fade" }}
-          />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="add" options={{ headerShown: false }} />
-          <Stack.Screen name="shop" options={{ headerShown: false }} />
-        </Stack>
-      </ToastProvider>
+      <PurchaseProvider>
+        <LoadUIMode />
+        <ToastProvider>
+          <AppSetupAndTimers />
+          <Stack>
+            <Stack.Screen
+              name="(sidemenu)"
+              options={{ headerShown: false, animation: "fade" }}
+            />
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="add" options={{ headerShown: false }} />
+            <Stack.Screen name="shop" options={{ headerShown: false }} />
+          </Stack>
+        </ToastProvider>
+      </PurchaseProvider>
     </ThemeProvider>
   );
 }

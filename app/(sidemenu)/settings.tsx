@@ -5,6 +5,7 @@ import {
   scheduleDailyNotification,
   sendTestNotification,
 } from "@/components/notifications";
+import { usePurchase } from "@/components/PurchaseContext";
 import UIModeModal from "@/components/UIModeModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme } from "nativewind";
@@ -41,6 +42,8 @@ export default function Settings() {
   const [decimalPlaces, setDecimalPlaces] = useState<0 | 1 | 2>(2); // default 2
 
   const [isRemindEverydayEnabled, setIsRemindEverydayEnabled] = useState(false);
+
+  const { hasPurchasedDarkMode } = usePurchase();
 
   // Dark Mode Logic
   const toggleDarkMode = () => {
@@ -257,8 +260,10 @@ export default function Settings() {
       <UIModeModal
         visible={isUIModalVisible}
         currentMode={uiMode}
+        hasPurchasedDarkMode={hasPurchasedDarkMode} // ✅ important
         onClose={() => setIsUIModalVisible(false)}
         onSelectMode={async (mode) => {
+          if (mode === "dark" && !hasPurchasedDarkMode) return; // prevent selection
           setUIMode(mode);
           setColorScheme(mode === "dark" ? "dark" : "light");
           await AsyncStorage.setItem("uiMode", mode);
