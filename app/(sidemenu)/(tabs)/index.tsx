@@ -58,6 +58,7 @@ export default function Index() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const { mode } = useContext(ThemeContext);
   const backgroundColor = mode === "dark" ? "#121212" : "#FFFFFF";
+  const [themeVersion, setThemeVersion] = useState(0);
   const screenHeight = Dimensions.get("window").height;
 
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
@@ -122,6 +123,15 @@ export default function Index() {
   const [quests, setQuests] = useState<WeeklyQuest[]>(() =>
     WEEKLY_QUESTS.map((q) => ({ ...q }))
   );
+
+  // Add an effect to update the mode if using nativewind
+  // useEffect(() => {
+  //   setColorScheme(colorScheme); // optional depending on your ThemeContext implementation
+  // }, [colorScheme]);
+
+  useEffect(() => {
+    setThemeVersion((v) => v + 1);
+  }, [mode]);
 
   const budgetLabel =
     selectedIndex === 0
@@ -880,7 +890,7 @@ export default function Index() {
         style={{ elevation: 5 }}
       >
         <View className="pb-[20] flex-row justify-between">
-          <Text className="text-[12px] font-medium self-center text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+          <Text className="text-[12px] font-medium self-center text-textPrimary-light dark:text-textPrimary-dark">
             Overview
           </Text>
           <View className="flex-row justify-between">
@@ -889,7 +899,7 @@ export default function Index() {
             </TouchableOpacity>
 
             <View className="self-center" style={{ width: 70 }}>
-              <Text className="text-[12px] font-medium self-center text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
+              <Text className="text-[12px] font-medium self-center text-textPrimary-light dark:text-textPrimary-dark">
                 {options[selectedIndex]}
               </Text>
             </View>
@@ -993,26 +1003,23 @@ export default function Index() {
 
       {/* === Planned Budgets Section === */}
       <View
-        style={{
-          backgroundColor: backgroundColor,
-          minHeight: screenHeight * 0.3,
-        }}
-        className="w-full mt-[32] mb-[16] pl-[32]"
+        className={`w-full mt-[32] mb-[16] pl-[32] bg-bgPrimary-light dark:bg-bgPrimary-dark
+        }`}
+        style={{ minHeight: screenHeight * 0.3 }}
       >
         <Text
-          className={`font-medium text-[16px] mb-[8] ${
-            mode === "dark" ? "text-white" : "text-black"
+          className={`font-medium text-[16px] mb-[8]  text-textPrimary-light dark:text-textPrimary-dark
           }`}
         >
           Planned Budgets
         </Text>
 
         {loading ? (
-          <Text className={mode === "dark" ? "text-gray-300" : "text-gray-500"}>
+          <Text className={"dark:text-gray-300 text-gray-500"}>
             Loading planned budgets...
           </Text>
         ) : plannedBudgets.length === 0 ? (
-          <Text className={mode === "dark" ? "text-gray-300" : "text-gray-500"}>
+          <Text className={"dark:text-gray-300 text-gray-500"}>
             No planned budgets yet.
           </Text>
         ) : (
@@ -1033,8 +1040,7 @@ export default function Index() {
                   setSelectedBudget(budget);
                   setIsModalVisible(true);
                 }}
-                className={`w-[280] h-[140] rounded-[20] ${
-                  mode === "dark" ? "bg-card-dark" : "bg-card-light"
+                className={`w-[280] h-[140] rounded-[20] dark:bg-card-dark bg-card-light
                 }`}
                 style={{
                   elevation: 6,
@@ -1061,7 +1067,12 @@ export default function Index() {
                         backgroundColor: budget.color_name || "#FCC21B",
                       }}
                     />
-                    <Text className="text-[14px] text-[#392F46] dark:text-textInsidePrimary-dark">
+                    <Text
+                      className={`text-[14px] 
+                          text-textInsidePrimary-light
+                          text-textPrimary-dark
+                      }`}
+                    >
                       {budget.budget_name || "Unnamed Budget"}
                     </Text>
                   </View>

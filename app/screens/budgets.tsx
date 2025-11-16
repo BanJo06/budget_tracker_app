@@ -709,7 +709,7 @@ export default function Budgets() {
             return (
               <View
                 key={pb.id}
-                className="w-[137px] h-[136px] p-2 bg-white rounded-lg shadow-md"
+                className="w-[137px] h-[136px] p-2 rounded-lg shadow-md bg-card-light dark:bg-card-dark"
                 style={{
                   position: "relative",
                   zIndex: openMenuId === pb.id ? 9999 : 1,
@@ -721,7 +721,9 @@ export default function Budgets() {
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: pb.color_name || "#ccc" }}
                     />
-                    <Text>{pb.budget_name}</Text>
+                    <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+                      {pb.budget_name}
+                    </Text>
                   </View>
                   <View className="relative">
                     <TouchableOpacity
@@ -826,7 +828,7 @@ export default function Budgets() {
                 </View>
 
                 <View className="items-center">
-                  <Text className="text-xs pb-1">
+                  <Text className="text-xs pb-1 text-textPrimary-light dark:text-textPrimary-dark">
                     {pb.start_date && pb.end_date
                       ? `${pb.start_date} - ${pb.end_date}`
                       : "Ongoing"}
@@ -834,8 +836,10 @@ export default function Budgets() {
 
                   <ProgressBar progress={currentProgress} />
 
-                  <Text className="text-lg pt-1">₱{totalSpent.toFixed(2)}</Text>
-                  <Text className="text-">
+                  <Text className="text-lg pt-1 text-textPrimary-light dark:text-textPrimary-dark">
+                    ₱{totalSpent.toFixed(2)}
+                  </Text>
+                  <Text className="text-textPrimary-light dark:text-textPrimary-dark">
                     (₱{(pb.amount ?? 0).toFixed(2)})
                   </Text>
                 </View>

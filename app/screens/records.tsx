@@ -133,54 +133,166 @@ export default function Records() {
     });
 
     return (
-      <View className="m-5 rounded-xl p-9 items-center shadow-lg w-[90%] bg-bgPrimary-light dark:bg-bgPrimary-dark">
-        {/* Header with buttons */}
-        <View className="flex-row justify-between w-full mb-5">
-          <Pressable
-            className="p-2.5"
-            onPress={() => setSelectedTransaction(null)}
-          >
-            <SVG_ICONS.Category size={24} color="#000" />
-          </Pressable>
-          <View className="flex-row gap-2.5">
-            <Pressable className="p-2.5"></Pressable>
-            <Pressable className="p-2.5"></Pressable>
-          </View>
-        </View>
+      // <View className="m-5 rounded-xl p-9 items-center shadow-lg w-[90%] bg-bgPrimary-light dark:bg-bgPrimary-dark">
+      //   {/* Header with buttons */}
+      //   <View className="flex-row justify-between w-full mb-5">
+      //     <Pressable
+      //       className="p-2.5"
+      //       onPress={() => setSelectedTransaction(null)}
+      //     >
+      //       <SVG_ICONS.Category size={24} color="#000" />
+      //     </Pressable>
+      //     <View className="flex-row gap-2.5">
+      //       <Pressable className="p-2.5">
+      //         <Text>A</Text>
+      //       </Pressable>
+      //       <Pressable className="p-2.5">
+      //         <Text>B</Text>
+      //       </Pressable>
+      //     </View>
+      //   </View>
 
-        {/* Transaction details */}
-        <View className="items-center mb-5">
-          <View
-            className={`w-15 h-15 rounded-full justify-center items-center mb-2.5 ${iconBgColorClass}`}
-          >
-            {IconComponent && <IconComponent size={40} color="white" />}
+      //   {/* Transaction details */}
+      //   <View className="items-center mb-5">
+      //     <View
+      //       className={`w-15 h-15 rounded-full justify-center items-center mb-2.5 ${iconBgColorClass}`}
+      //     >
+      //       {IconComponent && <IconComponent size={40} color="white" />}
+      //     </View>
+      //     <Text className={`text-2xl font-bold mb-1.5 ${amountColorClass}`}>
+      //       {displayAmount}
+      //     </Text>
+      //     <Text className="text-xl font-medium text-center">{mainText}</Text>
+      //     <Text className="text-base text-gray-500 text-center">{subText}</Text>
+      //   </View>
+      //   <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
+      //     <Text className="text-base text-gray-500">Account</Text>
+      //     <Text className="text-base font-medium text-right flex-shrink">
+      //       {account_name}
+      //     </Text>
+      //   </View>
+      //   <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
+      //     <Text className="text-base text-gray-500">Date & Time</Text>
+      //     <Text className="text-base font-medium text-right flex-shrink">
+      //       {formattedDate} at {formattedTime}
+      //     </Text>
+      //   </View>
+      //   {description && (
+      //     <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
+      //       <Text className="text-base text-gray-500">Notes</Text>
+      //       <Text className="text-base font-medium text-right flex-shrink">
+      //         {description}
+      //       </Text>
+      //     </View>
+      //   )}
+      // </View>
+      <View className="m-5 rounded-xl w-[90%] bg-white dark:bg-bgPrimary-dark shadow-lg overflow-hidden">
+        {/* ========= HEADER (DEPENDS ON TRANSACTION TYPE) ========= */}
+        {type === "income" ? (
+          /* ---------- INCOME HEADER (PURPLE) ---------- */
+          <View className="bg-[#8B2BE2] p-5 pt-8 rounded-t-xl">
+            {/* Top Buttons */}
+            <View className="flex-row justify-between items-center w-full mb-4">
+              <Pressable
+                className="w-10 h-10 rounded-full border border-white justify-center items-center"
+                onPress={() => setSelectedTransaction(null)}
+              >
+                <Text className="text-white text-2xl">×</Text>
+              </Pressable>
+
+              <View className="flex-row items-center gap-5">
+                <Pressable>
+                  <SVG_ICONS.Account size={26} color="white" />
+                </Pressable>
+                <Pressable>
+                  <SVG_ICONS.Account size={26} color="white" />
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Income Label & Amount */}
+            <Text className="text-white text-lg font-semibold mb-1">
+              INCOME
+            </Text>
+
+            <Text className="text-white text-4xl font-bold mb-1">
+              ₱{amount.toFixed(2)}
+            </Text>
+
+            {/* Date */}
+            <Text className="text-white text-right opacity-90">
+              {formattedDate} {formattedTime}
+            </Text>
           </View>
-          <Text className={`text-2xl font-bold mb-1.5 ${amountColorClass}`}>
-            {displayAmount}
-          </Text>
-          <Text className="text-xl font-medium text-center">{mainText}</Text>
-          <Text className="text-base text-gray-500 text-center">{subText}</Text>
-        </View>
-        <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-          <Text className="text-base text-gray-500">Account</Text>
-          <Text className="text-base font-medium text-right flex-shrink">
-            {account_name}
-          </Text>
-        </View>
-        <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-          <Text className="text-base text-gray-500">Date & Time</Text>
-          <Text className="text-base font-medium text-right flex-shrink">
-            {formattedDate} at {formattedTime}
-          </Text>
-        </View>
-        {description && (
-          <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-            <Text className="text-base text-gray-500">Notes</Text>
-            <Text className="text-base font-medium text-right flex-shrink">
-              {description}
+        ) : (
+          /* ---------- EXPENSE HEADER (WHITE) ---------- */
+          <View className="bg-white dark:bg-bgPrimary-dark p-5 pt-8 rounded-t-xl border-b border-gray-300">
+            {/* Top Buttons */}
+            <View className="flex-row justify-between items-center w-full mb-4">
+              <Pressable
+                className="w-10 h-10 rounded-full border border-black justify-center items-center"
+                onPress={() => setSelectedTransaction(null)}
+              >
+                <Text className="text-black text-2xl">×</Text>
+              </Pressable>
+
+              <View className="flex-row items-center gap-5">
+                <Pressable>
+                  <SVG_ICONS.Close size={26} color="black" />
+                </Pressable>
+                <Pressable>
+                  <SVG_ICONS.Close size={26} color="black" />
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Expense Label & Amount */}
+            <Text className="text-black text-lg font-semibold mb-1">
+              EXPENSE
+            </Text>
+
+            <Text className="text-black text-4xl font-bold mb-1">
+              -₱{amount.toFixed(2)}
+            </Text>
+
+            {/* Date */}
+            <Text className="text-black text-right opacity-70">
+              {formattedDate} {formattedTime}
             </Text>
           </View>
         )}
+
+        {/* ============= BODY (IDENTICAL FOR BOTH TYPES) ============= */}
+        <View className="p-5">
+          {/* ACCOUNT */}
+          <View className="flex-row justify-between items-center w-full py-3">
+            <Text className="text-base text-gray-600">Account</Text>
+            <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
+              <SVG_ICONS.Account size={20} color="#8B2BE2" />
+              <Text className="ml-2 text-base text-gray-700">
+                {account_name}
+              </Text>
+            </View>
+          </View>
+
+          {/* CATEGORY */}
+          <View className="flex-row justify-between items-center w-full py-3">
+            <Text className="text-base text-gray-600">Category</Text>
+            <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
+              <SVG_ICONS.Account size={20} color="#8B2BE2" />
+              <Text className="ml-2 text-base text-gray-700">
+                {category_name}
+              </Text>
+            </View>
+          </View>
+
+          {/* NOTES */}
+          <View className="pt-6 items-center">
+            <Text className="text-gray-400">
+              {description ? description : "No notes"}
+            </Text>
+          </View>
+        </View>
       </View>
     );
   };

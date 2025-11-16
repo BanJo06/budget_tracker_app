@@ -95,6 +95,8 @@ export default function Shop() {
             { name: "Dark Mode", price: 150 },
             { name: "Themes", price: 250 },
             { name: "Eye-Catching Icons", price: 250 },
+            { name: "Skip Daily Quest", price: 250 },
+            { name: "Skip Weekly Quest", price: 250 },
           ].map((item) => (
             <View key={item.name} className="flex-row justify-between">
               <Text

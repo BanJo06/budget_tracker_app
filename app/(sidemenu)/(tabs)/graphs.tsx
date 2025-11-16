@@ -93,7 +93,7 @@ export default function Graphs() {
               initial={0}
               onPress={(value) => setSelectedOption(value)}
               textColor="#000"
-              selectedColor={colorScheme === "dark" ? "#fff" : "#000"}
+              selectedColor={colorScheme === "dark" ? "#fff" : "#fff"}
               buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
               hasPadding
               borderRadius={30}

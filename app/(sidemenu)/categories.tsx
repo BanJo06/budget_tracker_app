@@ -356,14 +356,13 @@ export default function Categories() {
       </ScrollView>
 
       {/* Fixed Add Button */}
-      <View className="px-8 py-4 mb-[40] border-t border-gray-200 bg-white">
+      <View className="px-8 py-4 mb-[40] border-t border-gray-200 bg-bgPrimary-light dark:bg-bgPrimary-dark">
         <TouchableOpacity
           onPress={toggleNewCategoryModal}
-          className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg"
+          className="w-full h-[40] justify-center items-center rounded-lg bg-button-light dark:bg-button-dark"
         >
           <View className="flex-row items-center justify-center gap-2">
-            <SVG_ICONS.SmallAdd size={15} color="#8938E9" />
-            <Text className="font-medium text-purple-600">
+            <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
               ADD NEW CATEGORY
             </Text>
           </View>

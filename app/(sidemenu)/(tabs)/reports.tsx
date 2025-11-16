@@ -64,7 +64,7 @@ export default function Reports() {
               initial={0}
               onPress={(value) => setSelectedReportTab(value)}
               textColor={"#000000"}
-              selectedColor={colorScheme === "dark" ? "#fff" : "#000"}
+              selectedColor={colorScheme === "dark" ? "#fff" : "#fff"}
               buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
               hasPadding={true}
               borderRadius={30}

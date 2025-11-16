@@ -54,11 +54,13 @@ export default function DonutChart({
 
       {/* Center Text */}
       <View className="absolute justify-center items-center">
-        <Text className="text-[12px] text-[#392F46] opacity-60">{label}</Text>
-        <Text className="text-[18px] font-bold text-[#8938E9]">
+        <Text className="text-[12px] text-textPrimary-light dark:text-textPrimary-dark opacity-60">
+          {label}
+        </Text>
+        <Text className="text-[18px] font-bold text-textHighlight-light dark:text-textHighlight-dark">
           ₱{spent.toFixed(2)}
         </Text>
-        <Text className="text-[12px] text-[#392F46] opacity-65">
+        <Text className="text-[12px] text-textPrimary-light dark:text-textPrimary-dark opacity-65">
           / ₱{dailyBudget.toFixed(2)}
         </Text>
       </View>
