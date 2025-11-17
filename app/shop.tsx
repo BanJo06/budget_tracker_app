@@ -1,5 +1,8 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { usePurchase } from "@/components/PurchaseContext";
+import { useToast } from "@/components/ToastContext";
+import { QuestState, WEEKLY_QUESTS } from "@/data/weekly_quests_items";
+import { skipQuestById } from "@/data/weekly_skip_helpers";
 import { getCoins } from "@/utils/coins"; // 🪙 import helper
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
@@ -16,6 +19,7 @@ type ShopItem = {
 export default function Shop() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { showToast } = useToast();
 
   const [coins, setCoins] = useState<number>(0);
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
@@ -23,12 +27,28 @@ export default function Shop() {
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [hasPurchasedSkipWeekly, setHasPurchasedSkipWeekly] = useState(false);
+  const [skipModalVisible, setSkipModalVisible] = useState(false);
+  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
+  const [confirmSkipModalVisible, setConfirmSkipModalVisible] = useState(false);
+
+  const [weeklyQuests, setWeeklyQuests] = useState<QuestState[]>(
+    WEEKLY_QUESTS.map((q) => ({ ...q, readyToComplete: false }))
+  );
+
+  // Weekly quests list (IDs must match your quest system)
+  const SKIPPABLE_QUESTS = [
+    { id: "login_7days", label: "Skip Login 7 Days" },
+    { id: "use_app_40min", label: "Skip Use App 40 Minutes" },
+    { id: "add_50_transactions", label: "Skip Add 50 Transactions" },
+  ];
+
   const shopItems: ShopItem[] = [
     { name: "Dark Mode", price: 1 },
     // { name: "Themes", price: 250 },
     // { name: "Eye-Catching Icons", price: 250 },
-    { name: "Skip Daily Quest (Not Available)", price: 250 },
-    { name: "Skip Weekly Quest (Not Available)", price: 250 },
+    // { name: "Skip Daily Quest (Not Available)", price: 250 },
+    { name: "Skip Weekly Quest", price: 1 },
   ];
 
   useFocusEffect(
@@ -58,6 +78,11 @@ export default function Shop() {
       if (item.name === "Dark Mode") {
         setHasPurchasedDarkMode(true);
         await AsyncStorage.setItem("purchasedDarkMode", "true");
+      }
+
+      if (item.name === "Skip Weekly Quest (Not Available)") {
+        setHasPurchasedSkipWeekly(true);
+        await AsyncStorage.setItem("purchasedSkipWeekly", "true");
       }
 
       setMessage(`You purchased "${item.name}" successfully!`);
@@ -228,10 +253,127 @@ export default function Shop() {
             </Text>
             <TouchableOpacity
               className="mt-4 bg-purple-500 rounded-lg p-3"
-              onPress={() => setModalVisible(false)}
+              onPress={() => {
+                setModalVisible(false); // close purchase success modal
+                setSkipModalVisible(true); // open quest skip selection modal
+              }}
             >
               <Text className="text-center text-white">OK</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* STEP 1 — Pick quest to skip */}
+      <Modal
+        visible={skipModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSkipModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[85%]">
+            <Text className="text-center text-lg text-black dark:text-white mb-4">
+              Select a Weekly Quest to Skip
+            </Text>
+
+            {weeklyQuests.map((quest) => (
+              <TouchableOpacity
+                key={quest.id}
+                className={`p-3 my-1 rounded-lg 
+            ${
+              quest.completed
+                ? "bg-gray-400"
+                : selectedQuestId === quest.id
+                ? "bg-purple-700"
+                : "bg-purple-500"
+            }`}
+                disabled={quest.completed}
+                onPress={() => setSelectedQuestId(quest.id)}
+              >
+                <Text
+                  className={`text-center font-medium 
+            ${quest.completed ? "text-gray-700" : "text-white"}`}
+                >
+                  {quest.completed
+                    ? `${quest.title} - Already Completed`
+                    : quest.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            <View className="flex-row justify-between mt-4">
+              <TouchableOpacity
+                className="bg-gray-500 py-2 px-4 rounded-lg"
+                onPress={() => {
+                  setSelectedQuestId(null);
+                  setSkipModalVisible(false);
+                }}
+              >
+                <Text className="text-white text-center">Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className={`py-2 px-4 rounded-lg 
+            ${selectedQuestId ? "bg-green-600" : "bg-green-300"}`}
+                disabled={!selectedQuestId}
+                onPress={() => setConfirmSkipModalVisible(true)}
+              >
+                <Text className="text-white">Confirm</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* STEP 2 — Confirm skip */}
+      <Modal
+        visible={confirmSkipModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmSkipModalVisible(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[75%]">
+            <Text className="text-center text-lg text-black dark:text-white mb-4">
+              Skip this quest?
+            </Text>
+
+            <View className="flex-row justify-between mt-2">
+              <TouchableOpacity
+                className="bg-gray-500 py-2 px-4 rounded-lg"
+                onPress={() => setConfirmSkipModalVisible(false)}
+              >
+                <Text className="text-white">Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="bg-red-600 py-2 px-4 rounded-lg"
+                onPress={async () => {
+                  if (!selectedQuestId) return;
+
+                  await skipQuestById(selectedQuestId);
+
+                  // Update UI instantly
+                  setWeeklyQuests((prev) =>
+                    prev.map((q) =>
+                      q.id === selectedQuestId
+                        ? { ...q, skipped: true, completed: true }
+                        : q
+                    )
+                  );
+
+                  showToast("Weekly Quest Skipped!");
+
+                  // Close both modals
+                  setConfirmSkipModalVisible(false);
+                  setSkipModalVisible(false);
+                  setSelectedQuestId(null);
+                }}
+              >
+                <Text className="text-white">Yes, Skip</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

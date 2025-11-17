@@ -69,17 +69,69 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
   const lastProgressRef = useRef(0);
 
-  // Initialize quests only once
+  // useEffect(() => {
+  //   const loadQuests = async () => {
+  //     const loadedQuests: QuestState[] = await Promise.all(
+  //       WEEKLY_QUESTS.map(async (q) => {
+  //         const completed =
+  //           (await AsyncStorage.getItem(`@weeklyQuest_${q.id}`)) ===
+  //           "completed";
+  //         return { ...q, completed, readyToComplete: false };
+  //       })
+  //     );
+  //     setQuests(loadedQuests);
+  //     setIsLoaded(true);
+  //   };
+
+  //   loadQuests();
+  // }, []);
   useEffect(() => {
-    const initialized = WEEKLY_QUESTS.map((q) => ({
-      ...q,
-      completed: readyIds.includes(q.id),
-      readyToComplete: false,
-    }));
-    console.log("Initialized weekly quests:", initialized);
-    setQuests(initialized);
-    setIsLoaded(true);
-  }, [readyIds]);
+    const loadRewardStatus = async () => {
+      const claimed = await AsyncStorage.getItem("weeklyRewardClaimed");
+      if (claimed === "true") setRewardClaimed(true);
+    };
+    loadRewardStatus();
+  }, []);
+
+  useEffect(() => {
+    const loadQuests = async () => {
+      const loadedQuests: QuestState[] = await Promise.all(
+        WEEKLY_QUESTS.map(async (q) => {
+          const completed =
+            (await AsyncStorage.getItem(`@weeklyQuest_${q.id}`)) ===
+            "completed";
+
+          const skipped =
+            (await AsyncStorage.getItem(`@weeklyQuest_skip_${q.id}`)) ===
+            "true";
+
+          return {
+            ...q,
+            completed: completed || skipped,
+            skipped,
+            readyToComplete: false,
+          };
+        })
+      );
+
+      setQuests(loadedQuests);
+      setIsLoaded(true);
+    };
+
+    loadQuests();
+  }, []);
+
+  // Initialize quests only once
+  // useEffect(() => {
+  //   const initialized = WEEKLY_QUESTS.map((q) => ({
+  //     ...q,
+  //     completed: readyIds.includes(q.id),
+  //     readyToComplete: false,
+  //   }));
+  //   console.log("Initialized weekly quests:", initialized);
+  //   setQuests(initialized);
+  //   setIsLoaded(true);
+  // }, [readyIds]);
 
   // Update parent progress safely
   useEffect(() => {
@@ -101,18 +153,44 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
     const updateLoginQuest = async () => {
       const streak =
         Number(await AsyncStorage.getItem("@weeklyLoginStreak")) || 0;
+
       setQuests((prev) =>
-        prev.map((q) =>
-          q.id === "login_7days"
-            ? { ...q, progress: streak, completed: streak >= 7 }
-            : q
-        )
+        prev.map((q) => {
+          if (q.id !== "login_7days") return q;
+          if (q.skipped) return q; // ⛔ do not override skipped quests
+
+          return {
+            ...q,
+            progress: streak,
+            completed: streak >= 7,
+          };
+        })
       );
     };
     updateLoginQuest();
   }, [isLoaded]);
 
   //Weekly 7 day log in quest logic
+  // useEffect(() => {
+  //   const loadLoginStreak = async () => {
+  //     const streak = Number(
+  //       (await AsyncStorage.getItem("@weeklyLoginStreak")) || "0"
+  //     );
+  //     setLogin7DaysProgress(Math.min(streak / 7, 1));
+  //     const completed = streak >= 7;
+  //     setLogin7DaysCompleted(completed);
+
+  //     // ✅ Immediately mark as completed in quests
+  //     setQuests((prev) =>
+  //       prev.map((q) =>
+  //         q.id === "login_7days"
+  //           ? { ...q, completed, readyToComplete: false, progress: streak }
+  //           : q
+  //       )
+  //     );
+  //   };
+  //   loadLoginStreak();
+  // }, []);
   useEffect(() => {
     const loadLoginStreak = async () => {
       const streak = Number(
@@ -122,17 +200,18 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
       const completed = streak >= 7;
       setLogin7DaysCompleted(completed);
 
-      // ✅ Immediately mark as completed in quests
+      // Respect skipped flag when updating quests
       setQuests((prev) =>
-        prev.map((q) =>
-          q.id === "login_7days"
-            ? { ...q, completed, readyToComplete: false, progress: streak }
-            : q
-        )
+        prev.map((q) => {
+          if (q.id !== "login_7days") return q;
+          if (q.skipped)
+            return { ...q, completed: true, progress: q.progress ?? 7 }; // keep skipped as completed
+          return { ...q, completed, readyToComplete: false, progress: streak };
+        })
       );
     };
     loadLoginStreak();
-  }, []);
+  }, [isLoaded]);
 
   // Weekly quest for adding 50 transactions
   useEffect(() => {
@@ -147,11 +226,11 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
         // ✅ Immediately update quest completion
         setQuests((prev) =>
-          prev.map((q) =>
-            q.id === "add_50_transactions"
-              ? { ...q, progress: count, completed, readyToComplete: false }
-              : q
-          )
+          prev.map((q) => {
+            if (q.id !== "add_50_transactions") return q;
+            if (q.skipped) return { ...q, completed: true, progress: 50 };
+            return { ...q, progress: count, completed, readyToComplete: false };
+          })
         );
       } catch (err) {
         console.error("Error loading transaction quest progress:", err);
@@ -236,21 +315,24 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
       setAppUsageProgress(Math.min(totalSeconds / 2400, 1));
       setAppUsageCompleted(completed);
 
-      // ✅ Immediately update quest UI
+      // ✅ Updated logic with skip protection
       setQuests((prev) =>
-        prev.map((q) =>
-          q.id === "use_app_40min"
-            ? {
-                ...q,
-                progress: totalSeconds,
-                completed,
-                readyToComplete: false,
-              }
-            : q
-        )
+        prev.map((q) => {
+          if (q.id !== "use_app_40min") return q;
+
+          // ⛔ prevent overwriting skipped quests
+          if (q.skipped) return q;
+
+          return {
+            ...q,
+            progress: totalSeconds,
+            completed,
+            readyToComplete: false,
+          };
+        })
       );
 
-      // ✅ Instant persist (no need to wait for timer)
+      // Persist if completed
       if (completed) {
         const today = new Date();
         const day = today.getDay();
@@ -266,10 +348,10 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
       }
     };
 
-    // Run immediately once
+    // Run immediately
     updateWeeklyAppUsage();
 
-    // Start timer and poll progress every 3s
+    // Poll every 3s
     startWeeklyAppUsageTimer(showToast);
     const interval = setInterval(updateWeeklyAppUsage, 3000);
 
@@ -286,7 +368,10 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
       const completed = quests.filter((q) => q.completed).length;
       const progress = total > 0 ? completed / total : 0;
 
-      if (progress === 1 && !rewardClaimed) {
+      // Check persisted reward status in AsyncStorage
+      const alreadyClaimed = await AsyncStorage.getItem("weeklyRewardClaimed");
+
+      if (progress === 1 && !rewardClaimed && alreadyClaimed !== "true") {
         await AsyncStorage.setItem("weeklyRewardClaimed", "true");
         await addCoins(30); // +30 coins
         setRewardClaimed(true);
@@ -326,6 +411,32 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
     setLogin7DaysProgress(0);
     setLogin7DaysCompleted(false);
     showToast("✅ 7-Day Login Quest has been reset!");
+  };
+
+  const handleResetWeeklyQuests = async () => {
+    // Remove completion flags
+    for (const quest of WEEKLY_QUESTS) {
+      await AsyncStorage.removeItem(`@weeklyQuest_${quest.id}`);
+      await AsyncStorage.removeItem(`@weeklyQuest_skip_${quest.id}`);
+    }
+
+    // Reset progress keys
+    await AsyncStorage.removeItem("@weeklyLoginStreak");
+    await AsyncStorage.removeItem("@weeklyTransactionCount");
+    await AsyncStorage.removeItem("@weekly_use_app_40min_total");
+
+    // Reset local state
+    const resetQuests: QuestState[] = WEEKLY_QUESTS.map((q) => ({
+      ...q,
+      completed: false,
+      skipped: false,
+      readyToComplete: false,
+      progress: 0,
+    }));
+
+    setQuests(resetQuests);
+
+    alert("Weekly quests have been reset!");
   };
 
   return (
@@ -473,7 +584,7 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
                         isDark ? "text-white" : "text-[#8938E9]"
                       }`}
                     >
-                      Done
+                      {quest.skipped ? "Skipped" : "Done"}
                     </Text>
                   </View>
                 </View>
@@ -481,7 +592,14 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
             </View>
           );
         })}
-
+        <TouchableOpacity
+          onPress={handleResetWeeklyQuests}
+          className="mt-4 bg-red-500 p-3 rounded-lg self-center"
+        >
+          <Text className="text-white font-bold">
+            Reset Weekly Quests (Testing)
+          </Text>
+        </TouchableOpacity>
         {/* <TouchableOpacity
           className="px-4 py-2 bg-purple-500 rounded"
           onPress={handleResetLoginQuest}

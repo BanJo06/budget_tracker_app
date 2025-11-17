@@ -1,5 +1,6 @@
 export interface QuestState extends WeeklyQuest {
   readyToComplete: boolean;
+  skipped?: boolean;
 }
 
 export interface WeeklyQuest {

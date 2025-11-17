@@ -180,19 +180,45 @@ function AppSetupAndTimers() {
   return null;
 }
 
+// function LoadUIMode() {
+//   const { colorScheme, setColorScheme } = useColorScheme();
+
+//   useEffect(() => {
+//     const loadMode = async () => {
+//       try {
+//         const savedMode = await AsyncStorage.getItem("uiMode");
+//         if (savedMode === "dark") setColorScheme("dark");
+//         else setColorScheme("light");
+//       } catch (error) {
+//         console.log("Failed to load UI mode:", error);
+//       }
+//     };
+//     loadMode();
+//   }, []);
+
+//   return null;
+// }
+
 function LoadUIMode() {
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const { setColorScheme } = useColorScheme();
 
   useEffect(() => {
     const loadMode = async () => {
       try {
-        const savedMode = await AsyncStorage.getItem("uiMode");
-        if (savedMode === "dark") setColorScheme("dark");
-        else setColorScheme("light");
-      } catch (error) {
-        console.log("Failed to load UI mode:", error);
+        const saved = await AsyncStorage.getItem("uiMode");
+
+        if (saved === null) {
+          // First launch → force light mode
+          setColorScheme("light");
+          return;
+        }
+
+        setColorScheme(saved === "dark" ? "dark" : "light");
+      } catch (err) {
+        console.log("Failed to load UI mode:", err);
       }
     };
+
     loadMode();
   }, []);
 
@@ -213,6 +239,7 @@ export default function RootLayout() {
 
         // 2. Set ready state only AFTER DB is initialized
         setAppReady(true);
+        console.log("UI MODE:", await AsyncStorage.getItem("uiMode"));
       } catch (error) {
         console.error("Critical error during app initialization:", error);
         setDbError("Failed to initialize database. Please restart the app.");

@@ -8,14 +8,16 @@ import {
 } from "@/utils/accounts";
 import { initDatabase } from "@/utils/database";
 import { useColorScheme } from "nativewind";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Dimensions,
   Modal,
   RefreshControl,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
@@ -210,14 +212,35 @@ export default function Accounts() {
     fetchAccounts();
   }, []);
 
-  const handleEllipsisPress = (event, account) => {
-    const { pageX, pageY } = event.nativeEvent;
-    setMenuState({
-      isVisible: true,
-      x: pageX,
-      y: pageY,
-      selectedAccount: account,
-    });
+  const ellipsisRefs = useRef<{
+    [key: string]: React.ComponentRef<typeof TouchableOpacity> | null;
+  }>({});
+  const DROPDOWN_WIDTH = 140;
+
+  const handleEllipsisPress = (accountId: string) => {
+    const ref = ellipsisRefs.current[accountId];
+    if (ref) {
+      ref.measureInWindow((x, y, width, height) => {
+        // Calculate centered position
+        let left = x + width / 2 - DROPDOWN_WIDTH / 2;
+
+        // Ensure dropdown doesn't go off-screen
+        const screenWidth = Dimensions.get("window").width;
+        if (left < 8) left = 8;
+        if (left + DROPDOWN_WIDTH > screenWidth - 8)
+          left = screenWidth - DROPDOWN_WIDTH - 8;
+
+        setMenuState({
+          isVisible:
+            menuState.isVisible && menuState.selectedAccount?.id === accountId
+              ? false
+              : true,
+          x: left,
+          y: y + height + 5,
+          selectedAccount: accounts.find((a) => a.id === accountId) || null,
+        });
+      });
+    }
   };
 
   const handleEdit = () => {
@@ -339,7 +362,10 @@ export default function Accounts() {
                     </View>
                     <View>
                       <TouchableOpacity
-                        onPress={(event) => handleEllipsisPress(event, account)}
+                        ref={(el) => {
+                          ellipsisRefs.current[account.id] = el;
+                        }}
+                        onPress={() => handleEllipsisPress(account.id)}
                       >
                         <SVG_ICONS.Ellipsis width={24} height={24} />
                       </TouchableOpacity>
@@ -372,31 +398,74 @@ export default function Accounts() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      {menuState.isVisible && (
-        <TouchableOpacity
-          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-          onPress={() => setMenuState({ ...menuState, isVisible: false })}
-          activeOpacity={1}
+      {menuState.isVisible && menuState.selectedAccount && (
+        <TouchableWithoutFeedback
+          onPress={() =>
+            setMenuState({
+              ...menuState,
+              isVisible: false,
+              selectedAccount: null,
+            })
+          }
         >
           <View
             style={{
               position: "absolute",
-              top: menuState.y,
-              left: menuState.x - 40,
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9999,
             }}
-            className="bg-white rounded-lg border border-gray-200"
           >
-            <TouchableOpacity onPress={handleEdit} className="p-3">
-              <Text className="text-lg">Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} className="p-3">
-              <Text className="text-lg text-red-600">Delete</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleIgnore} className="p-3">
-              <Text className="text-lg text-gray-500">Ignore</Text>
-            </TouchableOpacity>
+            {/* Actual dropdown menu */}
+            <View
+              style={{
+                position: "absolute",
+                top: menuState.y - 170,
+                left: menuState.x - 70,
+                width: DROPDOWN_WIDTH,
+                backgroundColor: "#fff",
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: "#d1d5db",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.3,
+                shadowRadius: 4,
+                elevation: 10,
+                zIndex: 9999,
+              }}
+            >
+              {[
+                { label: "Edit", color: "#6f42c1", action: handleEdit },
+                { label: "Delete", color: "#dc2626", action: handleDelete },
+                { label: "Ignore", color: "#6b7280", action: handleIgnore },
+              ].map((item, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={item.action}
+                  style={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                    borderBottomWidth: idx < 2 ? 1 : 0,
+                    borderBottomColor: "#e5e7eb",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: item.color,
+                      fontSize: 14,
+                      fontWeight: "500",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </TouchableOpacity>
+        </TouchableWithoutFeedback>
       )}
       {/* Render the modals */}
       <NewAccountModal

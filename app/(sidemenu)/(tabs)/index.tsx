@@ -129,9 +129,9 @@ export default function Index() {
   //   setColorScheme(colorScheme); // optional depending on your ThemeContext implementation
   // }, [colorScheme]);
 
-  useEffect(() => {
-    setThemeVersion((v) => v + 1);
-  }, [mode]);
+  // useEffect(() => {
+  //   setThemeVersion((v) => v + 1);
+  // }, [mode]);
 
   const budgetLabel =
     selectedIndex === 0
@@ -946,7 +946,7 @@ export default function Index() {
               than last week
             </Text> */}
             <Text className="text-[8px] opacity-65 text-right text-textHighlight-light dark:text-textHighlight-dark">
-              {insightText}
+              {insightText || "Please add your budget"}
             </Text>
           </View>
         </View>

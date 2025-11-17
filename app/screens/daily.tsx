@@ -45,6 +45,18 @@ const DailyContent: React.FC<DailyContentProps> = ({
     useState(false);
 
   useEffect(() => {
+    const loadRewardStatus = async () => {
+      const today = new Date().toDateString();
+      const claimed = await AsyncStorage.getItem("dailyRewardClaimed");
+
+      if (claimed === today) {
+        setRewardClaimed(true);
+      }
+    };
+    loadRewardStatus();
+  }, []);
+
+  useEffect(() => {
     const initQuests = async () => {
       try {
         const today = new Date().toDateString();
@@ -108,13 +120,12 @@ const DailyContent: React.FC<DailyContentProps> = ({
   // 🎁 Detect when progress hits 100% in daily.tsx
   useEffect(() => {
     const checkReward = async () => {
-      // 🛑 This condition MUST be sufficient. If rewardClaimed is true from initQuests, it skips.
-      if (currentProgress === 1 && !rewardClaimed) {
-        const today = new Date().toDateString();
-        // --- 🥇 GRANT REWARD & PERSIST STATUS ---
-        await AsyncStorage.setItem("dailyRewardClaimed", today);
-        await addCoins(10); // 🪙 Add 10 coins here
-        // --- 🥇 UPDATE STATE & SHOW MODAL ---
+      const today = new Date().toDateString();
+      const alreadyClaimed = await AsyncStorage.getItem("dailyRewardClaimed");
+
+      if (currentProgress === 1 && !rewardClaimed && alreadyClaimed !== today) {
+        await AsyncStorage.setItem("dailyRewardClaimed", today); // persist
+        await addCoins(10); // grant reward
         setRewardClaimed(true);
         setShowRewardModal(true);
         showToast("🎉 You earned 10 coins!");

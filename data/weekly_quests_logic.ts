@@ -212,6 +212,19 @@ export const stopWeeklyAppUsageTimer = () => {
  * Update total usage time
  */
 const updateWeeklyUsageTime = async (showToast?: (msg: string) => void) => {
+  // --- EARLY RETURN if quest was skipped ---
+  const skipFlag = await AsyncStorage.getItem(
+    "@weeklyQuest_skip_use_app_40min"
+  );
+  if (skipFlag === "true") {
+    // ensure timer isn't running
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    return;
+  }
+  // --- end early return ---
   const lastActiveStr = await AsyncStorage.getItem(WEEKLY_USE_APP_LAST_KEY);
   if (!lastActiveStr) return;
 
@@ -270,7 +283,7 @@ export const resetWeeklyAppUsageQuest = async () => {
 /**
  * Helper: get date string of current week's Monday
  */
-const getMondayDateString = () => {
+export const getMondayDateString = () => {
   const now = new Date();
   const day = now.getDay(); // 0 = Sunday
   const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday
