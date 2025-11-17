@@ -65,6 +65,7 @@ export const getAllTransactions = () => {
                 T.account_id, 
                 T.category_id,
                 T.to_account_id, -- NEW: Include the 'to' account ID
+                T.source,
                 C.name AS category_name, 
                 C.icon_name AS category_icon_name,
                 A.name AS account_name,
@@ -110,6 +111,7 @@ export const getTransactionById = (id) => {
                 T.account_id, 
                 T.category_id,
                 T.to_account_id, -- NEW: Include the 'to' account ID
+                T.source,
                 C.name AS category_name, 
                 C.icon_name AS category_icon_name,
                 A.name AS account_name,
@@ -191,33 +193,42 @@ export const saveTransferTransaction = (
   date
 ) => {
   const db = getDb();
-  const type = "transfer"; // Explicitly set the type for a transfer
+  const type = "transfer";
 
   try {
-    console.log(
-      "Attempting to save transfer transaction with these parameters:"
-    );
-    console.log({
-      fromAccountId,
-      toAccountId,
-      amount,
-      type,
-      description: notes,
-      date,
+    // 1. Start the Atomic Database Transaction
+    // If any operation inside this callback throws an error (like insufficient funds),
+    // ALL changes are automatically rolled back (not saved).
+    db.transactionSync(() => {
+      // 2. Withdrawal (Debit the 'From' Account)
+      // The crucial insufficient funds check happens inside updateAccountBalance
+      updateAccountBalance(fromAccountId, amount, "expense");
+
+      // 3. Deposit (Credit the 'To' Account)
+      // This only runs if step 2 succeeded.
+      updateAccountBalance(toAccountId, amount, "income");
+
+      // 4. Save the Transfer Record
+      // This only runs if both balance updates succeeded.
+      db.runSync(
+        `INSERT INTO transactions (account_id, to_account_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+        [fromAccountId, toAccountId, amount, type, notes, date]
+      );
     });
 
-    // Add a new column 'to_account_id' in your transactions table to store the destination account ID
-    db.runSync(
-      `INSERT INTO transactions (account_id, to_account_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
-      [fromAccountId, toAccountId, amount, type, notes, date]
+    console.log(
+      "✅ Atomic transfer successful: Balances updated and record saved."
     );
-    console.log("Transfer transaction saved successfully.");
   } catch (error) {
-    console.error("Error saving transfer transaction:", error);
-    throw new Error("Failed to save transfer transaction.");
+    // Catches errors thrown by updateAccountBalance (e.g., Insufficient funds)
+    // and errors during the database run.
+    console.error("❌ Error performing atomic transfer (rolled back):", error);
+
+    // Re-throw the specific error message (like "Insufficient funds")
+    // so the UI in add.tsx can handle it.
+    throw new Error(`Failed to perform transfer: ${error.message}`);
   }
 };
-
 /**
  * Calculates the date from N days ago in 'YYYY-MM-DD' format.
  * @param {number} days The number of days to go back (e.g., 7 for one week).

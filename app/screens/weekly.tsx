@@ -398,7 +398,12 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
             ? "text-gray-100"
             : "text-black";
 
-          const cardHeight = quest.id === "use_app_40min" ? 70 : 100;
+          const cardHeight =
+            quest.id === "login_7days" ||
+            quest.id === "add_50_transactions" ||
+            quest.id === "use_app_40min"
+              ? 100
+              : "auto";
 
           return (
             <View

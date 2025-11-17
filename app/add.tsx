@@ -25,7 +25,7 @@ import {
   getAccounts,
   updateAccountBalance,
 } from "@/utils/accounts";
-import { initDatabase } from "@/utils/database";
+import { getAccountBalance, initDatabase } from "@/utils/database";
 import { saveTransaction, saveTransferTransaction } from "@/utils/transactions";
 import { seedDefaultCategories } from "../database/categoryDefaultSelection";
 
@@ -526,57 +526,61 @@ export default function Add() {
     const categoryId = selectedCategory?.id;
     const transactionType = selectedOption;
     const transactionNotes = notes;
+    const transactionDate = new Date().toISOString(); // Define date once
 
     if (isNaN(amount) || amount <= 0) {
       console.error("Invalid amount.");
       return;
     }
 
-    if (transactionType === "transfer") {
-      if (!fromAccountId || !toAccountId) {
-        console.error("Please select both 'From' and 'To' accounts.");
-        return;
-      }
-      if (fromAccountId === toAccountId) {
-        console.error("Cannot transfer to the same account.");
-        return;
-      }
-
-      try {
-        await updateAccountBalance(Number(fromAccountId), amount, "expense");
-        await updateAccountBalance(Number(toAccountId), amount, "income");
+    try {
+      if (transactionType === "transfer") {
+        // --- Transfer Validation ---
+        if (!fromAccountId || !toAccountId) {
+          throw new Error("Please select both 'From' and 'To' accounts.");
+        }
+        if (fromAccountId === toAccountId) {
+          throw new Error("Cannot transfer to the same account.");
+        }
 
         await saveTransferTransaction(
           Number(fromAccountId),
           Number(toAccountId),
           amount,
           transactionNotes,
-          new Date().toISOString()
+          transactionDate
         );
 
         console.log("Transfer saved successfully!");
-        router.replace("/(sidemenu)/(tabs)");
-      } catch (error: any) {
-        console.error("Failed to save transfer:", error?.message || error);
-      }
-    } else {
-      if (!fromAccountId) {
-        console.error("Please select an account.");
-        return;
-      }
-      if (!categoryId) {
-        console.error("Please select a category.");
-        return;
-      }
+      } else {
+        // --- Expense/Income Validation ---
+        if (!fromAccountId) {
+          throw new Error("Please select an account.");
+        }
+        if (!categoryId) {
+          throw new Error("Please select a category.");
+        }
 
-      try {
-        const transactionDate = new Date().toISOString(); // ✅ store date once
+        if (transactionType === "expense") {
+          // Synchronously fetch the current balance
+          const currentBalance = getAccountBalance(Number(fromAccountId));
 
+          if (currentBalance < amount) {
+            // Throw an error that the catch block will handle
+            throw new Error(
+              "Insufficient funds: Account balance is lower than the transaction amount."
+            );
+          }
+        }
+
+        // ✅ updateAccountBalance will throw "Insufficient funds" if it's an expense
+        // and the balance check fails.
         await updateAccountBalance(
           Number(fromAccountId),
           amount,
           transactionType
         );
+
         await saveTransaction(
           Number(fromAccountId),
           selectedAccount.name,
@@ -584,20 +588,17 @@ export default function Add() {
           amount,
           transactionType,
           transactionNotes,
-          transactionDate // ✅ reuse same date
+          transactionDate
         );
 
         console.log("Transaction saved successfully!");
 
-        // ✅ Daily Quest
+        // --- Quest Logic (Unchanged) ---
         const completed = await markTransactionQuestCompleted(transactionDate);
-        console.log("🧭 Quest status (Add 1 transaction):", completed);
-
         if (completed) {
           showToast("🎉 Quest Completed: Add 1 transaction");
         }
 
-        // ✅ Weekly Quest
         const { count, completed: weeklyCompleted } =
           await incrementTransactionQuestProgress();
         setTransactionProgress(count / 50);
@@ -608,11 +609,20 @@ export default function Add() {
         } else {
           showToast(`📈 Added ${count}/50 transactions this week`);
         }
-
-        router.replace("/(sidemenu)/(tabs)");
-      } catch (error: any) {
-        console.error("Failed to save transaction:", error?.message || error);
       }
+
+      router.replace("/(sidemenu)/(tabs)");
+    } catch (error: any) {
+      // This single catch block handles ALL errors (validation, DB errors, Insufficient funds)
+      const errorMessage = error?.message || "An unknown error occurred.";
+
+      // Special handling for user-facing errors (like Insufficient Funds)
+      if (errorMessage.includes("Insufficient funds")) {
+        showToast(`⚠️ Error: ${errorMessage}`);
+      }
+
+      console.error("Failed to save transaction:", errorMessage);
+      // You might want to show a general error toast if it's not a known validation/fund error
     }
   };
 

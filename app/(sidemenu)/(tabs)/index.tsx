@@ -180,6 +180,7 @@ export default function Index() {
   const loadRegularTransactions = async () => {
     try {
       const allTx = await getAllTransactions();
+
       setTransactions(allTx);
     } catch (err) {
       console.error("❌ Failed to load regular transactions:", err);
@@ -497,13 +498,19 @@ export default function Index() {
   useEffect(() => {
     if (!dailyBudget) return;
 
-    // Only include expense transactions (excluding planned budgets)
-    const expenseTx = regularTransactions.filter(
-      (t) => t.type === "expense" && t.source !== "planned_budget"
-    );
-
     const now = new Date();
 
+    // Helper: filter only real expense transactions
+    const getRealExpenses = (txArray: any[]) =>
+      txArray.filter(
+        (t) => t.type === "expense" && t.source !== "planned_budget"
+      );
+
+    const expenseTx = getRealExpenses(regularTransactions);
+
+    // ---------------------------
+    // Determine start of period
+    // ---------------------------
     let startDate: Date;
     switch (options[selectedIndex]) {
       case "Today":
@@ -521,17 +528,23 @@ export default function Index() {
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     }
 
-    const filteredTx = expenseTx.filter((t) => {
+    // ---------------------------
+    // Filter transactions for current period
+    // ---------------------------
+    const periodTx = expenseTx.filter((t) => {
       const txDate = new Date(t.date);
       return txDate >= startDate && txDate <= now;
     });
 
-    const totalSpent = filteredTx.reduce(
+    const totalSpent = periodTx.reduce(
       (sum, t) => sum + Number(t.amount || 0),
       0
     );
     setAmountSpent(totalSpent);
 
+    // ---------------------------
+    // Scale budget based on period
+    // ---------------------------
     let newScaledBudget = dailyBudget;
     if (options[selectedIndex] === "This Week")
       newScaledBudget = dailyBudget * 7;
@@ -545,7 +558,9 @@ export default function Index() {
     }
     setScaledBudget(newScaledBudget);
 
-    // 🟣 Comparison logic (only expenseTx)
+    // ---------------------------
+    // Previous period comparison
+    // ---------------------------
     let prevStart: Date, prevEnd: Date;
     if (options[selectedIndex] === "Today") {
       prevStart = new Date(now);
@@ -558,10 +573,10 @@ export default function Index() {
       prevEnd = new Date(startDate);
       prevEnd.setDate(prevEnd.getDate() - 1);
       prevStart = new Date(prevEnd);
-      prevStart.setDate(prevStart.getDate() - 6);
+      prevStart.setDate(prevEnd.getDate() - 6);
     } else {
       prevEnd = new Date(startDate);
-      prevEnd.setDate(0);
+      prevEnd.setDate(0); // last day of previous month
       prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1);
     }
 
@@ -788,7 +803,7 @@ export default function Index() {
       );
 
       // ✅ Delete the planned budget after saving
-      await deletePlannedBudget(plannedBudgetId);
+      await deletePlannedBudget(plannedBudgetId, false);
 
       // ✅ Close modal and refresh
       setBudgetCompleteModalVisible(false);
@@ -912,21 +927,6 @@ export default function Index() {
 
         <View className="flex-row justify-between">
           <View className="w-[140] h-[140] flex-col justify-center items-center">
-            {/* <ProgressRing
-              progress={currentProgress}
-              radius={70}
-              strokeWidth={15}
-              progressColor="#8938E9"
-              backgroundColor="#EDE1FB"
-              duration={500}
-              showPercentage={true}
-              textColor="#8938E9"
-            /> */}
-            {/* <DonutChart
-              progress={scaledBudget > 0 ? amountSpent / scaledBudget : 0}
-              dailyBudget={scaledBudget}
-              spent={amountSpent}
-            /> */}
             <DonutChart
               progress={scaledBudget > 0 ? amountSpent / scaledBudget : 0}
               dailyBudget={scaledBudget}
@@ -1107,8 +1107,3 @@ export default function Index() {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

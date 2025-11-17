@@ -164,6 +164,24 @@ export const getAccounts = () => {
   }
 };
 
+export const getAccountBalance = (accountId) => {
+  try {
+    const db = getDb();
+    const account = db.getFirstSync(
+      "SELECT balance FROM accounts WHERE id = ?;",
+      [accountId]
+    );
+    if (!account) {
+      console.warn(`Account ID ${accountId} not found for balance check.`);
+      return 0; // Return 0 or throw an error based on your preference
+    }
+    return Number(account.balance);
+  } catch (error) {
+    console.error("Error fetching account balance:", error);
+    throw new Error(`Failed to fetch account balance: ${error.message}`);
+  }
+};
+
 // Budgets
 export const getBudgets = () => {
   try {
@@ -321,7 +339,8 @@ export const getPlannedBudgets = () => {
   }
 };
 
-export const deletePlannedBudget = (id) => {
+export const deletePlannedBudget = (id, shouldRestoreBalance = true) => {
+  // 🚩 ADD FLAG
   try {
     db.withTransactionSync(() => {
       // 1️⃣ Get all transactions for this planned budget
@@ -330,29 +349,33 @@ export const deletePlannedBudget = (id) => {
         [id]
       );
 
-      // 2️⃣ Restore account balances
-      transactions.forEach((tx) => {
-        if (tx.account_id) {
-          restoreAccountBalance(tx.account_id, tx.amount);
-        }
-      });
+      // 2️⃣ Restore account balances (ONLY IF FLAG IS TRUE)
+      if (shouldRestoreBalance) {
+        // 🚩 CHECK FLAG
+        transactions.forEach((tx) => {
+          if (tx.account_id) {
+            restoreAccountBalance(tx.account_id, tx.amount);
+          }
+        });
+      }
 
-      // 3️⃣ Delete transactions
+      // 3️⃣ Delete transactions (Always needed for cleanup)
       db.runSync(
         "DELETE FROM planned_budget_transactions WHERE planned_budget_id = ?;",
         [id]
       );
 
-      // 4️⃣ Delete the budget itself
+      // 4️⃣ Delete the budget itself (Always needed for cleanup)
       db.runSync("DELETE FROM planned_budgets WHERE id = ?;", [id]);
     });
 
     console.log(
-      `🗑️ Planned budget ID ${id} and its transactions deleted (balances restored).`
+      `🗑️ Planned budget ID ${id} and its transactions deleted (balances ${
+        shouldRestoreBalance ? "restored" : "not restored"
+      }).`
     );
   } catch (error) {
-    console.error(`Error deleting planned budget ID ${id}:`, error);
-    throw new Error(`Failed to delete planned budget ID ${id}.`);
+    // ...
   }
 };
 
