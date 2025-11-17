@@ -200,7 +200,10 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       className="bg-bgPrimary-light dark:bg-bgPrimary-dark"
     >
       {/* Graph Overview */}
-      <View className="w-full h-[220px] p-5 mt-4 mb-4 rounded-2xl shadow-md bg-card-light dark:bg-card-dark">
+      <View
+        className="w-full h-[220px] p-5 mt-4 mb-4 rounded-2xl bg-card-light dark:bg-card-dark"
+        style={{ elevation: 5 }}
+      >
         <View className="flex-row justify-between">
           <Text className="font-medium text-textPrimary-light dark:text-textPrimary-dark">
             Income
@@ -245,7 +248,8 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
           return (
             <View
               key={label}
-              className="flex-1 h-22 p-5 rounded-2xl shadow-md items-center bg-card-light dark:bg-card-dark"
+              className="flex-1 h-22 p-5 rounded-2xl items-center bg-card-light dark:bg-card-dark"
+              style={{ elevation: 5 }}
             >
               <Text className="opacity-60 text-base text-textPrimary-light dark:text-textPrimary-dark">
                 {label}
