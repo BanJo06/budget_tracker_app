@@ -25,10 +25,10 @@ export default function Shop() {
 
   const shopItems: ShopItem[] = [
     { name: "Dark Mode", price: 1 },
-    { name: "Themes", price: 250 },
-    { name: "Eye-Catching Icons", price: 250 },
-    { name: "Skip Daily Quest", price: 250 },
-    { name: "Skip Weekly Quest", price: 250 },
+    // { name: "Themes", price: 250 },
+    // { name: "Eye-Catching Icons", price: 250 },
+    { name: "Skip Daily Quest (Not Available)", price: 250 },
+    { name: "Skip Weekly Quest (Not Available)", price: 250 },
   ];
 
   useFocusEffect(
@@ -141,7 +141,9 @@ export default function Shop() {
           <View className="flex-row gap-10">
             {[1, 2, 3].map((_, i) => (
               <View key={i} className="flex-col gap-2 items-center">
-                <View className="w-[70] h-[70] rounded-[10] bg-orange-400"></View>
+                <View className="w-[70] h-[70] rounded-[10] bg-orange-400 items-center justify-center">
+                  <Text className="text-[10px]">Not Available</Text>
+                </View>
                 <View className="flex-row gap-2 items-center">
                   <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
                   <Text
@@ -202,14 +204,14 @@ export default function Shop() {
             </TouchableOpacity>
           ))}
         </View>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           className="mt-6 bg-red-500 p-3 rounded-lg"
           onPress={resetPurchases}
         >
           <Text className="text-white text-center font-medium">
             Reset Shop Purchases
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Modal */}

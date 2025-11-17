@@ -1,10 +1,6 @@
 import { SVG_ICONS } from "@/assets/constants/icons";
 import ProgressBar from "@/components/ProgressBar";
 import { DailyQuest, DAILY_QUESTS } from "@/data/daily_quests_items";
-import {
-  resetAddTransactionQuest,
-  resetUseApp5MinQuest,
-} from "@/data/daily_quests_logic";
 import { addCoins } from "@/utils/coins";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColorScheme } from "nativewind";
@@ -245,7 +241,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
       </View>
 
       {/* Reset Buttons (for debugging) */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={resetAddTransactionQuest}
         className="mt-4 px-4"
       >
@@ -257,7 +253,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
         <Text className="text-center text-[#8938E9] font-medium">
           Reset Use the app for 5 minutes
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };
