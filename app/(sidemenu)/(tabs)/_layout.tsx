@@ -43,6 +43,7 @@ const AddTabBarButton: React.FC<AddButtonProps> = ({
 }) => {
   // `focused` indicates if this tab is currently selected, though for a navigation button, it might always be false
   const focused = accessibilityState?.selected;
+  const { colorScheme } = useColorScheme();
 
   return (
     <Pressable
@@ -52,19 +53,32 @@ const AddTabBarButton: React.FC<AddButtonProps> = ({
       // Tailwind classes for the Pressable itself, to position the floating button
       className="flex-1 justify-center items-center relative -mt-6" // -mt-6 lifts it up
     >
-      {({ pressed }) => (
-        <View
-          // This View creates the circular background for the icon
-          className="w-[52px] h-[52px] rounded-full justify-center items-center"
-        >
-          {/* Render the appropriate Add icon based on press state */}
-          {pressed ? (
-            <SVG_ICONS.AddActive size={52} /> // Adjust size/color as needed
-          ) : (
-            <SVG_ICONS.Add size={52} /> // Adjust size/color as needed
-          )}
-        </View>
-      )}
+      {({ pressed }) => {
+        // --- Icon Selection Logic ---
+        let IconComponent;
+
+        if (colorScheme === "dark") {
+          // Night Mode logic
+          IconComponent = pressed
+            ? SVG_ICONS.AddActiveNight // Use the night active icon when pressed
+            : SVG_ICONS.AddNight; // Use the night normal icon
+        } else {
+          // Light Mode logic
+          IconComponent = pressed
+            ? SVG_ICONS.AddActive // Use the light active icon when pressed
+            : SVG_ICONS.Add; // Use the light normal icon
+        }
+
+        return (
+          <View
+            // This View creates the circular background for the icon
+            className="w-[52px] h-[52px] rounded-full justify-center items-center"
+          >
+            {/* Render the selected IconComponent */}
+            <IconComponent size={52} />
+          </View>
+        );
+      }}
     </Pressable>
   );
 };

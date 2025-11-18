@@ -1,6 +1,8 @@
 import AccountIcon from "../icons/AccountIcon";
 import AddActiveIcon from "../icons/AddActiveIcon";
+import AddActiveIconNight from "../icons/AddActiveIconNight";
 import AddIcon from "../icons/AddIcon";
+import AddIconNight from "../icons/AddIconNight";
 import ArrowLeftIcon from "../icons/ArrowLeftIcon";
 import ArrowRightIcon from "../icons/ArrowRightIcon";
 import BackspaceIcon from "../icons/BackspaceIcon";
@@ -67,4 +69,6 @@ export const SVG_ICONS: SvgIconMap = {
   Ellipsis: EllipsisIcon,
   Transfer: TransferIcon,
   PlannedBudgets: PlannedBudgetsIcon,
+  AddActiveNight: AddActiveIconNight,
+  AddNight: AddIconNight,
 };

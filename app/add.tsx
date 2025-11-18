@@ -47,7 +47,7 @@ const CalculatorButton = ({
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`h-[60] border-2 rounded-lg justify-center items-center active:bg-[#8938E9] ${
+      className={`h-[60] border-2 border-search-light dark:border-search-dark rounded-lg justify-center items-center active:bg-search-light dark:active:bg-search-dark ${
         isLarge ? "w-[49%]" : "w-[24%]"
       }`}
       style={isLarge ? { width: "49%" } : { width: "24%" }}
@@ -55,7 +55,9 @@ const CalculatorButton = ({
       {label === "←" ? (
         <SVG_ICONS.Backspace size={36} />
       ) : (
-        <Text className="text-3xl font-bold text-gray-700">{label}</Text>
+        <Text className="text-3xl font-bold text-textPrimary-light dark:text-textPrimary-dark">
+          {label}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -644,7 +646,7 @@ export default function Add() {
   ];
 
   return (
-    <View className="p-8 flex-1 bg-white">
+    <View className="p-8 flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <StatusBar barStyle={"dark-content"} />
 
       {/* Modals */}
@@ -679,14 +681,14 @@ export default function Add() {
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity
           onPress={handleCancel}
-          className="w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg"
+          className="w-32 h-10 justify-center items-center rounded-lg bg-button-light dark:bg-button-dark"
         >
           <Text className="text-white text-base font-medium">CANCEL</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={handleSaveTransaction}
-          className={`w-32 h-10 justify-center items-center bg-[#8938E9] rounded-lg ${
+          className={`w-32 h-10 justify-center items-center bg-button-light dark:bg-button-dark rounded-lg ${
             !dbReady ? "opacity-50" : ""
           }`}
           disabled={!dbReady}
@@ -719,12 +721,12 @@ export default function Add() {
       {/* Account / Category selectors */}
       <View className="flex-row justify-between mt-8">
         <View className="items-center flex-1 mr-2">
-          <Text className="text-sm mb-2">
+          <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
             {selectedOption === "transfer" ? "From" : "Account"}
           </Text>
           <TouchableOpacity
             onPress={toggleAccountsModal}
-            className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
+            className="w-full h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark  rounded-lg"
           >
             <SVG_ICONS.Account size={16} color="white" />
             <Text className="text-white text-base">
@@ -734,7 +736,7 @@ export default function Add() {
         </View>
 
         <View className="items-center flex-1 ml-2">
-          <Text className="text-sm mb-2">
+          <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark ">
             {selectedOption === "transfer" ? "To" : "Category"}
           </Text>
           <TouchableOpacity
@@ -743,7 +745,7 @@ export default function Add() {
                 ? toggleToAccountsModal
                 : toggleCategoriesModal
             }
-            className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
+            className="w-full h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark  rounded-lg"
           >
             {selectedOption === "transfer" ? (
               <SVG_ICONS.Account size={16} color="white" />
@@ -766,7 +768,7 @@ export default function Add() {
       {/* Notes */}
       <View className="mt-6">
         <TextInput
-          className="w-full h-24 border-2 rounded-lg p-4 text-base"
+          className="w-full h-24 border-2 border-search-light dark:border-search-dark rounded-lg p-4 text-base"
           placeholder="Notes"
           multiline={true}
           numberOfLines={3}
@@ -779,9 +781,9 @@ export default function Add() {
 
       {/* Display */}
       <View className="mt-4">
-        <View className="w-full h-[80] border-2 rounded-lg p-2 flex items-end justify-center">
+        <View className="w-full h-[80] border-2 border-search-light dark:border-search-dark rounded-lg p-2 flex items-end justify-center">
           <Text
-            className="text-7xl text-right"
+            className="text-7xl text-right text-textPrimary-light dark:text-textPrimary-dark"
             style={{ lineHeight: 65, includeFontPadding: false }}
           >
             {displayValue}

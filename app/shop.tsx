@@ -254,8 +254,13 @@ export default function Shop() {
             <TouchableOpacity
               className="mt-4 bg-purple-500 rounded-lg p-3"
               onPress={() => {
-                setModalVisible(false); // close purchase success modal
-                setSkipModalVisible(true); // open quest skip selection modal
+                setModalVisible(false);
+
+                if (selectedItem?.name === "Skip Weekly Quest") {
+                  setSkipModalVisible(true); // ✅ Only open for skip purchase
+                }
+
+                setSelectedItem(null); // clear selection
               }}
             >
               <Text className="text-center text-white">OK</Text>
