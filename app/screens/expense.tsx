@@ -42,12 +42,12 @@ const fetchTransactions = async (): Promise<ExpenseTransaction[]> => {
 };
 
 const categoryColors: { [key: string]: string } = {
-  Food: "#8938E9",
+  Foods: "#8938E9",
   Shopping: "#FACC15",
   Gifts: "#4ADE80",
-  Bills: "#EF4444",
+  Entertainment: "#EF4444",
   Clothing: "#3B82F6",
-  Tuition: "#A855F7",
+  Transportation: "#A855F7",
   Uncategorized: "#CCCCCC",
 };
 

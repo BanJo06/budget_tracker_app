@@ -1,8 +1,10 @@
 import BillsIcon from "../icons/categories/expenses/BillsIcon";
 import ClothingIcon from "../icons/categories/expenses/ClothingIcon";
+import EntertainmentIcon from "../icons/categories/expenses/EntertainmentIcon";
 import FoodsIcon from "../icons/categories/expenses/FoodsIcon";
 import OtherExpensesIcon from "../icons/categories/expenses/OtherExpensesIcon";
 import ShoppingIcon from "../icons/categories/expenses/ShoppingIcon";
+import TransportationIcon from "../icons/categories/expenses/TransportationIcon";
 import TuitionIcon from "../icons/categories/expenses/TuitionIcon";
 
 // Define an interface for your icon map for better type safety
@@ -18,5 +20,7 @@ export const CATEGORIES_EXPENSES_SVG_ICONS: SvgIconMap = {
   Foods: FoodsIcon,
   Shopping: ShoppingIcon,
   Tuition: TuitionIcon,
+  Entertainment: EntertainmentIcon,
+  Transportation: TransportationIcon,
   OtherExpenses: OtherExpensesIcon,
 };

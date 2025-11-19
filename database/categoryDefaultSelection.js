@@ -2,11 +2,11 @@ import { getDb } from "@/utils/database";
 
 // Define the default categories for expenses and income
 const defaultExpenseCategories = [
-  { name: "Bills", icon_name: "Bills" },
+  { name: "Transportation", icon_name: "Transportation" },
   { name: "Clothing", icon_name: "Clothing" },
   { name: "Foods", icon_name: "Foods" },
   { name: "Shopping", icon_name: "Shopping" },
-  { name: "Tuition", icon_name: "Tuition" },
+  { name: "Entertainment", icon_name: "Entertainment" },
   { name: "Other Expenses", icon_name: "OtherExpenses" },
 ];
 

@@ -2,9 +2,11 @@ import { CATEGORIES_EXPENSES_SVG_ICONS } from "@/assets/constants/categories_exp
 import { CATEGORIES_INCOME_SVG_ICONS } from "@/assets/constants/categories_income_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
 import {
+  deleteCategory,
   getExpenseCategories,
   getIncomeCategories,
   saveNewCategory,
+  updateCategory,
 } from "@/database/categoryQueries";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -32,14 +34,21 @@ interface Category {
 interface CategoryItemProps {
   category: Category;
   IconMap: { [key: string]: React.FC<any> };
+  onEdit: (category: Category) => void;
+  onDelete: (categoryId: number) => void;
 }
 
-const CategoryItem: React.FC<CategoryItemProps> = ({ category, IconMap }) => {
+const CategoryItem: React.FC<CategoryItemProps> = ({
+  category,
+  IconMap,
+  onEdit,
+  onDelete,
+}) => {
   const IconComponent = IconMap[category.icon_name];
+
   return (
     <View className="pt-4 flex-row items-center justify-between bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <View className="flex-row gap-4 items-center">
-        {/* Category Icon Container */}
         <View className="w-[50] h-[50] rounded-full bg-[#8938E9] justify-center items-center">
           {IconComponent ? (
             <IconComponent width={30} height={30} color="#FFFFFF" />
@@ -52,9 +61,13 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, IconMap }) => {
         </Text>
       </View>
 
-      {/* Ellipsis/Menu Icon */}
-      <View className="justify-center">
-        <SVG_ICONS.Ellipsis width={24} height={24} />
+      <View className="justify-center flex-row gap-4">
+        <TouchableOpacity onPress={() => onEdit(category)}>
+          <SVG_ICONS.Edit />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onDelete(category.id)}>
+          <SVG_ICONS.Delete />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -64,18 +77,35 @@ interface NewCategoryModalProps {
   isVisible: boolean;
   onClose: () => void;
   onSave: (data: Omit<Category, "id">) => void;
+  editingCategory?: Category | null; // <-- new
+  setEditingCategory?: React.Dispatch<React.SetStateAction<Category | null>>;
 }
 
 const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
   isVisible,
   onClose,
   onSave,
+  editingCategory,
+  setEditingCategory,
 }) => {
   const [categoryName, setCategoryName] = useState("");
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<"income" | "expense">(
     "expense"
   );
+
+  // Populate fields when editingCategory changes
+  useEffect(() => {
+    if (editingCategory) {
+      setCategoryName(editingCategory.name);
+      setSelectedIcon(editingCategory.icon_name);
+      setSelectedOption(editingCategory.type);
+    } else {
+      setCategoryName("");
+      setSelectedIcon(null);
+      setSelectedOption("expense");
+    }
+  }, [editingCategory, isVisible]);
 
   const handleSave = () => {
     if (!categoryName.trim() || !selectedIcon) {
@@ -96,6 +126,7 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
     setCategoryName("");
     setSelectedIcon(null);
     setSelectedOption("expense");
+    if (setEditingCategory) setEditingCategory(null);
     onClose();
   };
 
@@ -227,6 +258,7 @@ export default function Categories() {
   const [error, setError] = useState<string | null>(null);
   // 💡 State to trigger a reload
   const [reloadTrigger, setReloadTrigger] = useState(0);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [isNewCategoryModalVisible, setNewCategoryModalVisible] =
     useState(false);
@@ -260,27 +292,77 @@ export default function Categories() {
   }, [reloadTrigger, loadCategories]);
 
   // 💡 Handler to save the new category to the database
+  // const handleSaveNewCategory = (newCategoryData: Omit<Category, "id">) => {
+  //   try {
+  //     const newId = saveNewCategory(newCategoryData); // <-- Call the actual DB function
+
+  //     // OPTIONAL: Instead of reloading the whole list, you can update the state directly
+  //     const newCategory: Category = { ...newCategoryData, id: newId };
+  //     if (newCategory.type === "income") {
+  //       setIncomeCategories((prev) => [...prev, newCategory]);
+  //     } else {
+  //       setExpenseCategories((prev) => [...prev, newCategory]);
+  //     }
+  //     // OR, simply: setReloadTrigger(prev => prev + 1);
+
+  //     Alert.alert("Success", `Category '${newCategory.name}' added!`);
+  //   } catch (e: any) {
+  //     console.error("Save Category Error:", e);
+  //     Alert.alert(
+  //       "Save Failed",
+  //       e.message || "Could not save the category to the database."
+  //     );
+  //     // Re-open the modal or handle error appropriately if needed
+  //     setNewCategoryModalVisible(true);
+  //   }
+  // };
   const handleSaveNewCategory = (newCategoryData: Omit<Category, "id">) => {
     try {
-      const newId = saveNewCategory(newCategoryData); // <-- Call the actual DB function
+      if (editingCategory) {
+        // Edit existing category
+        updateCategory(editingCategory.id, newCategoryData);
+        const updatedCategory: Category = {
+          ...newCategoryData,
+          id: editingCategory.id,
+        };
 
-      // OPTIONAL: Instead of reloading the whole list, you can update the state directly
-      const newCategory: Category = { ...newCategoryData, id: newId };
-      if (newCategory.type === "income") {
-        setIncomeCategories((prev) => [...prev, newCategory]);
+        if (updatedCategory.type === "income") {
+          setIncomeCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === updatedCategory.id ? updatedCategory : cat
+            )
+          );
+          setExpenseCategories((prev) =>
+            prev.filter((cat) => cat.id !== updatedCategory.id)
+          );
+        } else {
+          setExpenseCategories((prev) =>
+            prev.map((cat) =>
+              cat.id === updatedCategory.id ? updatedCategory : cat
+            )
+          );
+          setIncomeCategories((prev) =>
+            prev.filter((cat) => cat.id !== updatedCategory.id)
+          );
+        }
+
+        Alert.alert("Success", `Category '${updatedCategory.name}' updated!`);
+        setEditingCategory(null);
       } else {
-        setExpenseCategories((prev) => [...prev, newCategory]);
+        // Add new category
+        const newId = saveNewCategory(newCategoryData);
+        const newCategory: Category = { ...newCategoryData, id: newId };
+        if (newCategory.type === "income")
+          setIncomeCategories((prev) => [...prev, newCategory]);
+        else setExpenseCategories((prev) => [...prev, newCategory]);
+        Alert.alert("Success", `Category '${newCategory.name}' added!`);
       }
-      // OR, simply: setReloadTrigger(prev => prev + 1);
-
-      Alert.alert("Success", `Category '${newCategory.name}' added!`);
     } catch (e: any) {
       console.error("Save Category Error:", e);
       Alert.alert(
         "Save Failed",
         e.message || "Could not save the category to the database."
       );
-      // Re-open the modal or handle error appropriately if needed
       setNewCategoryModalVisible(true);
     }
   };
@@ -303,6 +385,46 @@ export default function Categories() {
       </View>
     );
   }
+
+  // Edit handler (opens the same modal as adding, but prefilled)
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setNewCategoryModalVisible(true);
+  };
+
+  // Delete handler
+  const handleDeleteCategory = (categoryId: number) => {
+    Alert.alert(
+      "Delete Category",
+      "Are you sure you want to delete this category?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            try {
+              deleteCategory(categoryId);
+              // Update local state after deletion
+              setIncomeCategories((prev) =>
+                prev.filter((cat) => cat.id !== categoryId)
+              );
+              setExpenseCategories((prev) =>
+                prev.filter((cat) => cat.id !== categoryId)
+              );
+              Alert.alert("Deleted", "Category deleted successfully.");
+            } catch (e: any) {
+              console.error("Delete Category Error:", e);
+              Alert.alert(
+                "Delete Failed",
+                e.message || "Failed to delete category."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Main content wrapped in ScrollView
   return (
@@ -328,6 +450,8 @@ export default function Categories() {
                 key={category.id}
                 category={category}
                 IconMap={CATEGORIES_INCOME_SVG_ICONS}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
               />
             ))
           )}
@@ -349,6 +473,8 @@ export default function Categories() {
                 key={category.id}
                 category={category}
                 IconMap={CATEGORIES_EXPENSES_SVG_ICONS}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
               />
             ))
           )}
@@ -373,6 +499,8 @@ export default function Categories() {
           isVisible={isNewCategoryModalVisible}
           onClose={toggleNewCategoryModal}
           onSave={handleSaveNewCategory}
+          editingCategory={editingCategory}
+          setEditingCategory={setEditingCategory}
         />
       </View>
     </View>

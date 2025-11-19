@@ -13,6 +13,8 @@ import CloseIcon from "../icons/CloseIcon";
 import DailyRewardIcon from "../icons/DailyRewardIcon";
 import DashboardActiveIcon from "../icons/DashboardActiveIcon";
 import DashboardIcon from "../icons/DashboardIcon";
+import DeleteIcon from "../icons/DeleteIcon";
+import EditIcon from "../icons/EditIcon";
 import EllipsisIcon from "../icons/EllipsisIcon";
 import ExportRecordsIcon from "../icons/ExportRecordsIcon";
 import GraphsActiveIcon from "../icons/GraphsActiveIcon";
@@ -75,4 +77,6 @@ export const SVG_ICONS: SvgIconMap = {
   AddNight: AddIconNight,
   Help: HelpIcon,
   HelpTop: HelpTopIcon,
+  Delete: DeleteIcon,
+  Edit: EditIcon,
 };

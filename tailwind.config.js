@@ -61,6 +61,18 @@ module.exports = {
           light: "#FFFFFF",
           dark: "#9CA3AF",
         },
+        bgModal: {
+          light: "#FFFFFF",
+          dark: "#2A2A2A",
+        },
+        bgTextbox: {
+          light: "#FFFFFF",
+          dark: "#2A2A2A",
+        },
+        textTextbox: {
+          light: "#392F46",
+          dark: "#9CA3AF",
+        },
       },
     },
   },

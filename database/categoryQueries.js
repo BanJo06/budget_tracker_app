@@ -84,3 +84,28 @@ export const saveNewCategory = ({ name, type, icon_name }) => {
     throw new Error("Failed to save new category to the database.");
   }
 };
+
+export const updateCategory = (id, { name, type, icon_name }) => {
+  try {
+    const db = getDb();
+    db.runSync(
+      "UPDATE categories SET name = ?, type = ?, icon_name = ? WHERE id = ?;",
+      [name, type, icon_name, id]
+    );
+    console.log(`Category ${id} updated successfully.`);
+  } catch (error) {
+    console.error(`Error updating category ${id}:`, error);
+    throw new Error("Failed to update category.");
+  }
+};
+
+export const deleteCategory = (id) => {
+  try {
+    const db = getDb();
+    db.runSync("DELETE FROM categories WHERE id = ?;", [id]);
+    console.log(`Category ${id} deleted successfully.`);
+  } catch (error) {
+    console.error(`Error deleting category ${id}:`, error);
+    throw new Error("Failed to delete category.");
+  }
+};
