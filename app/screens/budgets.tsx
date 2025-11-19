@@ -152,7 +152,7 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
     if (!budgetName.trim() || !selectedColor) {
       Alert.alert(
         "Missing Information",
-        "Please enter a name and select a color."
+        "Please enter a name, goal amount and select a color."
       );
       return;
     }
@@ -194,11 +194,15 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Add new planned budget</Text>
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            Add new planned budget
+          </Text>
 
           <View className="flex-row items-center pb-5">
-            <Text>Cash Flow</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Cash Flow
+            </Text>
             <View className="flex-1 ml-[110]">
               <SwitchSelector
                 options={[
@@ -229,9 +233,11 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
           </View>
 
           <View className="w-full flex-row gap-2 items-center mb-6">
-            <Text>Budget Name</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Budget Name
+            </Text>
             <TextInput
-              className="flex-1 h-10 border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
+              className="flex-1 h-[44] border-2 bg-bgModal-light dark:bg-bgModal-dark border-search-light dark:border-search-dark text-textPrimary-light dark:text-textPrimary-dark rounded-lg pl-2"
               placeholder="Untitled"
               value={budgetName}
               onChangeText={setBudgetName}
@@ -239,9 +245,11 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
           </View>
 
           <View className="w-full flex-row gap-2 items-center mb-2">
-            <Text>Goal Amount</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Goal Amount
+            </Text>
             <TextInput
-              className="flex-1 h-10 border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
+              className="flex-1 h-[44] border-2 rounded-lg pl-2 bg-bgModal-light dark:bg-bgModal-dark border-search-light dark:border-search-dark text-textPrimary-light dark:text-textPrimary-dark"
               placeholder="0.00"
               keyboardType="numeric"
               value={amount}
@@ -250,7 +258,9 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
           </View>
 
           <View className="w-full flex-row items-center justify-between mb-4">
-            <Text>Add Goal Date Range</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Add Goal Date Range
+            </Text>
             <Switch
               value={isGoalDateEnabled}
               onValueChange={setIsGoalDateEnabled}
@@ -261,12 +271,14 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
 
           {isGoalDateEnabled && (
             <View className="w-full mb-6 mt-2 border-t pt-4 border-gray-200">
-              <Text className="mb-2 text-sm font-semibold text-purple-600">
+              <Text className="mb-2 text-sm font-semibold text-textPrimary-light dark:text-textPrimary-dark">
                 Goal Period
               </Text>
 
               <View className="flex-row gap-2 items-center mb-3">
-                <Text className="w-16">From:</Text>
+                <Text className="w-16 text-textPrimary-light dark:text-textPrimary-dark">
+                  From:
+                </Text>
                 <TouchableOpacity
                   className="flex-1 h-10 border-2 border-gray-300 rounded-lg justify-center bg-purple-100"
                   onPress={() => setShowStartDatePicker(true)}
@@ -291,7 +303,9 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
               </View>
 
               <View className="flex-row gap-2 items-center">
-                <Text className="w-16">To:</Text>
+                <Text className="w-16 text-textPrimary-light dark:text-textPrimary-dark">
+                  To:
+                </Text>
                 <TouchableOpacity
                   className="flex-1 h-10 border-2 border-gray-300 rounded-lg justify-center bg-purple-100"
                   onPress={() => setShowEndDatePicker(true)}
@@ -317,7 +331,9 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
           )}
 
           <View className="mb-6">
-            <Text className="text-sm mb-2">Select Color</Text>
+            <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
+              Select Color
+            </Text>
             <View className="h-30">
               <ScrollView
                 contentContainerStyle={{
@@ -351,19 +367,19 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
 
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-purple-600">Cancel</Text>
+              <Text className="uppercase text-button-light dark:text-button-dark">
+                Cancel
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className={`w-24 h-10 rounded-lg justify-center items-center ${
-                budgetName.trim() && selectedColor
-                  ? "bg-purple-600"
-                  : "bg-gray-400"
-              }`}
+              className={
+                "w-24 h-10 rounded-lg justify-center items-center bg-button-light dark:bg-button-dark"
+              }
               onPress={handleSave}
-              disabled={!budgetName.trim() || !selectedColor}
+              // disabled={!budgetName.trim() || !selectedColor}
             >
               <Text className="uppercase text-white">Save</Text>
             </TouchableOpacity>
@@ -740,7 +756,6 @@ export default function Budgets() {
                           position: "absolute",
                           top: 28,
                           right: 0,
-                          backgroundColor: "#ffffff",
                           borderRadius: 8,
                           borderWidth: 1,
                           borderColor: "#d1d5db",
@@ -752,11 +767,11 @@ export default function Budgets() {
                           zIndex: 9999,
                           width: 120,
                         }}
+                        className="bg-bgModal-light dark:bg-bgModal-dark"
                       >
                         {[
                           {
                             label: "Edit",
-                            color: "#6f42c1",
                             action: () => {
                               setSelectedBudget(pb); // 🟣 set current budget for editing
                               setNewPlannedBudgetVisible(true); // open same modal
@@ -765,7 +780,6 @@ export default function Budgets() {
                           },
                           {
                             label: "Delete",
-                            color: "#dc2626",
                             action: () => {
                               setOpenMenuId(null);
                               Alert.alert(
@@ -813,10 +827,10 @@ export default function Budgets() {
                           >
                             <Text
                               style={{
-                                color: item.color,
                                 fontSize: 14,
                                 fontWeight: "500",
                               }}
+                              className="text-textPrimary-light dark:text-textPrimary-dark"
                             >
                               {item.label}
                             </Text>
@@ -911,26 +925,29 @@ const BudgetEditModal: React.FC<{
   return (
     <GeneralBudgetsModal isVisible={isVisible} onClose={onClose} title={title}>
       <View className="flex-row items-center gap-2">
-        <Text>Limit</Text>
+        <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+          Limit
+        </Text>
         <TextInput
-          className="flex-1 border-2 rounded-md pl-2 h-10"
+          className="flex-1 border-2 border-search-light dark:border-search-dark rounded-md pl-2 h-[44] bg-bgTextbox-light dark:bg-bgTextbox-dark text-textTextbox-light dark:text-textTextbox-dark"
           placeholder="0"
           keyboardType="numeric"
           value={inputValue}
           onChangeText={setInputValue}
-          style={{ backgroundColor: "#D4BFED" }}
         />
       </View>
 
       <View className="flex-row pt-4 gap-4">
         <TouchableOpacity
-          className="w-20 h-8 rounded-md border border-gray-400 justify-center items-center"
+          className="w-20 h-8 rounded-md border border-button-light dark:border-button-dark justify-center items-center"
           onPress={onClose}
         >
-          <Text className="uppercase text-gray-800">Cancel</Text>
+          <Text className="uppercase text-button-light dark:text-button-dark">
+            Cancel
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="w-20 h-8 rounded-md border border-purple-600 bg-purple-600 justify-center items-center"
+          className="w-20 h-8 rounded-md bg-button-light dark:bg-button-dark justify-center items-center"
           onPress={handleSave}
         >
           <Text className="uppercase text-white">Set</Text>

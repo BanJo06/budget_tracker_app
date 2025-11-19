@@ -105,13 +105,17 @@ const NewAccountModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Add new account</Text>
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            Add new account
+          </Text>
 
           <View className="w-full flex-row gap-2 items-center mb-4">
-            <Text>Initial Amount</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Initial Amount
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-bgTextbox-light dark:bg-bgTextbox-dark"
               placeholder="0"
               keyboardType="numeric"
               value={initialAmount}
@@ -120,9 +124,11 @@ const NewAccountModal = ({
           </View>
 
           <View className="w-full flex-row gap-2 items-center mb-6">
-            <Text>Name</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Name
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-bgTextbox-light dark:bg-bgTextbox-dark"
               placeholder="Untitled"
               value={accountName}
               onChangeText={setAccountName}
@@ -130,7 +136,9 @@ const NewAccountModal = ({
           </View>
 
           <View className="mb-6">
-            <Text className="text-sm mb-2">Select Icon</Text>
+            <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
+              Select Icon
+            </Text>
             <View className="flex-row flex-wrap justify-start gap-4">
               {Object.entries(ACCOUNTS_SVG_ICONS).map(
                 ([key, IconComponent]) => (
@@ -155,13 +163,15 @@ const NewAccountModal = ({
 
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-purple-600">Cancel</Text>
+              <Text className="uppercase text-button-light dark:text-button-dark">
+                Cancel
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
+              className="w-24 h-10 rounded-lg bg-button-light dark:bg-button-dark justify-center items-center"
               onPress={handleSave}
             >
               <Text className="uppercase text-white">Save</Text>
@@ -217,8 +227,10 @@ const AccountsModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Select Account</Text>
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            Select Account
+          </Text>
 
           {accounts.map((account) => {
             const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
@@ -235,9 +247,11 @@ const AccountsModal = ({
                   <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
                     {IconComponent && <IconComponent size={24} color="white" />}
                   </View>
-                  <Text className="text-lg">{account.name}</Text>
+                  <Text className="text-lg text-textPrimary-light dark:text-textPrimary-dark">
+                    {account.name}
+                  </Text>
                 </View>
-                <Text className="text-[#8938E9] text-lg">
+                <Text className="text-lg text-textHighlight-light dark:text-textHighlight-dark">
                   ₱{account.balance.toFixed(2)}
                 </Text>
               </TouchableOpacity>
@@ -246,11 +260,11 @@ const AccountsModal = ({
 
           <TouchableOpacity
             onPress={toggleNewAccountModal}
-            className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg mt-4"
+            className="w-full h-[40] justify-center items-center rounded-lg mt-4 bg-button-light dark:bg-button-dark"
           >
             <View className="flex-row items-center justify-center gap-2">
-              <SVG_ICONS.SmallAdd size={15} color="#8938E9" />
-              <Text className="font-medium text-purple-600">
+              {/* <SVG_ICONS.SmallAdd size={15} color="#8938E9" /> */}
+              <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
                 ADD NEW ACCOUNT
               </Text>
             </View>

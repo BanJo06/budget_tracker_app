@@ -28,8 +28,10 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         className="flex-1 justify-end"
         style={[styles.modalOverlay, { paddingBottom: 40 }]} // <-- add padding here
       >
-        <View className="w-full h-[400] bg-white items-center rounded-t-[10] px-5 py-4">
-          <Text className="font-medium">Select a category</Text>
+        <View className="w-full h-[400] bg-bgModal-light dark:bg-bgModal-dark items-center rounded-t-[10] px-5 py-4">
+          <Text className="font-medium text-textPrimary-light dark:text-textPrimary-dark">
+            Select a category
+          </Text>
           {children}
         </View>
       </View>

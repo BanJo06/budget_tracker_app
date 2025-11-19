@@ -101,9 +101,11 @@ export default function PlannedBudgetModals({
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => {}} // prevents modal from closing when inner content pressed
-          className="bg-white p-6 rounded-lg w-11/12"
+          className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12"
         >
-          <Text className="text-xl font-bold mb-4">Select Account</Text>
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            Select Account
+          </Text>
           {accounts.map((account) => {
             const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
             return (
@@ -116,9 +118,11 @@ export default function PlannedBudgetModals({
                   <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
                     {IconComponent && <IconComponent size={24} color="white" />}
                   </View>
-                  <Text className="text-lg">{account.name}</Text>
+                  <Text className="text-lg text-textPrimary-light dark:text-textPrimary-dark">
+                    {account.name}
+                  </Text>
                 </View>
-                <Text className="text-[#8938E9] text-lg">
+                <Text className="text-lg text-textHighlight-light dark:text-textHighlight-dark">
                   ₱{account.balance.toFixed(2)}
                 </Text>
               </TouchableOpacity>
@@ -137,7 +141,7 @@ export default function PlannedBudgetModals({
       onRequestClose={() => setIsBudgetModalVisible(false)}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="w-[360] bg-white rounded-[20] p-[20] shadow-lg">
+        <View className="w-[360] bg-bgModal-light dark:bg-bgModal-dark rounded-[20] p-[20] shadow-lg">
           {!selectedBudget ? (
             <Text className="text-center text-gray-500">
               No budget selected.
@@ -153,10 +157,10 @@ export default function PlannedBudgetModals({
                   }}
                 />
                 <View className="flex-col">
-                  <Text className="text-[18px] font-medium text-[#392F46]">
+                  <Text className="text-[18px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
                     {selectedBudget?.budget_name || "Unnamed Budget"}
                   </Text>
-                  <Text className="text-[14px] text-[#392F46] opacity-70">
+                  <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark opacity-70">
                     {selectedBudget?.budget_type
                       ? selectedBudget.budget_type + " category"
                       : "No category"}
@@ -166,16 +170,16 @@ export default function PlannedBudgetModals({
 
               {/* === DETAILS === */}
               <View>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
+                <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark mb-[4]">
                   Goal Amount: ₱{selectedBudget?.amount?.toFixed(2) || "0.00"}
                 </Text>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
+                <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark mb-[4]">
                   Start Date: {selectedBudget?.start_date || "Ongoing"}
                 </Text>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
+                <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark mb-[4]">
                   End Date: {selectedBudget?.end_date || "Ongoing"}
                 </Text>
-                <Text className="text-[14px] text-[#392F46] mb-[4]">
+                <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark mb-[4]">
                   Progress:{" "}
                   {(
                     getProgress(selectedBudget, budgetTransactions) * 100
@@ -185,7 +189,9 @@ export default function PlannedBudgetModals({
               </View>
 
               <View className="my-4">
-                <Text className="text-[16px] font-bold">Savings Record</Text>
+                <Text className="text-[16px] font-bold text-textPrimary-light dark:text-textPrimary-dark">
+                  Savings Record
+                </Text>
               </View>
 
               <ScrollView style={{ maxHeight: 300 }}>

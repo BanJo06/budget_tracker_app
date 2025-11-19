@@ -55,12 +55,12 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({
       <TouchableOpacity
         key={category.id || category.name} // stable key
         onPress={() => onSelectCategory(category)}
-        className="w-full flex-row items-center p-3 border-b border-gray-200"
+        className="w-full flex-row items-center p-3 border-b border-textPrimary-light dark:border-textPrimary-dark"
       >
         <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center mr-4">
           {IconComponent ? <IconComponent size={24} color="white" /> : null}
         </View>
-        <Text className="text-lg font-regular text-gray-800">
+        <Text className="text-lg font-regular text-textPrimary-light dark:text-textPrimary-dark">
           {category.name}
         </Text>
       </TouchableOpacity>

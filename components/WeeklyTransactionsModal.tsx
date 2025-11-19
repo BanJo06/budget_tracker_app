@@ -37,15 +37,15 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
     <Modal visible={visible} animationType="slide" transparent>
       <View className="flex-1 justify-center items-center bg-black/50">
         <View
-          className="bg-white w-[90%] rounded-2xl p-4"
+          className="bg-bgModal-light dark:bg-bgModal-dark w-[90%] rounded-2xl p-4"
           style={{ height: 450 }} // ✅ Fixed height for modal
         >
-          <Text className="text-xl font-bold mb-4 text-center">
+          <Text className="text-xl font-bold mb-4 text-center text-textPrimary-light dark:text-textPrimary-dark">
             {type === "spent" ? "Spent" : "Earned"} - Last 7 Days
           </Text>
 
           {transactions.length === 0 ? (
-            <Text className="text-center text-gray-500 py-4">
+            <Text className="text-center text-gray-500 py-4 text-textPrimary-light dark:text-textPrimary-dark">
               No transactions found.
             </Text>
           ) : (
@@ -57,17 +57,17 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
               {transactions.map((t) => (
                 <View
                   key={t.id}
-                  className="flex-row justify-between items-center py-2 border-b border-gray-200"
+                  className="flex-row justify-between items-center py-2 border-b border-textPrimary-light dark:border-textPrimary-dark"
                 >
                   <View className="flex-col">
-                    <Text className="text-base text-gray-800 font-medium">
+                    <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark font-medium">
                       {t.category_name || "(no category)"}
                     </Text>
-                    <Text className="text-sm text-gray-500">
+                    <Text className="text-sm text-textPrimary-light dark:text-textPrimary-dark">
                       {formatDate(t.date)}
                     </Text>
                   </View>
-                  <Text className="text-base font-semibold text-gray-900">
+                  <Text className="text-base font-semibold text-textPrimary-light dark:text-textPrimary-dark">
                     ₱{t.amount.toFixed(2)}
                   </Text>
                 </View>
@@ -76,9 +76,11 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
           )}
 
           {transactions.length > 0 && (
-            <View className="flex-row justify-between border-t border-gray-300 pt-2">
-              <Text className="text-base font-medium text-gray-800">Total</Text>
-              <Text className="text-base font-semibold text-gray-900">
+            <View className="flex-row justify-between border-t border-textPrimary-light dark:border-textPrimary-dark pt-2">
+              <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
+                Total
+              </Text>
+              <Text className="text-base font-semibold text-textPrimary-light dark:text-textPrimary-dark">
                 ₱{totalAmount.toFixed(2)}
               </Text>
             </View>

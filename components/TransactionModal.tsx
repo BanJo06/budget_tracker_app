@@ -30,8 +30,8 @@ const TransactionModal = ({
     onRequestClose={onClose}
   >
     <View className="flex-1 justify-center items-center bg-black/50">
-      <View className="w-[360] bg-white rounded-[20] p-[20] shadow-lg">
-        <Text className="text-[18px] font-semibold text-[#392F46] mb-[16]">
+      <View className="w-[360] bg-bgModal-light dark:bg-bgModal-dark rounded-[20] p-[20] shadow-lg">
+        <Text className="text-[18px] font-semibold text-textPrimary-light dark:text-textPrimary-dark mb-[16]">
           Create Budget Transaction
         </Text>
 
@@ -40,11 +40,13 @@ const TransactionModal = ({
           keyboardType="numeric"
           value={amount}
           onChangeText={onChangeAmount}
-          className="w-full border border-gray-300 rounded-[12] p-[10] mb-4"
+          className="w-full border border-gray-300 rounded-[12] p-[10] mb-4 text-textTextbox-light dark:text-textTextbox-dark"
         />
 
         <View className="mb-4">
-          <Text className="mb-2">Account:</Text>
+          <Text className="mb-2 text-textPrimary-light dark:text-textPrimary-dark">
+            Account:
+          </Text>
           <TouchableOpacity
             onPress={toggleAccountsModal}
             className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"

@@ -71,15 +71,17 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
             {accountToEdit ? "Edit Account" : "Add new account"}
           </Text>
           {/* Initial Amount Input */}
           <View className="w-full flex-row gap-2 items-center mb-4">
-            <Text>Initial Amount</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Initial Amount
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-textTextbox-light dark:border-textTextbox-dark rounded-lg pl-2 p-0 bg-bgTextbox-light dark:bg-bgTextbox-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="0"
               keyboardType="numeric"
               value={initialAmount}
@@ -88,9 +90,11 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
           </View>
           {/* Account Name Input */}
           <View className="w-full flex-row gap-2 items-center mb-6">
-            <Text>Name</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Name
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-textTextbox-light dark:border-textTextbox-dark rounded-lg pl-2 p-0 bg-bgTextbox-light dark:bg-bgTextbox-dark text-textSearch-light dark:text-textSearch-dark"
               placeholder="Untitled"
               value={accountName}
               onChangeText={setAccountName}
@@ -98,7 +102,9 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
           </View>
           {/* Icon Selector */}
           <View className="mb-6">
-            <Text className="text-sm mb-2">Select Icon</Text>
+            <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
+              Select Icon
+            </Text>
             <View className="flex-row flex-wrap justify-start gap-4">
               {Object.entries(ACCOUNTS_SVG_ICONS).map(
                 ([key, IconComponent]) => (
@@ -123,13 +129,15 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
           {/* Action Buttons */}
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-purple-600">Cancel</Text>
+              <Text className="uppercase text-button-light dark:text-button-dark">
+                Cancel
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
+              className="w-24 h-10 rounded-lg bg-button-light dark:bg-button-dark justify-center items-center"
               onPress={handleSave}
             >
               <Text className="uppercase text-white">Save</Text>
@@ -425,7 +433,7 @@ export default function Accounts() {
                 top: menuState.y - 170,
                 left: menuState.x - 70,
                 width: DROPDOWN_WIDTH,
-                backgroundColor: "#fff",
+                // backgroundColor: "#fff",
                 borderRadius: 8,
                 borderWidth: 1,
                 borderColor: "#d1d5db",
@@ -436,11 +444,12 @@ export default function Accounts() {
                 elevation: 10,
                 zIndex: 9999,
               }}
+              className="bg-bgModal-light dark:bg-bgModal-dark"
             >
               {[
-                { label: "Edit", color: "#6f42c1", action: handleEdit },
-                { label: "Delete", color: "#dc2626", action: handleDelete },
-                { label: "Ignore", color: "#6b7280", action: handleIgnore },
+                { label: "Edit", action: handleEdit },
+                { label: "Delete", action: handleDelete },
+                { label: "Ignore", action: handleIgnore },
               ].map((item, idx) => (
                 <TouchableOpacity
                   key={idx}
@@ -454,10 +463,10 @@ export default function Accounts() {
                 >
                   <Text
                     style={{
-                      color: item.color,
                       fontSize: 14,
                       fontWeight: "500",
                     }}
+                    className="text-textPrimary-light dark:text-textPrimary-dark"
                   >
                     {item.label}
                   </Text>

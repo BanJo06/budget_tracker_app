@@ -146,8 +146,16 @@ const UIModeModal: React.FC<UIModeModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Select UI Mode</Text>
+        <View
+          style={styles.modalContent}
+          className="bg-bgModal-light dark:bg-bgModal-dark"
+        >
+          <Text
+            style={styles.modalTitle}
+            className="text-textPrimary-light dark:text-textPrimary-dark"
+          >
+            Select UI Mode
+          </Text>
 
           {/* System Default */}
           <TouchableOpacity
@@ -157,10 +165,23 @@ const UIModeModal: React.FC<UIModeModalProps> = ({
               onClose();
             }}
           >
-            <View style={styles.radioCircle}>
-              {currentMode === "system" && <View style={styles.radioChecked} />}
+            <View
+              style={styles.radioCircle}
+              className="border-textPrimary-light dark:border-textPrimary-dark"
+            >
+              {currentMode === "system" && (
+                <View
+                  style={styles.radioChecked}
+                  className="rounded-full bg-textPrimary-light dark:bg-textPrimary-dark"
+                />
+              )}
             </View>
-            <Text style={styles.radioText}>System Default</Text>
+            <Text
+              style={styles.radioText}
+              className="text-textPrimary-light dark:text-textPrimary-dark"
+            >
+              System Default
+            </Text>
           </TouchableOpacity>
 
           {/* Dark Mode */}
@@ -181,16 +202,21 @@ const UIModeModal: React.FC<UIModeModalProps> = ({
                 styles.radioCircle,
                 !hasPurchasedDarkMode && { borderColor: "#aaa" }, // gray border if disabled
               ]}
+              className="border-textPrimary-light dark:border-textPrimary-dark"
             >
               {currentMode === "dark" && hasPurchasedDarkMode && (
-                <View style={styles.radioChecked} />
+                <View
+                  style={styles.radioChecked}
+                  className="rounded-full bg-textPrimary-light dark:bg-textPrimary-dark"
+                />
               )}
             </View>
             <Text
               style={[
                 styles.radioText,
-                !hasPurchasedDarkMode && { color: "#aaa" }, // gray text if disabled
+                !hasPurchasedDarkMode && { color: "#aaa" },
               ]}
+              className="text-textPrimary-light dark:text-textPrimary-dark"
             >
               Dark Mode
             </Text>
@@ -214,7 +240,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "80%",
-    backgroundColor: "white",
     borderRadius: 12,
     padding: 20,
   },
@@ -233,7 +258,6 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#392F46",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -241,8 +265,6 @@ const styles = StyleSheet.create({
   radioChecked: {
     height: 10,
     width: 10,
-    borderRadius: 5,
-    backgroundColor: "#392F46",
   },
   radioText: {
     fontSize: 14,
