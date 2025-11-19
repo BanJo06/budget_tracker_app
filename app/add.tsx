@@ -559,6 +559,18 @@ export default function Add() {
           alert("Cannot transfer to the same account.");
         }
 
+        // --- NEW: Check if 'From Account' has enough balance ---
+        const currentBalance = getAccountBalance(Number(fromAccountId));
+
+        if (currentBalance < amount) {
+          alert(
+            `Insufficient funds: Your first account only has ₱${currentBalance.toFixed(
+              2
+            )}.`
+          );
+          return; // STOP the saving process
+        }
+
         await saveTransferTransaction(
           Number(fromAccountId),
           Number(toAccountId),

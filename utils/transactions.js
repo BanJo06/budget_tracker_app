@@ -196,39 +196,50 @@ export const saveTransferTransaction = (
   const type = "transfer";
 
   try {
-    // 1. Start the Atomic Database Transaction
-    // If any operation inside this callback throws an error (like insufficient funds),
-    // ALL changes are automatically rolled back (not saved).
-    db.transactionSync(() => {
-      // 2. Withdrawal (Debit the 'From' Account)
-      // The crucial insufficient funds check happens inside updateAccountBalance
-      updateAccountBalance(fromAccountId, amount, "expense");
+    db.withTransactionSync(() => {
+      // 1. Withdraw from the source account
+      const fromAcc = db.getFirstSync(
+        "SELECT balance FROM accounts WHERE id = ?",
+        [fromAccountId]
+      );
+      if (!fromAcc) throw new Error("Source account not found");
+      if (Number(fromAcc.balance) < amount) {
+        throw new Error("Insufficient funds");
+      }
 
-      // 3. Deposit (Credit the 'To' Account)
-      // This only runs if step 2 succeeded.
-      updateAccountBalance(toAccountId, amount, "income");
+      db.runSync("UPDATE accounts SET balance = balance - ? WHERE id = ?", [
+        amount,
+        fromAccountId,
+      ]);
 
-      // 4. Save the Transfer Record
-      // This only runs if both balance updates succeeded.
+      // 2. Deposit into the destination account
+      const toAcc = db.getFirstSync(
+        "SELECT balance FROM accounts WHERE id = ?",
+        [toAccountId]
+      );
+      if (!toAcc) throw new Error("Destination account not found");
+
+      db.runSync("UPDATE accounts SET balance = balance + ? WHERE id = ?", [
+        amount,
+        toAccountId,
+      ]);
+
+      // 3. Save transaction record
       db.runSync(
-        `INSERT INTO transactions (account_id, to_account_id, amount, type, description, date) VALUES (?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO transactions 
+          (account_id, to_account_id, amount, type, description, date)
+         VALUES (?, ?, ?, ?, ?, ?)`,
         [fromAccountId, toAccountId, amount, type, notes, date]
       );
     });
 
-    console.log(
-      "✅ Atomic transfer successful: Balances updated and record saved."
-    );
+    console.log("✅ Atomic transfer successfully committed");
   } catch (error) {
-    // Catches errors thrown by updateAccountBalance (e.g., Insufficient funds)
-    // and errors during the database run.
-    console.error("❌ Error performing atomic transfer (rolled back):", error);
-
-    // Re-throw the specific error message (like "Insufficient funds")
-    // so the UI in add.tsx can handle it.
+    console.error("❌ Error saving transfer (rolled back):", error);
     throw new Error(`Failed to perform transfer: ${error.message}`);
   }
 };
+
 /**
  * Calculates the date from N days ago in 'YYYY-MM-DD' format.
  * @param {number} days The number of days to go back (e.g., 7 for one week).
