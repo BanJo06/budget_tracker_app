@@ -6,9 +6,11 @@ import {
   getTransactionQuestProgress,
   incrementTransactionQuestProgress,
 } from "@/data/weekly_quests_logic";
+import { getAllTransactions } from "@/utils/transactions";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   Modal,
   StatusBar,
   Text,
@@ -25,6 +27,7 @@ import {
   getAccounts,
   updateAccountBalance,
 } from "@/utils/accounts";
+import { getBudgetValue } from "@/utils/budgets";
 import { getAccountBalance, initDatabase } from "@/utils/database";
 import { saveTransaction, saveTransferTransaction } from "@/utils/transactions";
 import { seedDefaultCategories } from "../database/categoryDefaultSelection";
@@ -542,7 +545,7 @@ export default function Add() {
     const categoryId = selectedCategory?.id;
     const transactionType = selectedOption;
     const transactionNotes = notes;
-    const transactionDate = new Date().toISOString(); // Define date once
+    const transactionDate = new Date().toISOString();
 
     if (isNaN(amount) || amount <= 0) {
       alert("Invalid amount.");
@@ -551,24 +554,24 @@ export default function Add() {
 
     try {
       if (transactionType === "transfer") {
-        // --- Transfer Validation ---
+        // --- Transfer logic ---
         if (!fromAccountId || !toAccountId) {
           alert("Please select both 'From' and 'To' accounts.");
+          return;
         }
         if (fromAccountId === toAccountId) {
           alert("Cannot transfer to the same account.");
+          return;
         }
 
-        // --- NEW: Check if 'From Account' has enough balance ---
         const currentBalance = getAccountBalance(Number(fromAccountId));
-
         if (currentBalance < amount) {
           alert(
             `Insufficient funds: Your first account only has ₱${currentBalance.toFixed(
               2
             )}.`
           );
-          return; // STOP the saving process
+          return;
         }
 
         await saveTransferTransaction(
@@ -578,37 +581,110 @@ export default function Add() {
           transactionNotes,
           transactionDate
         );
-
         console.log("Transfer saved successfully!");
       } else {
-        // --- Expense/Income Validation ---
+        // --- Expense / Income logic ---
         if (!fromAccountId) {
           alert("Please select an account.");
+          return;
         }
         if (!categoryId) {
           alert("Please select a category.");
+          return;
+        }
+
+        const dailyBudgetValue = getBudgetValue("daily_budget");
+
+        // 1️⃣ Check if input exceeds full daily budget
+        if (amount > dailyBudgetValue) {
+          let confirmed = false;
+          await new Promise<void>((resolve) => {
+            Alert.alert(
+              "Daily Budget Limit Exceeded",
+              `Your input amount (₱${amount.toFixed(
+                2
+              )}) exceeds your daily budget (₱${dailyBudgetValue.toFixed(
+                2
+              )}). Do you want to continue?`,
+              [
+                { text: "No", style: "cancel", onPress: () => resolve() },
+                {
+                  text: "Yes",
+                  onPress: () => {
+                    confirmed = true;
+                    resolve();
+                  },
+                },
+              ],
+              { cancelable: false }
+            );
+          });
+          if (!confirmed) return;
+        }
+
+        // 2️⃣ Check if input exceeds remaining daily budget
+        let totalSpentToday = 0;
+        try {
+          const allTransactions = getAllTransactions();
+          const now = new Date();
+          totalSpentToday = allTransactions
+            .filter((t) => {
+              const txDate = new Date(t.date);
+              return (
+                txDate.getFullYear() === now.getFullYear() &&
+                txDate.getMonth() === now.getMonth() &&
+                txDate.getDate() === now.getDate() &&
+                t.type === "expense" &&
+                !t.source
+              );
+            })
+            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+        } catch (error) {
+          console.error("Failed to calculate today's total expenses:", error);
+        }
+
+        const remainingBudget = dailyBudgetValue - totalSpentToday;
+        if (amount > remainingBudget) {
+          let confirmed = false;
+          await new Promise<void>((resolve) => {
+            Alert.alert(
+              "Remaining Daily Budget Exceeded",
+              `Your remaining daily budget is ₱${remainingBudget.toFixed(
+                2
+              )}, and your input amount is ₱${amount.toFixed(
+                2
+              )}. Do you want to proceed?`,
+              [
+                { text: "No", style: "cancel", onPress: () => resolve() },
+                {
+                  text: "Yes",
+                  onPress: () => {
+                    confirmed = true;
+                    resolve();
+                  },
+                },
+              ],
+              { cancelable: false }
+            );
+          });
+          if (!confirmed) return;
         }
 
         if (transactionType === "expense") {
-          // Synchronously fetch the current balance
           const currentBalance = getAccountBalance(Number(fromAccountId));
-
           if (currentBalance < amount) {
-            // Throw an error that the catch block will handle
             alert(
               "Insufficient funds: Account balance is lower than the transaction amount."
             );
+            return;
           }
         }
 
-        // ✅ updateAccountBalance will throw "Insufficient funds" if it's an expense
-        // and the balance check fails.
         await updateAccountBalance(
           Number(fromAccountId),
           amount,
           transactionType
         );
-
         await saveTransaction(
           Number(fromAccountId),
           selectedAccount.name,
@@ -621,36 +697,26 @@ export default function Add() {
 
         console.log("Transaction saved successfully!");
 
-        // --- Quest Logic (Unchanged) ---
+        // --- Quest logic ---
         const completed = await markTransactionQuestCompleted(transactionDate);
-        if (completed) {
-          showToast("🎉 Quest Completed: Add 1 transaction");
-        }
+        if (completed) showToast("🎉 Quest Completed: Add 1 transaction");
 
         const { count, completed: weeklyCompleted } =
           await incrementTransactionQuestProgress();
         setTransactionProgress(count / 50);
         setTransactionCompleted(weeklyCompleted);
 
-        if (weeklyCompleted) {
+        if (weeklyCompleted)
           showToast("🎯 Weekly Quest Completed: Add 50 Transactions!");
-        } else {
-          showToast(`📈 Added ${count}/50 transactions this week`);
-        }
+        else showToast(`📈 Added ${count}/50 transactions this week`);
       }
 
       router.replace("/(sidemenu)/(tabs)");
     } catch (error: any) {
-      // This single catch block handles ALL errors (validation, DB errors, Insufficient funds)
       const errorMessage = error?.message || "An unknown error occurred.";
-
-      // Special handling for user-facing errors (like Insufficient Funds)
-      if (errorMessage.includes("Insufficient funds")) {
+      if (errorMessage.includes("Insufficient funds"))
         showToast(`⚠️ Error: ${errorMessage}`);
-      }
-
       console.error("Failed to save transaction:", errorMessage);
-      // You might want to show a general error toast if it's not a known validation/fund error
     }
   };
 

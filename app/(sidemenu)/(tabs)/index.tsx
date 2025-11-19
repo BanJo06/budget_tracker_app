@@ -1120,6 +1120,7 @@ export default function Index() {
               >
                 {/* === Header === */}
                 <View className="w-full h-[40] rounded-t-[20] overflow-hidden">
+                  {/* Overlay */}
                   <View
                     style={{
                       ...StyleSheet.absoluteFillObject,
@@ -1127,18 +1128,24 @@ export default function Index() {
                       opacity: 0.4,
                     }}
                   />
-                  <View className="flex-row gap-[12] items-center h-full px-[16]">
+
+                  {/* Foreground content */}
+                  <View
+                    className="flex-row gap-[12] items-center h-full px-[16]"
+                    style={{ zIndex: 1 }} // ensure this is above the overlay
+                  >
                     <View
                       className="w-[16] h-[16] rounded-[4]"
                       style={{
-                        backgroundColor: budget.color_name || "#FCC21B",
+                        backgroundColor: budget.color_name
+                          ? budget.color_name // hex + alpha for ~40% opacity
+                          : "rgba(137, 56, 233, 0.4)",
+                        zIndex: 2, // extra safety
                       }}
                     />
                     <Text
-                      className={`text-[14px] 
-                          text-textInsidePrimary-light
-                          text-textPrimary-dark
-                      }`}
+                      className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark"
+                      style={{ zIndex: 2 }}
                     >
                       {budget.budget_name || "Unnamed Budget"}
                     </Text>
