@@ -1,6 +1,8 @@
 import { ThemeContext } from "@/assets/constants/theme-provider";
 import DonutChart from "@/components/DonutChart";
 import { createNotificationChannel } from "@/components/notifications";
+import OverviewGuideModal from "@/components/OverviewGuideModal";
+import PlannedBudgetGuideModal from "@/components/PlannedBudgetGuideModal";
 import { useToast } from "@/components/ToastContext";
 import { checkDailyQuests } from "@/data/daily_quests_logic";
 import { WeeklyQuest, WEEKLY_QUESTS } from "@/data/weekly_quests_items";
@@ -40,6 +42,7 @@ import {
   View,
 } from "react-native";
 import { SVG_ICONS } from "../../../assets/constants/icons";
+import HelpGuideModal from "../../../components/HelpGuideModal";
 import PlannedBudgetModals from "../../../components/PlannedBudgetModals";
 import ProgressBar from "../../../components/ProgressBar";
 import ReusableRoundedBoxComponent from "../../../components/RoundedBoxComponent";
@@ -116,6 +119,12 @@ export default function Index() {
   const options = ["Today", "This Week", "This Month"];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [insightText, setInsightText] = useState("");
+
+  // Guide Modals
+  const [isHelpVisible, setIsHelpVisible] = useState(false);
+  const [isOverviewVisible, setIsOverviewVisible] = useState(false);
+  const [isPlannedBudgetGuideVisible, setIsPlannedBudgetGuideVisible] =
+    useState(false);
 
   //Weekly Quests States
   const [login7DaysProgress, setLogin7DaysProgress] = useState(0); // 0 to 7
@@ -848,6 +857,19 @@ export default function Index() {
         transactions={filteredWeeklyTransactions}
       />
 
+      <HelpGuideModal
+        visible={isHelpVisible}
+        onClose={() => setIsHelpVisible(false)}
+      />
+      <OverviewGuideModal
+        visible={isOverviewVisible}
+        onClose={() => setIsOverviewVisible(false)}
+      />
+      <PlannedBudgetGuideModal
+        visible={isPlannedBudgetGuideVisible}
+        onClose={() => setIsPlannedBudgetGuideVisible(false)}
+      />
+
       {/* ✅ Budget Completed Modal */}
       {budgetCompleteModalVisible && completedBudget && (
         <Modal
@@ -895,6 +917,12 @@ export default function Index() {
             <Text className="text-[16px] font-medium text-white">
               Dashboard
             </Text>
+            <TouchableOpacity
+              className="w-[30px] h-[30px] rounded-full flex-row absolute right-0 active:bg-[#F0E4FF]"
+              onPress={() => setIsHelpVisible(true)}
+            >
+              <SVG_ICONS.HelpTop width={30} height={30} />
+            </TouchableOpacity>
           </View>
         </View>
       </ReusableRoundedBoxComponent>
@@ -905,15 +933,23 @@ export default function Index() {
         style={{ elevation: 5 }}
       >
         <View className="pb-[20] flex-row justify-between">
-          <Text className="text-[12px] font-medium self-center text-textPrimary-light dark:text-textPrimary-dark">
-            Overview
-          </Text>
-          <View className="flex-row justify-between">
+          <View className="flex-row gap-1 items-center justify-center">
+            <Text className="text-[12px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
+              Overview
+            </Text>
+            <TouchableOpacity
+              className="active:bg-[#F0E4FF]"
+              onPress={() => setIsOverviewVisible(true)}
+            >
+              <SVG_ICONS.Help />
+            </TouchableOpacity>
+          </View>
+          <View className="flex-row justify-between items-center">
             <TouchableOpacity onPress={handleLeftPress}>
               <SVG_ICONS.ArrowLeft width={24} height={24} />
             </TouchableOpacity>
 
-            <View className="self-center" style={{ width: 70 }}>
+            <View style={{ width: 70 }}>
               <Text className="text-[12px] font-medium self-center text-textPrimary-light dark:text-textPrimary-dark">
                 {options[selectedIndex]}
               </Text>
@@ -1007,12 +1043,20 @@ export default function Index() {
         }`}
         style={{ minHeight: screenHeight * 0.3 }}
       >
-        <Text
-          className={`font-medium text-[16px] mb-[8]  text-textPrimary-light dark:text-textPrimary-dark
+        <View className="flex-row gap-2">
+          <Text
+            className={`font-medium text-[16px] mb-[8]  text-textPrimary-light dark:text-textPrimary-dark
           }`}
-        >
-          Planned Budgets
-        </Text>
+          >
+            Planned Budgets
+          </Text>
+          <TouchableOpacity
+            className="active:bg-[#F0E4FF]"
+            onPress={() => setIsPlannedBudgetGuideVisible(true)}
+          >
+            <SVG_ICONS.Help />
+          </TouchableOpacity>
+        </View>
 
         {loading ? (
           <Text className={"dark:text-gray-300 text-gray-500"}>

@@ -17,6 +17,8 @@ import EllipsisIcon from "../icons/EllipsisIcon";
 import ExportRecordsIcon from "../icons/ExportRecordsIcon";
 import GraphsActiveIcon from "../icons/GraphsActiveIcon";
 import GraphsIcon from "../icons/GraphsIcon";
+import HelpIcon from "../icons/HelpIcon";
+import HelpTopIcon from "../icons/HelpTopIcon";
 import InsightIcon from "../icons/InsightIcon";
 import PlannedBudgetsIcon from "../icons/PlannedBudgetsIcon";
 import QuestsActiveIcon from "../icons/QuestsActiveIcon";
@@ -71,4 +73,6 @@ export const SVG_ICONS: SvgIconMap = {
   PlannedBudgets: PlannedBudgetsIcon,
   AddActiveNight: AddActiveIconNight,
   AddNight: AddIconNight,
+  Help: HelpIcon,
+  HelpTop: HelpTopIcon,
 };
