@@ -545,7 +545,7 @@ export default function Add() {
     const transactionDate = new Date().toISOString(); // Define date once
 
     if (isNaN(amount) || amount <= 0) {
-      console.error("Invalid amount.");
+      alert("Invalid amount.");
       return;
     }
 
@@ -553,10 +553,10 @@ export default function Add() {
       if (transactionType === "transfer") {
         // --- Transfer Validation ---
         if (!fromAccountId || !toAccountId) {
-          throw new Error("Please select both 'From' and 'To' accounts.");
+          alert("Please select both 'From' and 'To' accounts.");
         }
         if (fromAccountId === toAccountId) {
-          throw new Error("Cannot transfer to the same account.");
+          alert("Cannot transfer to the same account.");
         }
 
         await saveTransferTransaction(
@@ -571,10 +571,10 @@ export default function Add() {
       } else {
         // --- Expense/Income Validation ---
         if (!fromAccountId) {
-          throw new Error("Please select an account.");
+          alert("Please select an account.");
         }
         if (!categoryId) {
-          throw new Error("Please select a category.");
+          alert("Please select a category.");
         }
 
         if (transactionType === "expense") {
@@ -583,7 +583,7 @@ export default function Add() {
 
           if (currentBalance < amount) {
             // Throw an error that the catch block will handle
-            throw new Error(
+            alert(
               "Insufficient funds: Account balance is lower than the transaction amount."
             );
           }

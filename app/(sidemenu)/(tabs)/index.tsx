@@ -15,6 +15,7 @@ import type {
 import { getAccounts } from "@/utils/accounts";
 import {
   deletePlannedBudget,
+  getAccountBalance,
   getAllPlannedBudgetTransactions,
   getBudget,
   getDailyBudget,
@@ -745,8 +746,30 @@ export default function Index() {
   // ======================
 
   const handleSaveTransaction = async () => {
-    if (!transactionAmount || !selectedBudget)
-      return alert("Please enter amount and select a budget.");
+    if (!transactionAmount) {
+      return alert("Please enter an amount.");
+    }
+
+    if (!selectedBudget) {
+      return alert("No budget selected.");
+    }
+
+    if (!selectedAccount) {
+      return alert("Please select an account before saving.");
+    }
+
+    const amount = Number(transactionAmount);
+    const accountId = Number(selectedAccount.id);
+
+    // ⭐ FIX: Check if account has enough balance BEFORE saving
+    const currentBalance = getAccountBalance(accountId);
+
+    if (currentBalance < amount) {
+      alert(
+        "Insufficient funds: Account balance is lower than the transaction amount."
+      );
+      return;
+    }
 
     try {
       const amount = Number(transactionAmount);
