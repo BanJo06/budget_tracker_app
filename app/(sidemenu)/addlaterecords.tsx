@@ -31,7 +31,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
   const [accountName, setAccountName] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(null);
 
-  const handleSave = () => {
+  const handleSaveAccount = () => {
     const newAccountData = {
       name: accountName || "Untitled",
       balance: parseFloat(initialAmount) || 0,
@@ -105,7 +105,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
             </TouchableOpacity>
             <TouchableOpacity
               className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
-              onPress={handleSave}
+              onPress={handleSaveAccount}
             >
               <Text className="uppercase text-white">Save</Text>
             </TouchableOpacity>
@@ -264,6 +264,21 @@ export default function AddLateRecords() {
     if (!fromAccountId || !categoryId || isNaN(amount) || amount <= 0) {
       Alert.alert("Error", "Please check your inputs.");
       return;
+    }
+
+    // --- Insufficient funds check ---
+    if (transactionType === "expense") {
+      if (selectedAccount.balance < amount) {
+        Alert.alert(
+          "Insufficient Funds",
+          `Your "${selectedAccount.name}" account has a balance of (₱${Number(
+            selectedAccount.balance
+          ).toFixed(2)}) lower than the transaction amount (₱${amount.toFixed(
+            2
+          )}).`
+        );
+        return;
+      }
     }
 
     try {
