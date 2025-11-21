@@ -2,12 +2,30 @@ import { ACCOUNTS_SVG_ICONS } from "@/assets/constants/accounts_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
 import CategoryModal from "@/components/CategoryModal";
 import CategorySelection from "@/components/CategorySelection";
+import { useToast } from "@/components/ToastContext";
+import { markTransactionQuestCompleted } from "@/data/daily_quests_logic";
 import {
   getTransactionQuestProgress,
   incrementTransactionQuestProgress,
 } from "@/data/weekly_quests_logic";
-import { getAllTransactions } from "@/utils/transactions";
-import { router } from "expo-router";
+import {
+  getExpenseCategories,
+  getIncomeCategories,
+} from "@/database/categoryQueries";
+import {
+  addAccount,
+  getAccounts,
+  updateAccountBalance,
+} from "@/utils/accounts";
+import { getBudgetValue } from "@/utils/budgets";
+import { getAccountBalance, initDatabase } from "@/utils/database";
+import {
+  getAllTransactions,
+  saveTransaction,
+  saveTransferTransaction,
+  updateExistingTransaction,
+} from "@/utils/transactions";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -19,20 +37,25 @@ import {
   View,
 } from "react-native";
 import SwitchSelector from "react-native-switch-selector";
-
-import { useToast } from "@/components/ToastContext";
-import { markTransactionQuestCompleted } from "@/data/daily_quests_logic";
-import {
-  addAccount,
-  getAccounts,
-  updateAccountBalance,
-} from "@/utils/accounts";
-import { getBudgetValue } from "@/utils/budgets";
-import { getAccountBalance, initDatabase } from "@/utils/database";
-import { saveTransaction, saveTransferTransaction } from "@/utils/transactions";
 import { seedDefaultCategories } from "../database/categoryDefaultSelection";
 
 export const unstable_settings = { headerShown: false };
+
+type Transaction = {
+  id: number;
+  account_id: number;
+  account_name: string;
+  to_account_id?: number | null;
+  to_account_name?: string | null;
+  category_id?: number | null;
+  category_name?: string | null;
+  category_icon_name?: string | null;
+  amount: number;
+  type: "income" | "expense" | "transfer";
+  description?: string | null;
+  date: string;
+  source?: string | null;
+};
 
 // ==============================
 // 🔹 Reusable Components
@@ -396,12 +419,25 @@ export default function Add() {
   const [notes, setNotes] = useState("");
 
   // Weekly quests
-  const [transactionProgress, setTransactionProgress] = useState(0); // 0-1
+  const [transactionProgress, setTransactionProgress] = useState(0);
   const [transactionCompleted, setTransactionCompleted] = useState(false);
+
+  const { mode, transaction } = useLocalSearchParams<{
+    mode?: string;
+    transaction?: string;
+  }>();
+
+  // ✅ Parse transaction if editing
+  const parsedTransaction = transaction ? JSON.parse(transaction) : null;
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const [incomeCategories, setIncomeCategories] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
 
   const [selectedOption, setSelectedOption] = useState<
     "expense" | "income" | "transfer"
   >("expense");
+  const [switchIndex, setSwitchIndex] = useState(1); // default to expense
 
   const [isAccountsModalVisible, setAccountsModalVisible] = useState(false);
   const [isToAccountsModalVisible, setToAccountsModalVisible] = useState(false);
@@ -425,10 +461,14 @@ export default function Add() {
     balance: number;
     icon_name: string;
   }>(null);
+  const [transactionType, setTransactionType] = useState<
+    "expense" | "income" | "transfer"
+  >("expense");
   const [isCategoriesModalVisible, setCategoriesModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<null | {
     id: number | string;
     name: string;
+    icon_name: string;
   }>(null);
   const [dbReady, setDbReady] = useState(false);
 
@@ -459,6 +499,7 @@ export default function Add() {
   const handleSelectCategory = (category: {
     id: number | string;
     name: string;
+    icon_name: string;
   }) => {
     setSelectedCategory(category);
     toggleCategoriesModal();
@@ -556,6 +597,50 @@ export default function Add() {
     router.replace("/(sidemenu)/(tabs)");
   };
 
+  useEffect(() => {
+    async function initializeFormForEdit() {
+      // 1. If we are NOT editing a transaction, or if the form is already initialized, stop.
+      //    This prevents the form from being reset on every re-render after initial population.
+      if (!parsedTransaction || isInitialized) return; // 1. Load categories
+
+      const incomes = await getIncomeCategories();
+      const expenses = await getExpenseCategories();
+      setIncomeCategories(incomes);
+      setExpenseCategories(expenses); // 2. Load accounts
+
+      const allAccounts = await getAccounts();
+      setAccounts(allAccounts); // 3. Populate form for editing
+
+      const t = parsedTransaction; // Set all state variables directly from the transaction object
+
+      setNotes(t.description || "");
+      setDisplayValue(t.amount?.toString() || "");
+      setSelectedOption(t.type);
+
+      const fromAcc = allAccounts.find((a) => a.id === t.account_id);
+      if (fromAcc) setSelectedAccount(fromAcc);
+
+      if (t.type === "transfer" && t.to_account_id) {
+        const toAcc = allAccounts.find((a) => a.id === t.to_account_id);
+        if (toAcc) setToAccount(toAcc);
+      } else if (t.type !== "transfer") {
+        setToAccount(null);
+      }
+
+      if (t.type !== "transfer" && t.category_id) {
+        const categories = t.type === "expense" ? expenses : incomes;
+        const cat = categories.find((c) => c.id === t.category_id);
+        if (cat) setSelectedCategory(cat);
+      } else if (t.type === "transfer") {
+        setSelectedCategory(null);
+      } // 4. Set the flag to prevent re-initialization
+
+      setIsInitialized(true);
+    }
+
+    initializeFormForEdit();
+  }, [parsedTransaction, isInitialized]); // Add isInitialized to dependencies.
+
   const handleSaveTransaction = async () => {
     const amount = parseFloat(displayValue);
     const fromAccountId = selectedAccount?.id;
@@ -570,28 +655,39 @@ export default function Add() {
       return;
     }
 
-    try {
-      if (transactionType === "transfer") {
-        // --- Transfer logic ---
-        if (!fromAccountId || !toAccountId) {
-          alert("Please select both 'From' and 'To' accounts.");
-          return;
-        }
-        if (fromAccountId === toAccountId) {
-          alert("Cannot transfer to the same account.");
-          return;
-        }
+    if (!fromAccountId) {
+      alert("Please select an account.");
+      return;
+    }
 
-        const currentBalance = getAccountBalance(Number(fromAccountId));
-        if (currentBalance < amount) {
-          alert(
-            `Insufficient funds: Your first account only has ₱${currentBalance.toFixed(
-              2
-            )}.`
-          );
-          return;
-        }
+    if (transactionType !== "transfer" && !categoryId) {
+      alert("Please select a category.");
+      return;
+    }
 
+    if (transactionType === "transfer") {
+      // --- Transfer validation ---
+      if (!toAccountId) {
+        alert("Please select a 'To' account for the transfer.");
+        return;
+      }
+
+      if (fromAccountId === toAccountId) {
+        alert("Cannot transfer to the same account.");
+        return;
+      }
+
+      const currentBalance = getAccountBalance(Number(fromAccountId));
+      if (currentBalance < amount) {
+        alert(
+          `Insufficient funds in ${
+            selectedAccount?.name
+          }: Your balance is ₱${currentBalance.toFixed(2)}.`
+        );
+        return;
+      }
+
+      try {
         await saveTransferTransaction(
           Number(fromAccountId),
           Number(toAccountId),
@@ -599,110 +695,109 @@ export default function Add() {
           transactionNotes,
           transactionDate
         );
-        console.log("Transfer saved successfully!");
-      } else {
-        // --- Expense / Income logic ---
-        if (!fromAccountId) {
-          alert("Please select an account.");
-          return;
-        }
-        if (!categoryId) {
-          alert("Please select a category.");
-          return;
-        }
+        showToast("✅ Transfer saved successfully!");
+        router.replace("/(sidemenu)/(tabs)");
+        return;
+      } catch (error: any) {
+        console.error("Failed to save transfer:", error);
+        alert("Failed to save transfer.");
+        return;
+      }
+    }
 
-        const dailyBudgetValue = getBudgetValue("daily_budget");
+    // --- Expense / Income logic ---
+    const currentBalance = getAccountBalance(Number(fromAccountId));
+    if (transactionType === "expense" && currentBalance < amount) {
+      alert(
+        `Insufficient funds in ${
+          selectedAccount?.name
+        }: Your balance is ₱${currentBalance.toFixed(2)}.`
+      );
+      return;
+    }
 
-        // 1️⃣ Check if input exceeds full daily budget
-        if (amount > dailyBudgetValue) {
-          let confirmed = false;
-          await new Promise<void>((resolve) => {
-            Alert.alert(
-              "Daily Budget Limit Exceeded",
-              `Your input amount (₱${amount.toFixed(
-                2
-              )}) exceeds your daily budget (₱${dailyBudgetValue.toFixed(
-                2
-              )}). Do you want to continue?`,
-              [
-                { text: "No", style: "cancel", onPress: () => resolve() },
-                {
-                  text: "Yes",
-                  onPress: () => {
-                    confirmed = true;
-                    resolve();
-                  },
-                },
-              ],
-              { cancelable: false }
-            );
-          });
-          if (!confirmed) return;
-        }
+    const dailyBudgetValue = getBudgetValue("daily_budget");
 
-        // 2️⃣ Check if input exceeds remaining daily budget
-        let totalSpentToday = 0;
-        try {
-          const allTransactions = getAllTransactions();
-          const now = new Date();
-          totalSpentToday = allTransactions
-            .filter((t) => {
-              const txDate = new Date(t.date);
-              return (
-                txDate.getFullYear() === now.getFullYear() &&
-                txDate.getMonth() === now.getMonth() &&
-                txDate.getDate() === now.getDate() &&
-                t.type === "expense" &&
-                !t.source
-              );
-            })
-            .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-        } catch (error) {
-          console.error("Failed to calculate today's total expenses:", error);
-        }
-
-        const remainingBudget = dailyBudgetValue - totalSpentToday;
-        if (amount > remainingBudget) {
-          let confirmed = false;
-          await new Promise<void>((resolve) => {
-            Alert.alert(
-              "Remaining Daily Budget Exceeded",
-              `Your remaining daily budget is ₱${remainingBudget.toFixed(
-                2
-              )}, and your input amount is ₱${amount.toFixed(
-                2
-              )}. Do you want to proceed?`,
-              [
-                { text: "No", style: "cancel", onPress: () => resolve() },
-                {
-                  text: "Yes",
-                  onPress: () => {
-                    confirmed = true;
-                    resolve();
-                  },
-                },
-              ],
-              { cancelable: false }
-            );
-          });
-          if (!confirmed) return;
-        }
-
-        if (transactionType === "expense") {
-          const currentBalance = getAccountBalance(Number(fromAccountId));
-          if (currentBalance < amount) {
-            alert(
-              "Insufficient funds: Account balance is lower than the transaction amount."
-            );
-            return;
-          }
-        }
-
-        await updateAccountBalance(
-          Number(fromAccountId),
-          amount,
-          transactionType
+    // 1️⃣ Check if input exceeds full daily budget
+    if (transactionType === "expense" && amount > dailyBudgetValue) {
+      const confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Daily Budget Limit Exceeded",
+          `Your input amount (₱${amount.toFixed(
+            2
+          )}) exceeds your daily budget (₱${dailyBudgetValue.toFixed(
+            2
+          )}). Do you want to continue?`,
+          [
+            { text: "No", style: "cancel", onPress: () => resolve(false) },
+            { text: "Yes", onPress: () => resolve(true) },
+          ],
+          { cancelable: false }
         );
+      });
+      if (!confirmed) return;
+    }
+
+    // 2️⃣ Check remaining daily budget
+    let totalSpentToday = 0;
+    try {
+      const allTransactions = getAllTransactions();
+      const now = new Date();
+      totalSpentToday = allTransactions
+        .filter((t) => {
+          const txDate = new Date(t.date);
+          return (
+            txDate.getFullYear() === now.getFullYear() &&
+            txDate.getMonth() === now.getMonth() &&
+            txDate.getDate() === now.getDate() &&
+            t.type === "expense" &&
+            !t.source
+          );
+        })
+        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    } catch (error) {
+      console.error("Failed to calculate today's total expenses:", error);
+    }
+
+    const remainingBudget = dailyBudgetValue - totalSpentToday;
+    if (transactionType === "expense" && amount > remainingBudget) {
+      const confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Remaining Daily Budget Exceeded",
+          `Your remaining daily budget is ₱${remainingBudget.toFixed(
+            2
+          )}, and your input amount is ₱${amount.toFixed(
+            2
+          )}. Do you want to proceed?`,
+          [
+            { text: "No", style: "cancel", onPress: () => resolve(false) },
+            { text: "Yes", onPress: () => resolve(true) },
+          ],
+          { cancelable: false }
+        );
+      });
+      if (!confirmed) return;
+    }
+
+    try {
+      // Update account balance first
+      await updateAccountBalance(
+        Number(fromAccountId),
+        amount,
+        transactionType
+      );
+
+      if (mode === "edit" && parsedTransaction?.id) {
+        await updateExistingTransaction({
+          transactionId: Number(parsedTransaction.id),
+          accountId: Number(fromAccountId),
+          categoryId: categoryId ? Number(categoryId) : null,
+          amount,
+          type: selectedOption,
+          description: notes,
+          date: transactionDate,
+        });
+      } else {
         await saveTransaction(
           Number(fromAccountId),
           selectedAccount.name,
@@ -712,29 +807,28 @@ export default function Add() {
           transactionNotes,
           transactionDate
         );
-
-        console.log("Transaction saved successfully!");
-
-        // --- Quest logic ---
-        const completed = await markTransactionQuestCompleted(transactionDate);
-        if (completed) showToast("🎉 Quest Completed: Add 1 transaction");
-
-        const { count, completed: weeklyCompleted } =
-          await incrementTransactionQuestProgress();
-        setTransactionProgress(count / 50);
-        setTransactionCompleted(weeklyCompleted);
-
-        if (weeklyCompleted)
-          showToast("🎯 Weekly Quest Completed: Add 50 Transactions!");
-        else showToast(`📈 Added ${count}/50 transactions this week`);
       }
+
+      showToast("✅ Transaction saved successfully!");
+
+      // --- Quest logic ---
+      const completed = await markTransactionQuestCompleted(transactionDate);
+      if (completed) showToast("🎉 Quest Completed: Add 1 transaction");
+
+      const { count, completed: weeklyCompleted } =
+        await incrementTransactionQuestProgress();
+      setTransactionProgress(count / 50);
+      setTransactionCompleted(weeklyCompleted);
+
+      if (weeklyCompleted)
+        showToast("🎯 Weekly Quest Completed: Add 50 Transactions!");
+      else showToast(`📈 Added ${count}/50 transactions this week`);
 
       router.replace("/(sidemenu)/(tabs)");
     } catch (error: any) {
+      console.error("Failed to save transaction:", error);
       const errorMessage = error?.message || "An unknown error occurred.";
-      if (errorMessage.includes("Insufficient funds"))
-        showToast(`⚠️ Error: ${errorMessage}`);
-      console.error("Failed to save transaction:", errorMessage);
+      showToast(`⚠️ Error: ${errorMessage}`);
     }
   };
 
@@ -803,15 +897,18 @@ export default function Add() {
           }`}
           disabled={!dbReady}
         >
-          <Text className="text-white text-base font-medium">SAVE</Text>
+          <Text className="text-white text-base font-medium">
+            {mode === "edit" ? "UPDATE" : "SAVE"}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Switch */}
       <View className="mt-10">
         <SwitchSelector
+          key={selectedOption} // <-- forces re-render when selectedOption changes
           options={options}
-          initial={1}
+          initial={options.findIndex((opt) => opt.value === selectedOption)} // index to select
           onPress={(val) =>
             handleSwitchChange(val as "expense" | "income" | "transfer")
           }

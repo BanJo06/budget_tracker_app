@@ -1,7 +1,6 @@
 import { CATEGORIES_EXPENSES_SVG_ICONS } from "@/assets/constants/categories_expenses_icons";
 import { CATEGORIES_INCOME_SVG_ICONS } from "@/assets/constants/categories_income_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
-import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
 import { initDatabase } from "@/utils/database";
 import { getAllTransactions } from "@/utils/transactions";
 import { router } from "expo-router";
@@ -25,7 +24,7 @@ export default function Records() {
     async function loadTransactions() {
       try {
         await initDatabase();
-        seedDefaultCategories();
+        // seedDefaultCategories();
         const allTransactions = await getAllTransactions();
         setTransactions(allTransactions);
       } catch (error) {
@@ -148,7 +147,18 @@ export default function Records() {
               </Pressable>
 
               <View className="flex-row items-center gap-5">
-                <TouchableOpacity onPress={() => console.log("Edit")}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedTransaction(null);
+                    router.push({
+                      pathname: "/add",
+                      params: {
+                        mode: "edit",
+                        transaction: JSON.stringify(selectedTransaction),
+                      },
+                    });
+                  }}
+                >
                   <SVG_ICONS.Edit />
                 </TouchableOpacity>
               </View>
@@ -176,7 +186,18 @@ export default function Records() {
               </Pressable>
 
               <View className="flex-row items-center gap-5">
-                <TouchableOpacity onPress={() => console.log("Edit")}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedTransaction(null);
+                    router.push({
+                      pathname: "/add",
+                      params: {
+                        mode: "edit",
+                        transaction: JSON.stringify(selectedTransaction),
+                      },
+                    });
+                  }}
+                >
                   <SVG_ICONS.Edit />
                 </TouchableOpacity>
               </View>
@@ -204,7 +225,18 @@ export default function Records() {
               </Pressable>
 
               <View className="flex-row items-center gap-5">
-                <TouchableOpacity onPress={() => console.log("Edit")}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedTransaction(null);
+                    router.push({
+                      pathname: "/add",
+                      params: {
+                        mode: "edit",
+                        transaction: JSON.stringify(selectedTransaction),
+                      },
+                    });
+                  }}
+                >
                   <SVG_ICONS.Edit />
                 </TouchableOpacity>
               </View>
