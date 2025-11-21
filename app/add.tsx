@@ -88,6 +88,24 @@ const NewAccountModal = ({
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
 
   const handleSave = useCallback(() => {
+    // ⚠️ New condition to check for empty accountName
+    if (!accountName.trim()) {
+      Alert.alert(
+        "Missing Account Name",
+        "Please enter a name for your new account."
+      );
+      return;
+    }
+
+    // ⚠️ Check for selectedIcon
+    if (!selectedIcon) {
+      Alert.alert(
+        "Missing Icon",
+        "Please select an icon for your new account."
+      );
+      return;
+    }
+
     const newAccountData = {
       name: accountName,
       balance: parseFloat(initialAmount) || 0,

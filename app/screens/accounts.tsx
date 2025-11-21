@@ -10,6 +10,7 @@ import { initDatabase } from "@/utils/database";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Dimensions,
   Modal,
   RefreshControl,
@@ -46,6 +47,23 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
   }, [accountToEdit]);
 
   const handleSave = () => {
+    // ⚠️ New condition to check for empty accountName
+    if (!accountName.trim()) {
+      Alert.alert(
+        "Missing Account Name",
+        "Please enter a name for your new account."
+      );
+      return; // Stop the function execution if the name is missing
+    }
+
+    // ⚠️ Check for selectedIcon
+    if (!selectedIcon) {
+      Alert.alert(
+        "Missing Icon",
+        "Please select an icon for your new account."
+      );
+      return; // Stop the function execution if the icon is missing
+    }
     // Create an object with the new account's data
     const newAccountData = {
       name: accountName,
@@ -94,7 +112,7 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
               Name
             </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-textTextbox-light dark:border-textTextbox-dark rounded-lg pl-2 p-0 bg-bgTextbox-light dark:bg-bgTextbox-dark text-textSearch-light dark:text-textSearch-dark"
+              className="flex-1 h-[40] border-2 border-textTextbox-light dark:border-textTextbox-dark rounded-lg pl-2 p-0 bg-bgTextbox-light dark:bg-bgTextbox-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="Untitled"
               value={accountName}
               onChangeText={setAccountName}
