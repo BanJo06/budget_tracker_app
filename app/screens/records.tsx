@@ -119,6 +119,7 @@ export default function Records() {
       IconComponent = SVG_ICONS.Transfer;
       mainText = `Transfer`;
       subText = `From ${account_name} to ${to_account_name}`;
+      const displayAmount = `₱${amount.toFixed(2)}`;
     }
 
     const transactionDate = new Date(date);
@@ -133,65 +134,11 @@ export default function Records() {
     });
 
     return (
-      // <View className="m-5 rounded-xl p-9 items-center shadow-lg w-[90%] bg-bgPrimary-light dark:bg-bgPrimary-dark">
-      //   {/* Header with buttons */}
-      //   <View className="flex-row justify-between w-full mb-5">
-      //     <Pressable
-      //       className="p-2.5"
-      //       onPress={() => setSelectedTransaction(null)}
-      //     >
-      //       <SVG_ICONS.Category size={24} color="#000" />
-      //     </Pressable>
-      //     <View className="flex-row gap-2.5">
-      //       <Pressable className="p-2.5">
-      //         <Text>A</Text>
-      //       </Pressable>
-      //       <Pressable className="p-2.5">
-      //         <Text>B</Text>
-      //       </Pressable>
-      //     </View>
-      //   </View>
-
-      //   {/* Transaction details */}
-      //   <View className="items-center mb-5">
-      //     <View
-      //       className={`w-15 h-15 rounded-full justify-center items-center mb-2.5 ${iconBgColorClass}`}
-      //     >
-      //       {IconComponent && <IconComponent size={40} color="white" />}
-      //     </View>
-      //     <Text className={`text-2xl font-bold mb-1.5 ${amountColorClass}`}>
-      //       {displayAmount}
-      //     </Text>
-      //     <Text className="text-xl font-medium text-center">{mainText}</Text>
-      //     <Text className="text-base text-gray-500 text-center">{subText}</Text>
-      //   </View>
-      //   <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-      //     <Text className="text-base text-gray-500">Account</Text>
-      //     <Text className="text-base font-medium text-right flex-shrink">
-      //       {account_name}
-      //     </Text>
-      //   </View>
-      //   <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-      //     <Text className="text-base text-gray-500">Date & Time</Text>
-      //     <Text className="text-base font-medium text-right flex-shrink">
-      //       {formattedDate} at {formattedTime}
-      //     </Text>
-      //   </View>
-      //   {description && (
-      //     <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-      //       <Text className="text-base text-gray-500">Notes</Text>
-      //       <Text className="text-base font-medium text-right flex-shrink">
-      //         {description}
-      //       </Text>
-      //     </View>
-      //   )}
-      // </View>
       <View className="m-5 rounded-xl w-[90%] bg-white dark:bg-bgPrimary-dark shadow-lg overflow-hidden">
         {/* ========= HEADER (DEPENDS ON TRANSACTION TYPE) ========= */}
         {type === "income" ? (
-          /* ---------- INCOME HEADER (PURPLE) ---------- */
+          // ---------- INCOME HEADER ----------
           <View className="bg-[#8B2BE2] p-5 pt-8 rounded-t-xl">
-            {/* Top Buttons */}
             <View className="flex-row justify-between items-center w-full mb-4">
               <Pressable
                 className="w-10 h-10 rounded-full border border-white justify-center items-center"
@@ -201,33 +148,25 @@ export default function Records() {
               </Pressable>
 
               <View className="flex-row items-center gap-5">
-                <Pressable>
-                  <SVG_ICONS.Account size={26} color="white" />
-                </Pressable>
-                <Pressable>
-                  <SVG_ICONS.Account size={26} color="white" />
-                </Pressable>
+                <TouchableOpacity onPress={() => console.log("Edit")}>
+                  <SVG_ICONS.Edit />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Income Label & Amount */}
             <Text className="text-white text-lg font-semibold mb-1">
               INCOME
             </Text>
-
             <Text className="text-white text-4xl font-bold mb-1">
               ₱{amount.toFixed(2)}
             </Text>
-
-            {/* Date */}
             <Text className="text-white text-right opacity-90">
               {formattedDate} {formattedTime}
             </Text>
           </View>
-        ) : (
-          /* ---------- EXPENSE HEADER (WHITE) ---------- */
+        ) : type === "expense" ? (
+          // ---------- EXPENSE HEADER ----------
           <View className="bg-white dark:bg-bgPrimary-dark p-5 pt-8 rounded-t-xl border-b border-gray-300">
-            {/* Top Buttons */}
             <View className="flex-row justify-between items-center w-full mb-4">
               <Pressable
                 className="w-10 h-10 rounded-full border border-black justify-center items-center"
@@ -237,61 +176,117 @@ export default function Records() {
               </Pressable>
 
               <View className="flex-row items-center gap-5">
-                <Pressable>
-                  <SVG_ICONS.Close size={26} color="black" />
-                </Pressable>
-                <Pressable>
-                  <SVG_ICONS.Close size={26} color="black" />
-                </Pressable>
+                <TouchableOpacity onPress={() => console.log("Edit")}>
+                  <SVG_ICONS.Edit />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Expense Label & Amount */}
             <Text className="text-black text-lg font-semibold mb-1">
               EXPENSE
             </Text>
-
             <Text className="text-black text-4xl font-bold mb-1">
               -₱{amount.toFixed(2)}
             </Text>
-
-            {/* Date */}
             <Text className="text-black text-right opacity-70">
+              {formattedDate} {formattedTime}
+            </Text>
+          </View>
+        ) : (
+          // ---------- TRANSFER HEADER ----------
+          <View className="bg-[#6B46C1] p-5 pt-8 rounded-t-xl">
+            <View className="flex-row justify-between items-center w-full mb-4">
+              <Pressable
+                className="w-10 h-10 rounded-full border border-white justify-center items-center"
+                onPress={() => setSelectedTransaction(null)}
+              >
+                <Text className="text-white text-2xl">×</Text>
+              </Pressable>
+
+              <View className="flex-row items-center gap-5">
+                <TouchableOpacity onPress={() => console.log("Edit")}>
+                  <SVG_ICONS.Edit />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <Text className="text-white text-lg font-semibold mb-1">
+              TRANSFER
+            </Text>
+            <Text className="text-white text-4xl font-bold mb-1">
+              {displayAmount}
+            </Text>
+            <Text className="text-white text-right opacity-90">
               {formattedDate} {formattedTime}
             </Text>
           </View>
         )}
 
-        {/* ============= BODY (IDENTICAL FOR BOTH TYPES) ============= */}
+        {/* ============= BODY (DIFFERENT FOR TRANSFER) ============= */}
         <View className="p-5">
-          {/* ACCOUNT */}
-          <View className="flex-row justify-between items-center w-full py-3">
-            <Text className="text-base text-gray-600">Account</Text>
-            <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
-              <SVG_ICONS.Account size={20} color="#8B2BE2" />
-              <Text className="ml-2 text-base text-gray-700">
-                {account_name}
-              </Text>
-            </View>
-          </View>
+          {type === "transfer" ? (
+            <>
+              {/* Account From */}
+              <View className="flex-row justify-between items-center w-full py-3">
+                <Text className="text-base text-gray-600">Account From</Text>
+                <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
+                  <SVG_ICONS.Account size={20} color="#8B2BE2" />
+                  <Text className="ml-2 text-base text-gray-700">
+                    {account_name}
+                  </Text>
+                </View>
+              </View>
 
-          {/* CATEGORY */}
-          <View className="flex-row justify-between items-center w-full py-3">
-            <Text className="text-base text-gray-600">Category</Text>
-            <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
-              <SVG_ICONS.Account size={20} color="#8B2BE2" />
-              <Text className="ml-2 text-base text-gray-700">
-                {category_name}
-              </Text>
-            </View>
-          </View>
+              {/* Account To */}
+              <View className="flex-row justify-between items-center w-full py-3">
+                <Text className="text-base text-gray-600">Account To</Text>
+                <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
+                  <SVG_ICONS.Account size={20} color="#8B2BE2" />
+                  <Text className="ml-2 text-base text-gray-700">
+                    {to_account_name}
+                  </Text>
+                </View>
+              </View>
 
-          {/* NOTES */}
-          <View className="pt-6 items-center">
-            <Text className="text-gray-400">
-              {description ? description : "No notes"}
-            </Text>
-          </View>
+              {/* Notes */}
+              <View className="pt-6 items-center">
+                <Text className="text-gray-400">
+                  {description || "No notes"}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Account */}
+              <View className="flex-row justify-between items-center w-full py-3">
+                <Text className="text-base text-gray-600">Account</Text>
+                <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
+                  <SVG_ICONS.Account size={20} color="#8B2BE2" />
+                  <Text className="ml-2 text-base text-gray-700">
+                    {account_name}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Category */}
+              <View className="flex-row justify-between items-center w-full py-3">
+                <Text className="text-base text-gray-600">Category</Text>
+                <View className="flex-row items-center border border-purple-400 rounded-full px-4 py-1.5">
+                  <SVG_ICONS.Account size={20} color="#8B2BE2" />
+                  <Text className="ml-2 text-base text-gray-700">
+                    {category_name}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Notes */}
+              <View className="pt-6 items-center">
+                <Text className="text-gray-400">
+                  {description || "No notes"}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
     );
