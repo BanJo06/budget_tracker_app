@@ -48,7 +48,12 @@ export default function Shop() {
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
 
   // Use context for Dark Mode state
-  const { hasPurchasedDarkMode, setHasPurchasedDarkMode } = usePurchase();
+  const {
+    hasPurchasedDarkMode,
+    setHasPurchasedDarkMode,
+    hasPurchasedExport,
+    setHasPurchasedExport,
+  } = usePurchase();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState("");
@@ -69,6 +74,7 @@ export default function Shop() {
   const shopItems: ShopItem[] = [
     { name: "Dark Mode", price: 1 },
     { name: "Skip Weekly Quest", price: 1 },
+    { name: "Export Records", price: 1 },
   ];
 
   // 1. Load Coins
@@ -149,6 +155,9 @@ export default function Shop() {
       if (item.name === "Dark Mode") {
         setHasPurchasedDarkMode(true);
         await AsyncStorage.setItem("purchasedDarkMode", "true");
+      } else if (item.name === "Export Records") {
+        setHasPurchasedExport(true);
+        await AsyncStorage.setItem("purchasedExportRecords", "true");
       }
 
       // 2. Handle Skip Quest Purchase
@@ -302,6 +311,8 @@ export default function Shop() {
             // 1. Dark Mode Logic (One-time purchase)
             if (item.name === "Dark Mode") {
               isPurchased = hasPurchasedDarkMode;
+            } else if (item.name === "Export Records") {
+              isPurchased = hasPurchasedExport;
             }
             // 2. Skip Logic (Purchasable until all quests are done)
             else if (item.name === "Skip Weekly Quest") {

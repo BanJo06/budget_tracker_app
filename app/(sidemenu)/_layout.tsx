@@ -1,9 +1,10 @@
+import { usePurchase } from "@/components/PurchaseContext";
 import { Entypo, Feather, MaterialIcons } from "@expo/vector-icons";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import React from "react";
-import { Pressable, Text, useColorScheme, View } from "react-native";
+import { Alert, Pressable, Text, useColorScheme, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type DrawerParamList = {
@@ -20,6 +21,8 @@ const CustomDrawerContent = (props) => {
 
   const insets = useSafeAreaInsets();
   const currentRouteName = props.state.routes[props.state.index].name;
+
+  const { hasPurchasedExport } = usePurchase();
 
   const menuItems = [
     {
@@ -39,8 +42,15 @@ const CustomDrawerContent = (props) => {
     },
     {
       label: "Export Records",
-      icon: <MaterialIcons name="file-download" size={24} color={iconColor} />,
+      icon: hasPurchasedExport ? (
+        <MaterialIcons name="file-download" size={24} color={iconColor} />
+      ) : (
+        // Optional: Change icon to a lock if not purchased
+        <Feather name="lock" size={24} color={iconColor} />
+      ),
       route: "exportrecords",
+      // 2. Add a locked flag
+      isLocked: !hasPurchasedExport,
     },
     {
       label: "Add Late Records",
@@ -75,15 +85,38 @@ const CustomDrawerContent = (props) => {
         <View className="px-4 space-y-2 gap-2">
           {menuItems.map((item, index) => {
             const isActive = currentRouteName === item.route;
+
+            // 3. Check if the item is locked
+            const isLocked = item.isLocked || false;
+
             return (
               <Pressable
                 key={index}
-                onPress={() => router.push(`/${item.route}`)}
+                onPress={() => {
+                  // 4. Block navigation if locked
+                  if (isLocked) {
+                    Alert.alert(
+                      "Feature Locked",
+                      "You need to purchase 'Export Records' in the Shop to use this feature.",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Go to Shop",
+                          onPress: () => router.push("/shop"), // Ensure /shop route is correct
+                        },
+                      ]
+                    );
+                  } else {
+                    // Only navigate if unlocked
+                    router.push(`/${item.route}`);
+                  }
+                }}
+                // 5. Visually dim the button if locked
                 className={`flex-row items-center p-3 rounded-xl ${
                   isActive
                     ? "bg-purple-100 dark:bg-purple-900/40"
                     : "bg-bgPrimary-light dark:bg-bgPrimary-dark"
-                }`}
+                } ${isLocked ? "opacity-50" : "opacity-100"}`}
               >
                 <View className="mr-4">{item.icon}</View>
                 <Text
@@ -238,8 +271,6 @@ export default function Layout() {
           ),
         })}
       />
-
-      {/* Add any other screens you want to be part of your drawer navigator */}
     </Drawer>
   );
 }
