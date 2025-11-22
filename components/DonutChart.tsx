@@ -3,10 +3,12 @@ import { Text, View } from "react-native";
 import { Circle, Svg } from "react-native-svg";
 
 interface DonutChartProps {
-  progress?: number; // between 0–1
-  dailyBudget?: number; // total daily budget
-  spent?: number; // amount spent
+  progress?: number;
+  dailyBudget?: number;
+  spent?: number;
   label?: string;
+  color?: string;
+  size?: number;
 }
 
 export default function DonutChart({
@@ -14,18 +16,20 @@ export default function DonutChart({
   dailyBudget = 0,
   spent = 0,
   label = "Daily Budget",
+  color = "#8938E9",
+  size = 140,
 }: DonutChartProps) {
-  console.log("DonutChart props:", { dailyBudget, spent, progress });
-  const size = 140;
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
+
+  const clampedProgress = Math.min(Math.max(progress, 0), 1);
+
+  const strokeDashoffset = circumference * (1 - clampedProgress);
 
   return (
     <View className="justify-center items-center">
       <Svg width={size} height={size}>
-        {/* Background Circle */}
         <Circle
           stroke="#EDE1FB"
           fill="none"
@@ -34,10 +38,8 @@ export default function DonutChart({
           r={radius}
           strokeWidth={strokeWidth}
         />
-
-        {/* Progress Circle */}
         <Circle
-          stroke="#8938E9"
+          stroke={color}
           fill="none"
           cx={size / 2}
           cy={size / 2}
@@ -51,13 +53,11 @@ export default function DonutChart({
           originY={size / 2}
         />
       </Svg>
-
-      {/* Center Text */}
       <View className="absolute justify-center items-center">
         <Text className="text-[12px] text-textPrimary-light dark:text-textPrimary-dark opacity-60">
           {label}
         </Text>
-        <Text className="text-[18px] font-bold text-textHighlight-light dark:text-textHighlight-dark">
+        <Text style={{ color: color }} className="text-[18px] font-bold">
           ₱{spent.toFixed(2)}
         </Text>
         <Text className="text-[12px] text-textPrimary-light dark:text-textPrimary-dark opacity-65">
