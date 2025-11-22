@@ -7,6 +7,7 @@ import { useToast } from "@/components/ToastContext";
 import { checkDailyQuests } from "@/data/daily_quests_logic";
 import { WeeklyQuest, WEEKLY_QUESTS } from "@/data/weekly_quests_items";
 import { resetWeeklyProgressIfNeeded } from "@/data/weekly_quests_logic";
+import { seedDefaultCategories } from "@/database/categoryDefaultSelection";
 import type {
   Account,
   PlannedBudget,
@@ -134,15 +135,6 @@ export default function Index() {
     WEEKLY_QUESTS.map((q) => ({ ...q }))
   );
 
-  // Add an effect to update the mode if using nativewind
-  // useEffect(() => {
-  //   setColorScheme(colorScheme); // optional depending on your ThemeContext implementation
-  // }, [colorScheme]);
-
-  // useEffect(() => {
-  //   setThemeVersion((v) => v + 1);
-  // }, [mode]);
-
   const budgetLabel =
     selectedIndex === 0
       ? "Daily Budget"
@@ -185,6 +177,7 @@ export default function Index() {
 
   useEffect(() => {
     createNotificationChannel();
+    seedDefaultCategories();
   }, []);
 
   const loadRegularTransactions = async () => {

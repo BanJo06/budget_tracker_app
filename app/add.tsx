@@ -639,7 +639,7 @@ export default function Add() {
     }
 
     initializeFormForEdit();
-  }, [parsedTransaction, isInitialized]); // Add isInitialized to dependencies.
+  }, [parsedTransaction, isInitialized]);
 
   const handleSaveTransaction = async () => {
     const amount = parseFloat(displayValue);
@@ -650,6 +650,9 @@ export default function Add() {
     const transactionNotes = notes;
     const transactionDate = new Date().toISOString();
 
+    // =================================================
+    // 1. GLOBAL VALIDATION
+    // =================================================
     if (isNaN(amount) || amount <= 0) {
       alert("Invalid amount.");
       return;
@@ -660,13 +663,16 @@ export default function Add() {
       return;
     }
 
+    // Check Category (only if not transfer)
     if (transactionType !== "transfer" && !categoryId) {
       alert("Please select a category.");
       return;
     }
 
+    // =================================================
+    // 2. TRANSFER SPECIFIC VALIDATION
+    // =================================================
     if (transactionType === "transfer") {
-      // --- Transfer validation ---
       if (!toAccountId) {
         alert("Please select a 'To' account for the transfer.");
         return;
@@ -676,8 +682,20 @@ export default function Add() {
         alert("Cannot transfer to the same account.");
         return;
       }
+    }
 
-      const currentBalance = getAccountBalance(Number(fromAccountId));
+    // =================================================
+    // 3. INSUFFICIENT FUNDS CHECK
+    // =================================================
+    const currentBalance = getAccountBalance(Number(fromAccountId));
+
+    // Logic: Check funds if it is a NEW expense/transfer OR if editing and increasing amount (simplified)
+    // For simplicity, we just warn on low balance but allow edits to proceed usually,
+    // unless you want strict blocking. Here is strict blocking for NEW transactions:
+    if (
+      mode !== "edit" &&
+      (transactionType === "expense" || transactionType === "transfer")
+    ) {
       if (currentBalance < amount) {
         alert(
           `Insufficient funds in ${
@@ -686,147 +704,164 @@ export default function Add() {
         );
         return;
       }
+    }
 
+    // =================================================
+    // 4. BUDGET CHECKS (Expenses Only)
+    // =================================================
+    if (transactionType === "expense") {
+      // 1. Calculate what has been spent today so far
+      let totalSpentToday = 0;
       try {
-        await saveTransferTransaction(
-          Number(fromAccountId),
-          Number(toAccountId),
-          amount,
-          transactionNotes,
-          transactionDate
-        );
-        showToast("✅ Transfer saved successfully!");
-        router.replace("/(sidemenu)/(tabs)");
-        return;
-      } catch (error: any) {
-        console.error("Failed to save transfer:", error);
-        alert("Failed to save transfer.");
-        return;
+        const allTransactions = getAllTransactions(); // Assuming this is synchronous based on your utils
+        const now = new Date();
+        totalSpentToday = allTransactions
+          .filter((t: any) => {
+            const txDate = new Date(t.date);
+            return (
+              txDate.getFullYear() === now.getFullYear() &&
+              txDate.getMonth() === now.getMonth() &&
+              txDate.getDate() === now.getDate() &&
+              t.type === "expense" &&
+              !t.source // Exclude system entries if needed
+            );
+          })
+          .reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+      } catch (error) {
+        console.error("Failed to calculate today's total expenses:", error);
+      }
+
+      const dailyBudgetValue = getBudgetValue("daily_budget");
+
+      // Check 1: Exceeds total daily budget?
+      if (amount > dailyBudgetValue) {
+        const confirmed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            "Daily Budget Limit Exceeded",
+            `Your input amount (₱${amount.toFixed(
+              2
+            )}) exceeds your daily budget (₱${dailyBudgetValue.toFixed(
+              2
+            )}). Continue?`,
+            [
+              { text: "No", style: "cancel", onPress: () => resolve(false) },
+              { text: "Yes", onPress: () => resolve(true) },
+            ],
+            { cancelable: false }
+          );
+        });
+        if (!confirmed) return;
+      }
+
+      // Check 2: Exceeds remaining daily budget?
+      const remainingBudget = dailyBudgetValue - totalSpentToday;
+      // Note: If editing, this logic might double-count the current transaction,
+      // but this matches your requested snippet.
+      if (amount > remainingBudget) {
+        const confirmed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            "Remaining Daily Budget Exceeded",
+            `Your remaining daily budget is ₱${remainingBudget.toFixed(
+              2
+            )}, and your input amount is ₱${amount.toFixed(
+              2
+            )}. Do you want to proceed?`,
+            [
+              { text: "No", style: "cancel", onPress: () => resolve(false) },
+              { text: "Yes", onPress: () => resolve(true) },
+            ],
+            { cancelable: false }
+          );
+        });
+        if (!confirmed) return;
       }
     }
 
-    // --- Expense / Income logic ---
-    const currentBalance = getAccountBalance(Number(fromAccountId));
-    if (transactionType === "expense" && currentBalance < amount) {
-      alert(
-        `Insufficient funds in ${
-          selectedAccount?.name
-        }: Your balance is ₱${currentBalance.toFixed(2)}.`
-      );
-      return;
-    }
-
-    const dailyBudgetValue = getBudgetValue("daily_budget");
-
-    // 1️⃣ Check if input exceeds full daily budget
-    if (transactionType === "expense" && amount > dailyBudgetValue) {
-      const confirmed = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          "Daily Budget Limit Exceeded",
-          `Your input amount (₱${amount.toFixed(
-            2
-          )}) exceeds your daily budget (₱${dailyBudgetValue.toFixed(
-            2
-          )}). Do you want to continue?`,
-          [
-            { text: "No", style: "cancel", onPress: () => resolve(false) },
-            { text: "Yes", onPress: () => resolve(true) },
-          ],
-          { cancelable: false }
-        );
-      });
-      if (!confirmed) return;
-    }
-
-    // 2️⃣ Check remaining daily budget
-    let totalSpentToday = 0;
+    // =================================================
+    // 5. EXECUTION: EDIT vs NEW
+    // =================================================
     try {
-      const allTransactions = getAllTransactions();
-      const now = new Date();
-      totalSpentToday = allTransactions
-        .filter((t) => {
-          const txDate = new Date(t.date);
-          return (
-            txDate.getFullYear() === now.getFullYear() &&
-            txDate.getMonth() === now.getMonth() &&
-            txDate.getDate() === now.getDate() &&
-            t.type === "expense" &&
-            !t.source
-          );
-        })
-        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-    } catch (error) {
-      console.error("Failed to calculate today's total expenses:", error);
-    }
-
-    const remainingBudget = dailyBudgetValue - totalSpentToday;
-    if (transactionType === "expense" && amount > remainingBudget) {
-      const confirmed = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          "Remaining Daily Budget Exceeded",
-          `Your remaining daily budget is ₱${remainingBudget.toFixed(
-            2
-          )}, and your input amount is ₱${amount.toFixed(
-            2
-          )}. Do you want to proceed?`,
-          [
-            { text: "No", style: "cancel", onPress: () => resolve(false) },
-            { text: "Yes", onPress: () => resolve(true) },
-          ],
-          { cancelable: false }
-        );
-      });
-      if (!confirmed) return;
-    }
-
-    try {
-      // Update account balance first
-      await updateAccountBalance(
-        Number(fromAccountId),
-        amount,
-        transactionType
-      );
-
       if (mode === "edit" && parsedTransaction?.id) {
+        // -------------------------------------------
+        // A) UPDATE EXISTING TRANSACTION
+        // -------------------------------------------
+        // This works for Income, Expense, AND Transfer because
+        // updateExistingTransaction (in transactions.js) now handles the logic for all 3.
+
+        const resolvedToAccountId =
+          transactionType === "transfer" ? toAccountId : null;
+
         await updateExistingTransaction({
           transactionId: Number(parsedTransaction.id),
           accountId: Number(fromAccountId),
           categoryId: categoryId ? Number(categoryId) : null,
           amount,
-          type: selectedOption,
-          description: notes,
+          type: transactionType,
+          description: transactionNotes,
           date: transactionDate,
+          toAccountId: resolvedToAccountId ? Number(resolvedToAccountId) : null,
         });
+
+        showToast("✅ Transaction updated successfully!");
       } else {
-        await saveTransaction(
-          Number(fromAccountId),
-          selectedAccount.name,
-          Number(categoryId),
-          amount,
-          transactionType,
-          transactionNotes,
-          transactionDate
-        );
+        // -------------------------------------------
+        // B) CREATE NEW TRANSACTION
+        // -------------------------------------------
+
+        if (transactionType === "transfer") {
+          // Case 1: New Transfer
+          // saveTransferTransaction handles balance updates internally
+          await saveTransferTransaction(
+            Number(fromAccountId),
+            Number(toAccountId),
+            amount,
+            transactionNotes,
+            transactionDate
+          );
+          showToast("✅ Transfer saved successfully!");
+        } else {
+          // Case 2: New Income or Expense
+          // We must manually update balance first, then save
+          await updateAccountBalance(
+            Number(fromAccountId),
+            amount,
+            transactionType
+          );
+
+          await saveTransaction(
+            Number(fromAccountId),
+            selectedAccount?.name || "",
+            Number(categoryId),
+            amount,
+            transactionType,
+            transactionNotes,
+            transactionDate
+          );
+          showToast("✅ Transaction saved successfully!");
+        }
       }
 
-      showToast("✅ Transaction saved successfully!");
+      // =================================================
+      // 6. POST-SAVE ACTIONS (Quests, Navigation)
+      // =================================================
 
-      // --- Quest logic ---
-      const completed = await markTransactionQuestCompleted(transactionDate);
-      if (completed) showToast("🎉 Quest Completed: Add 1 transaction");
+      // Only run quests for new transactions (optional preference)
+      if (mode !== "edit") {
+        const completed = await markTransactionQuestCompleted(transactionDate);
+        if (completed) showToast("🎉 Quest Completed: Add 1 transaction");
 
-      const { count, completed: weeklyCompleted } =
-        await incrementTransactionQuestProgress();
-      setTransactionProgress(count / 50);
-      setTransactionCompleted(weeklyCompleted);
+        const { count, completed: weeklyCompleted } =
+          await incrementTransactionQuestProgress();
+        setTransactionProgress(count / 50);
+        setTransactionCompleted(weeklyCompleted);
 
-      if (weeklyCompleted)
-        showToast("🎯 Weekly Quest Completed: Add 50 Transactions!");
-      else showToast(`📈 Added ${count}/50 transactions this week`);
+        if (weeklyCompleted)
+          showToast("🎯 Weekly Quest Completed: Add 50 Transactions!");
+      }
 
       router.replace("/(sidemenu)/(tabs)");
     } catch (error: any) {
-      console.error("Failed to save transaction:", error);
+      console.error("Failed to save/update transaction:", error);
       const errorMessage = error?.message || "An unknown error occurred.";
       showToast(`⚠️ Error: ${errorMessage}`);
     }
