@@ -3,18 +3,41 @@ import { usePurchase } from "@/components/PurchaseContext";
 import { useToast } from "@/components/ToastContext";
 import { QuestState, WEEKLY_QUESTS } from "@/data/weekly_quests_items";
 import { skipQuestById } from "@/data/weekly_skip_helpers";
-import { getCoins } from "@/utils/coins"; // 🪙 import helper
+import { getCoins, setCoins as saveCoins } from "@/utils/coins";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import { useColorScheme } from "nativewind";
 import React, { useCallback, useState } from "react";
-import { Alert, Modal, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Modal,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ReusableRoundedBoxComponent from "../components/RoundedBoxComponent";
 
-type ShopItem = {
+// App Icons
+import Icon1 from "@/assets/icons/shopIcons/icon1.png";
+import Icon2 from "@/assets/icons/shopIcons/icon2.png";
+import Icon3 from "@/assets/icons/shopIcons/icon3.png";
+
+type AppIconItem = {
+  id: string;
   name: string;
+  icon: any;
   price: number;
+  purchased?: boolean;
 };
+
+const appIcons: AppIconItem[] = [
+  { id: "icon1", name: "Icon 1", icon: Icon1, price: 100 },
+  { id: "icon2", name: "Icon 2", icon: Icon2, price: 100 },
+  { id: "icon3", name: "Icon 3", icon: Icon3, price: 100 },
+];
+
+type ShopItem = { name: string; price: number };
 
 export default function Shop() {
   const { colorScheme } = useColorScheme();
@@ -23,34 +46,32 @@ export default function Shop() {
 
   const [coins, setCoins] = useState<number>(0);
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
+
+  // Use context for Dark Mode state
   const { hasPurchasedDarkMode, setHasPurchasedDarkMode } = usePurchase();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [message, setMessage] = useState("");
 
-  const [hasPurchasedSkipWeekly, setHasPurchasedSkipWeekly] = useState(false);
   const [skipModalVisible, setSkipModalVisible] = useState(false);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
+  const [appIconsState, setAppIcons] = useState<AppIconItem[]>(appIcons);
+  const [selectedHomeIconId, setSelectedHomeIconId] = useState<string | null>(
+    null
+  );
+
   const [confirmSkipModalVisible, setConfirmSkipModalVisible] = useState(false);
 
   const [weeklyQuests, setWeeklyQuests] = useState<QuestState[]>(
     WEEKLY_QUESTS.map((q) => ({ ...q, readyToComplete: false }))
   );
 
-  // Weekly quests list (IDs must match your quest system)
-  const SKIPPABLE_QUESTS = [
-    { id: "login_7days", label: "Skip Login 7 Days" },
-    { id: "use_app_40min", label: "Skip Use App 40 Minutes" },
-    { id: "add_50_transactions", label: "Skip Add 50 Transactions" },
-  ];
-
   const shopItems: ShopItem[] = [
     { name: "Dark Mode", price: 1 },
-    // { name: "Themes", price: 250 },
-    // { name: "Eye-Catching Icons", price: 250 },
-    // { name: "Skip Daily Quest (Not Available)", price: 250 },
     { name: "Skip Weekly Quest", price: 1 },
   ];
 
+  // 1. Load Coins
   useFocusEffect(
     useCallback(() => {
       const loadCoins = async () => {
@@ -61,54 +82,112 @@ export default function Shop() {
     }, [])
   );
 
+  // 2. Load Purchases (Dark Mode)
   useFocusEffect(
     React.useCallback(() => {
       const loadPurchases = async () => {
-        const purchased = await AsyncStorage.getItem("purchasedDarkMode");
-        setHasPurchasedDarkMode(purchased === "true");
+        const purchasedDark = await AsyncStorage.getItem("purchasedDarkMode");
+        setHasPurchasedDarkMode(purchasedDark === "true");
       };
       loadPurchases();
     }, [])
   );
 
+  // 3. Load App Icons
+  useFocusEffect(
+    useCallback(() => {
+      const loadAppIconPurchases = async () => {
+        const updatedIcons = await Promise.all(
+          appIcons.map(async (icon) => {
+            const purchased = await AsyncStorage.getItem(
+              `purchased_${icon.id}`
+            );
+            return { ...icon, purchased: purchased === "true" };
+          })
+        );
+        setAppIcons(updatedIcons);
+      };
+      loadAppIconPurchases();
+    }, [])
+  );
+
+  // 4. NEW: Load Weekly Quest Status to determine "All Done"
+  useFocusEffect(
+    useCallback(() => {
+      const loadQuestStatuses = async () => {
+        try {
+          const updatedQuests = await Promise.all(
+            WEEKLY_QUESTS.map(async (q) => {
+              // This key matches what we save in the Modal below
+              const completed = await AsyncStorage.getItem(
+                `quest_completed_${q.id}`
+              );
+
+              return {
+                ...q,
+                readyToComplete: false,
+                completed: completed === "true",
+              };
+            })
+          );
+          setWeeklyQuests(updatedQuests);
+        } catch (error) {
+          console.log("Error loading quests:", error);
+        }
+      };
+      loadQuestStatuses();
+    }, [])
+  );
+
   const handlePurchase = async (item: ShopItem) => {
     if (coins >= item.price) {
-      setCoins((prev) => prev - item.price);
+      // 1. Deduct Coins & Save
+      const newBalance = coins - item.price;
+      setCoins(newBalance);
+      await saveCoins(newBalance);
 
       if (item.name === "Dark Mode") {
         setHasPurchasedDarkMode(true);
         await AsyncStorage.setItem("purchasedDarkMode", "true");
       }
 
-      if (item.name === "Skip Weekly Quest (Not Available)") {
-        setHasPurchasedSkipWeekly(true);
-        await AsyncStorage.setItem("purchasedSkipWeekly", "true");
+      // 2. Handle Skip Quest Purchase
+      if (item.name === "Skip Weekly Quest") {
+        // Just proceed to show success message, the modal logic handles the rest
       }
 
       setMessage(`You purchased "${item.name}" successfully!`);
     } else {
+      // 3. FAILURE: clear the selected item so the Modal doesn't trigger the Skip screen
+      setSelectedItem(null);
       setMessage("Insufficient Funds");
     }
 
     setModalVisible(true);
   };
 
-  const resetPurchases = async () => {
-    try {
-      // Reset Dark Mode purchase
-      setHasPurchasedDarkMode(false);
-      await AsyncStorage.removeItem("purchasedDarkMode");
+  const handleAppIconPurchase = async (item: AppIconItem) => {
+    if (coins >= item.price) {
+      const newBalance = coins - item.price;
+      setCoins(newBalance);
+      await saveCoins(newBalance);
 
-      // You can reset other items similarly:
-      // await AsyncStorage.removeItem("purchasedThemes");
-      // await AsyncStorage.removeItem("purchasedIcons");
+      await AsyncStorage.setItem(`purchased_${item.id}`, "true");
 
-      // Optionally reset coins
-      setCoins(1000); // or whatever default starting coins
+      setAppIcons((prev) =>
+        prev.map((icon) =>
+          icon.id === item.id ? { ...icon, purchased: true } : icon
+        )
+      );
 
-      Alert.alert("Shop Reset", "All purchases have been reset!");
-    } catch (error) {
-      console.log("Failed to reset purchases:", error);
+      setSelectedHomeIconId(item.id);
+
+      Alert.alert(
+        "Home Screen Icon Updated",
+        `${item.name} is your new home screen icon`
+      );
+    } else {
+      Alert.alert("Insufficient Funds", "You don't have enough coins.");
     }
   };
 
@@ -147,7 +226,7 @@ export default function Shop() {
         </View>
       </ReusableRoundedBoxComponent>
 
-      {/* ... existing Shop items */}
+      {/* ... App Icons Section ... */}
       <View
         className={`flex-col mx-8 mt-4 ${
           isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"
@@ -164,11 +243,27 @@ export default function Shop() {
           <View className="h-[2] bg-black rounded-full" />
 
           <View className="flex-row gap-10">
-            {[1, 2, 3].map((_, i) => (
-              <View key={i} className="flex-col gap-2 items-center">
-                <View className="w-[70] h-[70] rounded-[10] bg-orange-400 items-center justify-center">
-                  <Text className="text-[10px]">Not Available</Text>
-                </View>
+            {appIconsState.map((item) => (
+              <View
+                key={item.id}
+                className="flex-col gap-2 items-center relative"
+              >
+                <TouchableOpacity
+                  disabled={item.purchased && selectedHomeIconId === item.id}
+                  onPress={() => handleAppIconPurchase(item)}
+                >
+                  <Image
+                    source={item.icon}
+                    className="w-[70] h-[70] rounded-[10]"
+                    resizeMode="contain"
+                  />
+                  {selectedHomeIconId === item.id && (
+                    <View className="absolute top-1 right-1 w-6 h-6 bg-green-600 rounded-full justify-center items-center">
+                      <Text className="text-white font-bold text-xs">✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
                 <View className="flex-row gap-2 items-center">
                   <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
                   <Text
@@ -176,7 +271,7 @@ export default function Shop() {
                       isDark ? "text-gray-300" : "text-gray-500"
                     }`}
                   >
-                    100
+                    {item.purchased ? "Purchased" : item.price}
                   </Text>
                 </View>
               </View>
@@ -185,6 +280,7 @@ export default function Shop() {
         </View>
       </View>
 
+      {/* Shop Items Section */}
       <View
         className={`flex-col mx-8 mt-4 ${
           isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"
@@ -200,46 +296,68 @@ export default function Shop() {
         <View className="h-[2] bg-black rounded-full mb-4" />
 
         <View className="flex-col gap-4">
-          {shopItems.map((item) => (
-            <TouchableOpacity
-              key={item.name}
-              className="flex-row justify-between p-4 bg-gray-200 dark:bg-gray-700 rounded-lg"
-              onPress={() => {
-                setSelectedItem(item);
-                handlePurchase(item);
-              }}
-            >
-              <Text
-                className={`text-sm ${
-                  isDark ? "text-gray-300" : "text-gray-500"
+          {shopItems.map((item) => {
+            let isPurchased = false;
+
+            // 1. Dark Mode Logic (One-time purchase)
+            if (item.name === "Dark Mode") {
+              isPurchased = hasPurchasedDarkMode;
+            }
+            // 2. Skip Logic (Purchasable until all quests are done)
+            else if (item.name === "Skip Weekly Quest") {
+              // Check if EVERY quest is completed
+              const areAllQuestsCompleted = weeklyQuests.every(
+                (q) => q.completed
+              );
+              isPurchased = areAllQuestsCompleted;
+            }
+
+            return (
+              <TouchableOpacity
+                key={item.name}
+                disabled={isPurchased}
+                className={`flex-row justify-between p-4 rounded-lg ${
+                  isPurchased
+                    ? "bg-gray-300 dark:bg-gray-800 opacity-70"
+                    : "bg-gray-200 dark:bg-gray-700"
                 }`}
+                onPress={() => {
+                  setSelectedItem(item);
+                  handlePurchase(item);
+                }}
               >
-                {item.name}
-              </Text>
-              <View className="flex-row gap-2 items-center">
-                <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
                 <Text
                   className={`text-sm ${
                     isDark ? "text-gray-300" : "text-gray-500"
                   }`}
                 >
-                  {item.price}
+                  {item.name}
                 </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+
+                <View className="flex-row gap-2 items-center">
+                  {!isPurchased && (
+                    <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
+                  )}
+                  <Text
+                    className={`text-sm ${
+                      isDark ? "text-gray-300" : "text-gray-500"
+                    }`}
+                  >
+                    {/* Display 'All Done' for Skip Quest, 'Purchased' for others */}
+                    {isPurchased
+                      ? item.name === "Skip Weekly Quest"
+                        ? "All Done"
+                        : "Purchased"
+                      : item.price}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-        {/* <TouchableOpacity
-          className="mt-6 bg-red-500 p-3 rounded-lg"
-          onPress={resetPurchases}
-        >
-          <Text className="text-white text-center font-medium">
-            Reset Shop Purchases
-          </Text>
-        </TouchableOpacity> */}
       </View>
 
-      {/* Modal */}
+      {/* ... Modals ... */}
       <Modal
         visible={modalVisible}
         transparent
@@ -256,11 +374,15 @@ export default function Shop() {
               onPress={() => {
                 setModalVisible(false);
 
-                if (selectedItem?.name === "Skip Weekly Quest") {
-                  setSkipModalVisible(true); // ✅ Only open for skip purchase
+                // Only open skip modal if purchase was valid
+                if (
+                  message !== "Insufficient Funds" &&
+                  selectedItem?.name === "Skip Weekly Quest"
+                ) {
+                  setSkipModalVisible(true);
                 }
 
-                setSelectedItem(null); // clear selection
+                setSelectedItem(null);
               }}
             >
               <Text className="text-center text-white">OK</Text>
@@ -269,12 +391,12 @@ export default function Shop() {
         </View>
       </Modal>
 
-      {/* STEP 1 — Pick quest to skip */}
+      {/* Skip Modal (Step 1) - Non-Closable */}
       <Modal
         visible={skipModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setSkipModalVisible(false)}
+        onRequestClose={() => {}}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
           <View className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[85%]">
@@ -307,17 +429,7 @@ export default function Shop() {
               </TouchableOpacity>
             ))}
 
-            <View className="flex-row justify-between mt-4">
-              <TouchableOpacity
-                className="bg-gray-500 py-2 px-4 rounded-lg"
-                onPress={() => {
-                  setSelectedQuestId(null);
-                  setSkipModalVisible(false);
-                }}
-              >
-                <Text className="text-white text-center">Cancel</Text>
-              </TouchableOpacity>
-
+            <View className="flex-row justify-center mt-4">
               <TouchableOpacity
                 className={`py-2 px-4 rounded-lg 
             ${selectedQuestId ? "bg-green-600" : "bg-green-300"}`}
@@ -331,12 +443,12 @@ export default function Shop() {
         </View>
       </Modal>
 
-      {/* STEP 2 — Confirm skip */}
+      {/* Confirm Skip Modal (Step 2) */}
       <Modal
         visible={confirmSkipModalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setConfirmSkipModalVisible(false)}
+        onRequestClose={() => {}}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
           <View className="bg-white dark:bg-gray-800 p-6 rounded-xl w-[75%]">
@@ -357,9 +469,17 @@ export default function Shop() {
                 onPress={async () => {
                   if (!selectedQuestId) return;
 
+                  // 1. Run the existing helper
                   await skipQuestById(selectedQuestId);
 
-                  // Update UI instantly
+                  // 2. ⚠️ FORCE SAVE TO STORAGE (This fixes your issue)
+                  // We explicitly save the key exactly how the loader expects it
+                  await AsyncStorage.setItem(
+                    `quest_completed_${selectedQuestId}`,
+                    "true"
+                  );
+
+                  // 3. Update UI locally so "All Done" appears immediately
                   setWeeklyQuests((prev) =>
                     prev.map((q) =>
                       q.id === selectedQuestId
@@ -370,7 +490,6 @@ export default function Shop() {
 
                   showToast("Weekly Quest Skipped!");
 
-                  // Close both modals
                   setConfirmSkipModalVisible(false);
                   setSkipModalVisible(false);
                   setSelectedQuestId(null);
