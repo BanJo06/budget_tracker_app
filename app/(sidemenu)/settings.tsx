@@ -45,13 +45,6 @@ export default function Settings() {
 
   const { hasPurchasedDarkMode } = usePurchase();
 
-  // Dark Mode Logic
-  const toggleDarkMode = () => {
-    const newMode = colorScheme === "dark" ? "light" : "dark";
-    setColorScheme(newMode);
-    setUIMode(newMode === "dark" ? "dark" : "system");
-  };
-
   // Load settings
   useEffect(() => {
     const loadSettings = async () => {
@@ -159,16 +152,6 @@ export default function Settings() {
                 </Text>
               </View>
             </TouchableOpacity>
-
-            {/* Manual Dark Mode Toggle Button */}
-            {/* <TouchableOpacity
-              onPress={toggleDarkMode}
-              className="w-full py-[12] bg-gray-200 dark:bg-gray-700 rounded-lg mx-[32] mt-2"
-            >
-              <Text className="text-center text-black dark:text-white font-medium">
-                Toggle Dark Mode ({colorScheme})
-              </Text>
-            </TouchableOpacity> */}
           </View>
         </View>
       </View>
@@ -257,13 +240,27 @@ export default function Settings() {
       </View>
 
       {/* UI Mode Modal */}
-      <UIModeModal
+      {/* <UIModeModal
         visible={isUIModalVisible}
         currentMode={uiMode}
         hasPurchasedDarkMode={hasPurchasedDarkMode} // ✅ important
         onClose={() => setIsUIModalVisible(false)}
         onSelectMode={async (mode) => {
           if (mode === "dark" && !hasPurchasedDarkMode) return; // prevent selection
+          setUIMode(mode);
+          setColorScheme(mode === "dark" ? "dark" : "light");
+          await AsyncStorage.setItem("uiMode", mode);
+        }}
+      /> */}
+      <UIModeModal
+        visible={isUIModalVisible}
+        currentMode={uiMode}
+        hasPurchasedDarkMode={hasPurchasedDarkMode}
+        onClose={() => setIsUIModalVisible(false)}
+        onSelectMode={async (mode) => {
+          // Double protection: Ensure logic in Settings also prevents setting it
+          if (mode === "dark" && !hasPurchasedDarkMode) return;
+
           setUIMode(mode);
           setColorScheme(mode === "dark" ? "dark" : "light");
           await AsyncStorage.setItem("uiMode", mode);
