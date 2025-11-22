@@ -57,11 +57,11 @@ const CustomDrawerContent = (props) => {
       icon: <MaterialIcons name="post-add" size={24} color={iconColor} />,
       route: "addlaterecords",
     },
-    // {
-    //   label: "Backup",
-    //   icon: <MaterialIcons name="post-add" size={24} />,
-    //   route: "backup",
-    // },
+    {
+      label: "Backup",
+      icon: <MaterialIcons name="post-add" size={24} />,
+      route: "backup",
+    },
   ];
 
   return (
@@ -234,7 +234,7 @@ export default function Layout() {
         })}
       />
 
-      {/* <Drawer.Screen
+      <Drawer.Screen
         name="backup"
         options={({ navigation }) => ({
           drawerLabel: "Backup",
@@ -246,11 +246,11 @@ export default function Layout() {
               onPress={() => navigation.goBack()}
               style={{ paddingHorizontal: 15 }}
             >
-              <Text style={{ fontSize: 24 }}>⬅️</Text>
+              <Text style={{ fontSize: 24 }}>←</Text>
             </Pressable>
           ),
         })}
-      /> */}
+      />
 
       <Drawer.Screen
         name="addlaterecords"
