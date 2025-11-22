@@ -88,10 +88,10 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
 
           <TouchableOpacity
             onPress={onClose}
-            className="bg-[#8938E9] rounded-xl mt-4 py-3"
+            className="bg-button-light dark:bg-button-dark rounded-xl mt-4 py-3"
           >
             <Text className="text-white text-center font-semibold text-base">
-              Close
+              CLOSE
             </Text>
           </TouchableOpacity>
         </View>

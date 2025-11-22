@@ -10,6 +10,7 @@ import {
 import { initDatabase } from "@/utils/database";
 import { saveTransaction } from "@/utils/transactions";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -52,12 +53,16 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Add new account</Text>
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            Add new account
+          </Text>
           <View className="w-full flex-row gap-2 items-center mb-4">
-            <Text>Initial Amount</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Initial Amount
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-search-light dark:border-search-dark rounded-lg pl-2 bg-bgModal-light dark:bg-bgModal-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="0"
               keyboardType="numeric"
               value={initialAmount}
@@ -65,16 +70,20 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
             />
           </View>
           <View className="w-full flex-row gap-2 items-center mb-6">
-            <Text>Name</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Name
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-search-light dark:border-search-dark rounded-lg pl-2 bg-bgModal-light dark:bg-bgModal-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="Untitled"
               value={accountName}
               onChangeText={setAccountName}
             />
           </View>
           <View className="mb-6">
-            <Text className="text-sm mb-2">Select Icon</Text>
+            <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
+              Select Icon
+            </Text>
             <View className="flex-row flex-wrap justify-start gap-4">
               {Object.entries(ACCOUNTS_SVG_ICONS).map(
                 ([key, IconComponent]) => (
@@ -98,13 +107,15 @@ const NewAccountModal = ({ isVisible, onClose, onSave }) => {
           </View>
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-borderButton-light dark:border-borderButton-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-purple-600">Cancel</Text>
+              <Text className="uppercase text-borderButton-light dark:text-borderButton-dark">
+                Cancel
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg bg-purple-600 justify-center items-center"
+              className="w-24 h-10 rounded-lg bg-button-light dark:bg-button-dark justify-center items-center"
               onPress={handleSaveAccount}
             >
               <Text className="uppercase text-white">Save</Text>
@@ -134,8 +145,10 @@ const AccountsModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Select Account</Text>
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            Select Account
+          </Text>
           <ScrollView keyboardShouldPersistTaps="handled">
             {Array.isArray(accounts) &&
               accounts.map((account, index) => {
@@ -155,9 +168,11 @@ const AccountsModal = ({
                           <IconComponent size={24} color="white" />
                         )}
                       </View>
-                      <Text className="text-lg">{account.name}</Text>
+                      <Text className="text-lg text-textPrimary-light dark:text-textPrimary-dark">
+                        {account.name}
+                      </Text>
                     </View>
-                    <Text className="text-[#8938E9] text-lg">
+                    <Text className="text-textHighlight-light dark:text-textHighlight-dark text-lg">
                       ₱{Number(account.balance || 0).toFixed(2)}
                     </Text>
                   </TouchableOpacity>
@@ -166,11 +181,10 @@ const AccountsModal = ({
           </ScrollView>
           <TouchableOpacity
             onPress={() => setNewAccountModalVisible(true)}
-            className="w-full h-[40] justify-center items-center border-2 border-purple-500 rounded-lg mt-4"
+            className="w-full h-[40] justify-center items-center bg-button-light dark:bg-button-dark rounded-lg mt-4"
           >
             <View className="flex-row items-center justify-center gap-2">
-              <SVG_ICONS.SmallAdd size={15} color="#8938E9" />
-              <Text className="font-medium text-purple-600">
+              <Text className="font-medium text-textButton-light dark:text-textButton-dark">
                 ADD NEW ACCOUNT
               </Text>
             </View>
@@ -329,6 +343,8 @@ export default function AddLateRecords() {
     { label: "Income", value: "income" },
     { label: "Expense", value: "expense" },
   ];
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
     <View className="flex-1 items-center justify-center p-8 bg-bgPrimary-light dark:bg-bgPrimary-dark">
@@ -368,12 +384,12 @@ export default function AddLateRecords() {
               </Text>
               <TouchableOpacity
                 onPress={() => setShowDatePicker(true)}
-                className="w-[126px] h-[39px] flex-row items-center justify-center bg-[orange] px-5 py-3 rounded-full gap-2"
+                className="w-[126px] h-[39px] flex-row items-center justify-center bg-button-light dark:bg-button-dark px-5 py-3 rounded-full gap-2"
               >
-                <Text className="text-black text-[12px] font-medium">
+                <Text className="text-white text-[12px] font-medium">
                   {date.toLocaleDateString()}
                 </Text>
-                <SVG_ICONS.ButtonArrowDown size={15} />
+                <SVG_ICONS.ButtonArrowDown color="white" />
               </TouchableOpacity>
             </View>
             {showDatePicker && (
@@ -392,7 +408,7 @@ export default function AddLateRecords() {
               </Text>
               <TouchableOpacity
                 onPress={() => setAccountsModalVisible(true)}
-                className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-full"
+                className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark rounded-full"
               >
                 <SVG_ICONS.Account size={16} color="white" />
                 <Text className="text-white text-base">
@@ -411,13 +427,12 @@ export default function AddLateRecords() {
                   options={options}
                   initial={1}
                   onPress={handleSwitchChange}
-                  backgroundColor="#F0E4FF"
                   textColor="#000000"
-                  selectedColor="#ffffff"
-                  buttonColor="#7a44cf"
+                  selectedColor={colorScheme === "dark" ? "#fff" : "#fff"}
+                  buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
                   hasPadding
                   borderRadius={30}
-                  borderColor="#F0E4FF"
+                  borderColor={"#ffffff"}
                   height={40}
                   textStyle={{ fontSize: 12, fontWeight: "500" }}
                   selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
@@ -432,7 +447,7 @@ export default function AddLateRecords() {
               </Text>
               <TouchableOpacity
                 onPress={() => setCategoriesModalVisible(true)}
-                className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-full"
+                className="w-[126px] h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark rounded-full"
               >
                 <SVG_ICONS.Category size={16} color="white" />
                 <Text className="text-white text-base">
@@ -447,7 +462,7 @@ export default function AddLateRecords() {
                 Amount
               </Text>
               <TextInput
-                className="h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-card-light dark:bg-card-dark"
+                className="h-[40] border-2 border-search-light dark:border-search-dark rounded-lg pl-2 p-0 bg-card-light dark:bg-card-dark text-textTextbox-light dark:text-textTextbox-dark"
                 placeholder="0"
                 keyboardType="numeric"
                 value={initialAmount}
@@ -460,7 +475,7 @@ export default function AddLateRecords() {
                 Notes
               </Text>
               <TextInput
-                className="w-full h-20 border-2 border-gray-300 rounded-lg p-2 bg-card-light dark:bg-card-dark"
+                className="w-full h-20 border-2 border-search-light dark:border-search-dark rounded-lg p-2 bg-card-light dark:bg-card-dark text-textTextbox-light dark:text-textTextbox-dark"
                 placeholder="Write a note"
                 multiline
                 maxLength={100}
@@ -473,10 +488,10 @@ export default function AddLateRecords() {
             {/* Buttons */}
             <View className="flex-row justify-end gap-4">
               <TouchableOpacity
-                className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
+                className="w-24 h-10 rounded-lg border-2 border-borderButton-light dark:border-borderButton-dark justify-center items-center"
                 onPress={handleClear}
               >
-                <Text className="uppercase text-button-light dark:text-button-dark">
+                <Text className="uppercase text-borderButton-light dark:text-borderButton-dark">
                   Clear
                 </Text>
               </TouchableOpacity>

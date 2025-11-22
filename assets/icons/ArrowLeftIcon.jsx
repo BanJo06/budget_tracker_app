@@ -5,7 +5,7 @@ const ArrowLeftIcon = ({ color, ...props }) => {
   const { colorScheme } = useColorScheme();
 
   // Fallback color if prop is not provided
-  const fillColor = color || (colorScheme === "dark" ? "#fff" : "#000");
+  const fillColor = color || (colorScheme === "dark" ? "#9CA3AF" : "#392F46");
   return (
     <Svg
       xmlns="http://www.w3.org/2000/svg"

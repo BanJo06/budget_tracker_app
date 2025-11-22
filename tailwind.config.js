@@ -50,6 +50,15 @@ module.exports = {
 
         button: {
           light: "#8938E9",
+          dark: "#5F23A6",
+        },
+        textButton: {
+          light: "#FFFFFF",
+          dark: "#FFFFFF",
+        },
+
+        borderButton: {
+          light: "#392F46",
           dark: "#9CA3AF",
         },
 

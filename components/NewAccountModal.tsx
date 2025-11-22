@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Alert,
   Modal,
   Text,
   TextInput,
@@ -15,13 +16,16 @@ const NewAccountModal = ({ isVisible, onClose }) => {
   const [selectedIcon, setSelectedIcon] = useState(null);
 
   const handleSave = () => {
+    // ⚠️ New condition to check for empty accountName
+    if (!accountName.trim()) {
+      Alert.alert(
+        "Missing Account Name",
+        "Please enter a name for your new account."
+      );
+      return;
+    }
     // The saveAccount function is now synchronous, so no await is needed
-    addAccount(
-      accountName,
-      "Cash",
-      parseFloat(initialAmount) || 0,
-      selectedIcon
-    );
+    addAccount(accountName, parseFloat(initialAmount) || 0, selectedIcon);
 
     // Close the modal and reset state
     onClose();
@@ -70,10 +74,11 @@ const NewAccountModal = ({ isVisible, onClose }) => {
                   <TouchableOpacity
                     key={key}
                     onPress={() => setSelectedIcon(key)}
-                    className={`p-2 rounded-full border-2 ${selectedIcon === key
-                      ? "border-purple-600"
-                      : "border-gray-300"
-                      }`}
+                    className={`p-2 rounded-full border-2 ${
+                      selectedIcon === key
+                        ? "border-purple-600"
+                        : "border-gray-300"
+                    }`}
                   >
                     <IconComponent
                       size={24}

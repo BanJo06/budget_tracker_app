@@ -3,6 +3,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { DailyQuest, DAILY_QUESTS } from "@/data/daily_quests_items";
 import { addCoins } from "@/utils/coins";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Check } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import {
@@ -232,18 +233,12 @@ const DailyContent: React.FC<DailyContentProps> = ({
               )}
 
               {quest.completed && (
-                <View
-                  className={`w-[71px] h-[27px] flex-row justify-center ${
-                    isDark ? "bg-[#121212]" : "bg-white"
-                  } px-[8] py-[6] rounded-[10]`}
-                >
-                  <Text
-                    className={`text-[12px] ${
-                      isDark ? "text-white" : "text-[#8938E9]"
-                    }`}
-                  >
-                    Done
-                  </Text>
+                <View className={`flex-row justify-center items-center`}>
+                  <Check
+                    size={28}
+                    color={isDark ? "white" : "#8938E9"}
+                    strokeWidth={3}
+                  />
                 </View>
               )}
             </View>

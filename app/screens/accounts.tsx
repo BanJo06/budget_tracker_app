@@ -147,10 +147,10 @@ const NewAccountModal = ({ isVisible, onClose, onSave, accountToEdit }) => {
           {/* Action Buttons */}
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-borderButton-light dark:border-borderButton-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-button-light dark:text-button-dark">
+              <Text className="uppercase text-borderButton-light dark:text-borderButton-dark">
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -412,10 +412,9 @@ export default function Accounts() {
             }}
           >
             <View className="flex-row mt-6 gap-8 justify-center">
-              <View className="w-[180] h-[36] px-4 py-2  rounded-[10] border justify-center border-button-light dark:border-button-dark">
-                <View className="flex-row items-center gap-2">
-                  <View className="w-[20] h-[20] rounded-full border border-[#8938E9]"></View>
-                  <Text className="text-button-light dark:text-button-dark">
+              <View className="w-[200] h-[36] rounded-[10] justify-center items-center bg-button-light dark:bg-button-dark">
+                <View className="flex-row">
+                  <Text className="uppercase text-textButton-light dark:text-textButton-dark">
                     Add New Account
                   </Text>
                 </View>

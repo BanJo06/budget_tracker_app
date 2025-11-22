@@ -9,6 +9,7 @@ import {
 } from "@/data/weekly_quests_logic";
 import { addCoins } from "@/utils/coins";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Check } from "lucide-react-native";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -574,18 +575,19 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
 
               {isCompleted && (
                 <View className="items-end flex-1 justify-end mt-2">
-                  <View
-                    className={`w-[71px] h-[27px] flex-row justify-center ${
-                      isDark ? "bg-[#121212]" : "bg-white"
-                    } px-[8] py-[6] rounded-[10]`}
-                  >
-                    <Text
+                  <View className={`flex-row justify-center`}>
+                    <Check
+                      size={28}
+                      color={isDark ? "white" : "#8938E9"}
+                      strokeWidth={3}
+                    />
+                    {/* <Text
                       className={`text-[12px] ${
                         isDark ? "text-white" : "text-[#8938E9]"
                       }`}
                     >
                       {quest.skipped ? "Skipped" : "Done"}
-                    </Text>
+                    </Text> */}
                   </View>
                 </View>
               )}

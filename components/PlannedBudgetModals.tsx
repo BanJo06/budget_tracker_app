@@ -269,7 +269,7 @@ export default function PlannedBudgetModals({
                       setIsTransactionModalVisible(true);
                     }, 200); // slight delay to avoid modal overlap
                   }}
-                  className="flex-1 mt-[16] bg-[#8938E9] px-[16] py-[10] rounded-[12]"
+                  className="flex-1 mt-[16] bg-button-light dark:bg-button-dark px-[16] py-[10] rounded-[12]"
                 >
                   <Text className="text-white text-center font-medium">
                     CREATE TRANSACTION
@@ -278,9 +278,9 @@ export default function PlannedBudgetModals({
 
                 <TouchableOpacity
                   onPress={() => setIsBudgetModalVisible(false)}
-                  className="flex-1 mt-[16] bg-[#8938E9] px-[16] py-[10] rounded-[12] justify-center"
+                  className="flex-1 mt-[16] border-2 border-borderButton-light dark:border-borderButton-dark px-[16] py-[10] rounded-[12] justify-center"
                 >
-                  <Text className="text-white text-center font-medium">
+                  <Text className="text-borderButton-light dark:text-borderButton-dark text-center font-medium">
                     CLOSE
                   </Text>
                 </TouchableOpacity>
