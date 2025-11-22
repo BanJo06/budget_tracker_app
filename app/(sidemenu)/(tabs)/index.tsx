@@ -33,11 +33,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
+  Alert,
   Dimensions,
   FlatList,
   Modal,
+  PixelRatio,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -52,7 +60,36 @@ import WeeklyTransactionsModal from "../../../components/WeeklyTransactionsModal
 import type { TabHomeScreenNavigationProp } from "../../../types";
 
 // =========================================================
-// 🟣 Main Screen (logic fixes applied)
+// 🟣 Responsive Utilities
+// =========================================================
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+// Base width of the design (approx. standard iPhone width)
+const BASE_WIDTH = 360;
+
+/**
+ * Scales a size based on the screen width relative to the base design.
+ */
+const scale = (size: number) => {
+  return (SCREEN_WIDTH / BASE_WIDTH) * size;
+};
+
+/**
+ * Normalizes font size based on screen density
+ */
+const normalizeFont = (size: number) => {
+  const newSize = scale(size);
+  if (Platform.OS === "ios") {
+    return Math.round(PixelRatio.roundToNearestPixel(newSize));
+  } else {
+    return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
+  }
+};
+
+import { Platform } from "react-native";
+
+// =========================================================
+// 🟣 Main Screen
 // =========================================================
 
 interface QuestState extends WeeklyQuest {
@@ -63,8 +100,6 @@ export default function Index() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const { mode } = useContext(ThemeContext);
   const backgroundColor = mode === "dark" ? "#121212" : "#FFFFFF";
-  const [themeVersion, setThemeVersion] = useState(0);
-  const screenHeight = Dimensions.get("window").height;
 
   const navigation = useNavigation<TabHomeScreenNavigationProp>();
   const router = useRouter();
@@ -90,9 +125,7 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
 
   const [dailyBudget, setDailyBudget] = useState(0);
-  const [scaledBudget, setScaledBudget] = useState(0);
   const [amountSpent, setAmountSpent] = useState(0);
-  const [progress, setProgress] = useState(0);
   const [currentProgress, setCurrentProgress] = useState(0);
 
   const [selectedBudget, setSelectedBudget] = useState<PlannedBudget | null>(
@@ -231,21 +264,6 @@ export default function Index() {
     return Math.min(spentAmount / budgetAmount, 1);
   };
 
-  const checkBudgetCompletion = async (plannedBudget) => {
-    if (!plannedBudget) return;
-
-    const totalSpent = getTotalSpentForPlannedBudget(plannedBudget.id);
-    const completionPercent = (totalSpent / plannedBudget.amount) * 100;
-
-    if (completionPercent >= 100 && !plannedBudget.completed) {
-      setCompletedBudget(plannedBudget);
-      setBudgetCompleteModalVisible(true);
-
-      // Mark in-memory to avoid multiple triggers
-      plannedBudget.completed = true;
-    }
-  };
-
   const getTransactionsLast7Days = (type: "spent" | "earned") => {
     const now = new Date();
     const sevenDaysAgo = new Date();
@@ -276,224 +294,27 @@ export default function Index() {
 
   const toggleAccountsModal = () => setAccountsModalVisible((p) => !p);
 
-  // Today Overview
-  const isToday = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    return (
-      date.getFullYear() === today.getFullYear() &&
-      date.getMonth() === today.getMonth() &&
-      date.getDate() === today.getDate()
-    );
-  };
-
-  useEffect(() => {
-    if (!dailyBudget) return;
+  // ======================
+  // ⚡ INSTANT Budget Calculation
+  // ======================
+  const currentBudgetLimit = useMemo(() => {
+    if (!dailyBudget) return 0;
 
     const now = new Date();
-
-    const filteredTx = regularTransactions.filter((t) => {
-      const txDate = new Date(t.date);
-      return (
-        txDate.getFullYear() === now.getFullYear() &&
-        txDate.getMonth() === now.getMonth() &&
-        txDate.getDate() === now.getDate()
-      );
-    });
-
-    const totalSpentToday = filteredTx.reduce(
-      (sum, t) => sum + Number(t.amount || 0),
-      0
-    );
-
-    setAmountSpent(totalSpentToday);
-    setScaledBudget(dailyBudget); // ✅ use the dailyBudget directly
-  }, [dailyBudget, regularTransactions]);
-
-  //Weekly Quest Helpers
-  //Log-in for 7 days
-  // const handleLogin7DaysQuest = async () => {
-  //   const today = new Date().toDateString();
-
-  //   // Get last login info from AsyncStorage
-  //   const lastLoginDate = await AsyncStorage.getItem("@weeklyLoginLastDate");
-  //   const streak = Number(
-  //     (await AsyncStorage.getItem("@weeklyLoginStreak")) || "0"
-  //   );
-
-  //   let newStreak = streak;
-
-  //   if (lastLoginDate !== today) {
-  //     const yesterday = new Date();
-  //     yesterday.setDate(yesterday.getDate() - 1);
-
-  //     if (lastLoginDate === yesterday.toDateString()) {
-  //       newStreak = streak + 1; // consecutive day
-  //     } else {
-  //       newStreak = 1; // reset streak
-  //     }
-
-  //     // Save new values
-  //     await AsyncStorage.setItem("@weeklyLoginStreak", newStreak.toString());
-  //     await AsyncStorage.setItem("@weeklyLoginLastDate", today);
-  //   }
-
-  //   // Update internal progress (0–1)
-  //   setLogin7DaysProgress(Math.min(newStreak / 7, 1));
-
-  //   // Quest completed
-  //   if (newStreak >= 7 && !login7DaysCompleted) {
-  //     setLogin7DaysCompleted(true);
-  //     showToast("🎉 Weekly Quest Completed: Login for 7 days!");
-  //     setCurrentProgress((prev) =>
-  //       Math.min(prev + 1 / WEEKLY_QUESTS.length, 1)
-  //     );
-  //   }
-  // };
-  const [completedWeeklyQuestIds, setCompletedWeeklyQuestIds] = useState<
-    string[]
-  >([]);
-  const handleLogin7DaysQuest = async () => {
-    const DEBUG_LOGIN_STREAK = true; // enable debug mode
-
-    if (DEBUG_LOGIN_STREAK) {
-      // Simulate consecutive logins
-      let simulatedStreak = 6; // e.g., 6 days already logged
-      console.log("🛠 Simulated streak:", simulatedStreak);
-
-      // Increment one day (simulate login today)
-      simulatedStreak += 1;
-
-      // Save to AsyncStorage
-      await AsyncStorage.setItem(
-        "@weeklyLoginStreak",
-        simulatedStreak.toString()
-      );
-      await AsyncStorage.setItem(
-        "@weeklyLoginLastDate",
-        new Date().toDateString()
-      );
-
-      console.log("✅ Debug: New simulated streak:", simulatedStreak);
-
-      if (simulatedStreak >= 7) {
-        showToast("🎉 Weekly Quest Completed: Login for 7 days!");
-
-        // ✅ Update completed quests and main progress
-        setCompletedWeeklyQuestIds((prev) => [...prev, "login_7days"]);
-        setCurrentProgress((prev) =>
-          Math.min(prev + 1 / WEEKLY_QUESTS.length, 1)
-        );
-      }
-
-      return; // Skip the real login logic
+    if (options[selectedIndex] === "This Week") {
+      return dailyBudget * 7;
+    }
+    if (options[selectedIndex] === "This Month") {
+      const daysInMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0
+      ).getDate();
+      return dailyBudget * daysInMonth;
     }
 
-    // ...rest of normal logic
-  };
-
-  // useEffect(() => {
-  //   const initLoginQuest = async () => {
-  //     await handleLogin7DaysQuest();
-  //   };
-  //   initLoginQuest();
-  // }, []);
-
-  useEffect(() => {
-    const triggerLogin7DaysQuest = async () => {
-      try {
-        const today = new Date();
-        const todayStr = today.toDateString();
-
-        let streak =
-          Number(await AsyncStorage.getItem("@weeklyLoginStreak")) || 0;
-        const lastLoginStr = await AsyncStorage.getItem("@weeklyLastLoginDate");
-
-        console.log("📅 Today:", todayStr);
-        console.log("📌 Last Login:", lastLoginStr);
-        console.log("🔢 Current Streak (before check):", streak);
-
-        if (!lastLoginStr) {
-          // First login ever
-          streak = 1;
-          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
-          await AsyncStorage.setItem("@weeklyLastLoginDate", todayStr);
-          console.log("🌟 First login ever. Streak set to 1.");
-        } else if (lastLoginStr !== todayStr) {
-          // Not logged in today
-          const lastLoginDate = new Date(lastLoginStr);
-          const yesterday = new Date(today);
-          yesterday.setDate(today.getDate() - 1);
-
-          if (
-            lastLoginDate.getFullYear() === yesterday.getFullYear() &&
-            lastLoginDate.getMonth() === yesterday.getMonth() &&
-            lastLoginDate.getDate() === yesterday.getDate()
-          ) {
-            streak += 1;
-            console.log("✅ Consecutive login. Streak incremented.");
-          } else {
-            streak = 1;
-            console.log("🔄 Missed a day. Streak reset.");
-          }
-
-          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
-          await AsyncStorage.setItem("@weeklyLastLoginDate", todayStr);
-        } else if (streak === 0) {
-          // Already logged in today but streak = 0 → fix it
-          streak = 1;
-          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
-          console.log(
-            "⚡ Fix: Streak was 0 but user logged in today. Streak set to 1."
-          );
-        } else {
-          // Already logged in today, streak > 0 → do nothing
-          console.log("ℹ️ Already logged in today. Streak unchanged.");
-        }
-
-        // Update quests state
-        setQuests((prev) =>
-          prev.map((q) =>
-            q.id === "login_7days"
-              ? { ...q, progress: streak, completed: streak >= 7 }
-              : q
-          )
-        );
-
-        setLogin7DaysProgress(Math.min(streak / 7, 1));
-        setLogin7DaysCompleted(streak >= 7);
-
-        console.log(
-          `📊 Progress updated: ${streak}/7, Completed: ${streak >= 7}`
-        );
-
-        // Show toast only once
-        if (streak >= 7) {
-          const toastShown = await AsyncStorage.getItem(
-            "@login7DaysToastShown"
-          );
-          if (!toastShown) {
-            showToast("🎉 Congrats! You've completed the 7-Day Login Quest!");
-            await AsyncStorage.setItem("@login7DaysToastShown", "true");
-          }
-        }
-      } catch (err) {
-        console.error("❌ Error updating 7-day login quest:", err);
-      }
-    };
-
-    triggerLogin7DaysQuest();
-  }, []);
-  // run only once when component mounts
-
-  // Weekly Quest 2 Reset
-  useEffect(() => {
-    const initWeeklyReset = async () => {
-      await resetWeeklyProgressIfNeeded();
-    };
-
-    initWeeklyReset();
-  }, []);
+    return dailyBudget;
+  }, [dailyBudget, selectedIndex]);
 
   // ======================
   // Progress & Budget Overview
@@ -502,8 +323,6 @@ export default function Index() {
     if (!dailyBudget) return;
 
     const now = new Date();
-
-    // Helper: filter only real expense transactions
     const getRealExpenses = (txArray: any[]) =>
       txArray.filter(
         (t) => t.type === "expense" && t.source !== "planned_budget"
@@ -511,9 +330,6 @@ export default function Index() {
 
     const expenseTx = getRealExpenses(regularTransactions);
 
-    // ---------------------------
-    // Determine start of period
-    // ---------------------------
     let startDate: Date;
     switch (options[selectedIndex]) {
       case "Today":
@@ -531,9 +347,6 @@ export default function Index() {
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     }
 
-    // ---------------------------
-    // Filter transactions for current period
-    // ---------------------------
     const periodTx = expenseTx.filter((t) => {
       const txDate = new Date(t.date);
       return txDate >= startDate && txDate <= now;
@@ -545,25 +358,6 @@ export default function Index() {
     );
     setAmountSpent(totalSpent);
 
-    // ---------------------------
-    // Scale budget based on period
-    // ---------------------------
-    let newScaledBudget = dailyBudget;
-    if (options[selectedIndex] === "This Week")
-      newScaledBudget = dailyBudget * 7;
-    if (options[selectedIndex] === "This Month") {
-      const daysInMonth = new Date(
-        now.getFullYear(),
-        now.getMonth() + 1,
-        0
-      ).getDate();
-      newScaledBudget = dailyBudget * daysInMonth;
-    }
-    setScaledBudget(newScaledBudget);
-
-    // ---------------------------
-    // Previous period comparison
-    // ---------------------------
     let prevStart: Date, prevEnd: Date;
     if (options[selectedIndex] === "Today") {
       prevStart = new Date(now);
@@ -579,7 +373,7 @@ export default function Index() {
       prevStart.setDate(prevEnd.getDate() - 6);
     } else {
       prevEnd = new Date(startDate);
-      prevEnd.setDate(0); // last day of previous month
+      prevEnd.setDate(0);
       prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1);
     }
 
@@ -603,7 +397,6 @@ export default function Index() {
     setInsightText(calculateComparison(totalSpent, previousSpent, label));
   }, [dailyBudget, regularTransactions, selectedIndex]);
 
-  // Calculate Comparison
   const calculateComparison = (
     currentAmount: number,
     previousAmount: number,
@@ -624,6 +417,24 @@ export default function Index() {
   };
 
   // ======================
+  // 🟣 Budget Alert Logic
+  // ======================
+  const isOverBudget =
+    currentBudgetLimit > 0 && amountSpent > currentBudgetLimit;
+
+  useEffect(() => {
+    if (isOverBudget) {
+      Alert.alert(
+        "⚠️ Budget Exceeded!",
+        `You have exceeded your ${options[
+          selectedIndex
+        ].toLowerCase()} budget of ₱${currentBudgetLimit.toFixed(2)}.`,
+        [{ text: "OK" }]
+      );
+    }
+  }, [isOverBudget, selectedIndex, currentBudgetLimit]);
+
+  // ======================
   // Weekly Summary
   // ======================
   useEffect(() => {
@@ -641,8 +452,6 @@ export default function Index() {
   // ======================
   // Handle Daily Quest
   // ======================
-
-  // // 🧩 Handle Use App Quest
   useEffect(() => {
     async function handleDailyQuestCheck() {
       const { readyIds } = await checkDailyQuests();
@@ -657,7 +466,6 @@ export default function Index() {
         const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
         const today = new Date().toDateString();
 
-        // If already done today → show as complete
         if (hasUsedApp === "true" && lastUseApp === today) {
           setUseAppCompleted(true);
           setUseAppProgress(1);
@@ -671,7 +479,6 @@ export default function Index() {
     handleDailyQuestCheck();
   }, []);
 
-  // Automatic Reset when midnight (12:00am)
   useEffect(() => {
     const resetQuestIfNewDay = async () => {
       const today = new Date().toDateString();
@@ -685,6 +492,7 @@ export default function Index() {
     };
     resetQuestIfNewDay();
   }, []);
+
   useEffect(() => {
     const handleDailyQuestCheck = async () => {
       const { readyIds } = await checkDailyQuests();
@@ -707,32 +515,76 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    const resetQuestIfNewDay = async () => {
-      const today = new Date().toDateString();
-      const lastUseApp = await AsyncStorage.getItem("useAppQuestDate");
-      if (lastUseApp !== today) {
-        await AsyncStorage.multiRemove(["@hasUsedApp", "useAppQuestDate"]);
-        setUseAppCompleted(false);
-        setUseAppProgress(0);
+    const triggerLogin7DaysQuest = async () => {
+      try {
+        const today = new Date();
+        const todayStr = today.toDateString();
+
+        let streak =
+          Number(await AsyncStorage.getItem("@weeklyLoginStreak")) || 0;
+        const lastLoginStr = await AsyncStorage.getItem("@weeklyLastLoginDate");
+
+        if (!lastLoginStr) {
+          streak = 1;
+          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
+          await AsyncStorage.setItem("@weeklyLastLoginDate", todayStr);
+        } else if (lastLoginStr !== todayStr) {
+          const lastLoginDate = new Date(lastLoginStr);
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+
+          if (
+            lastLoginDate.getFullYear() === yesterday.getFullYear() &&
+            lastLoginDate.getMonth() === yesterday.getMonth() &&
+            lastLoginDate.getDate() === yesterday.getDate()
+          ) {
+            streak += 1;
+          } else {
+            streak = 1;
+          }
+
+          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
+          await AsyncStorage.setItem("@weeklyLastLoginDate", todayStr);
+        } else if (streak === 0) {
+          streak = 1;
+          await AsyncStorage.setItem("@weeklyLoginStreak", streak.toString());
+        }
+
+        setQuests((prev) =>
+          prev.map((q) =>
+            q.id === "login_7days"
+              ? { ...q, progress: streak, completed: streak >= 7 }
+              : q
+          )
+        );
+
+        setLogin7DaysProgress(Math.min(streak / 7, 1));
+        setLogin7DaysCompleted(streak >= 7);
+
+        if (streak >= 7) {
+          const toastShown = await AsyncStorage.getItem(
+            "@login7DaysToastShown"
+          );
+          if (!toastShown) {
+            showToast("🎉 Congrats! You've completed the 7-Day Login Quest!");
+            await AsyncStorage.setItem("@login7DaysToastShown", "true");
+          }
+        }
+      } catch (err) {
+        console.error("❌ Error updating 7-day login quest:", err);
       }
     };
-    resetQuestIfNewDay();
+
+    triggerLogin7DaysQuest();
   }, []);
 
-  //Troubleshoot for DailyQuests
-  // Reset code
-  // useEffect(() => {
-  //   const debugReset = async () => {
-  //     await AsyncStorage.multiRemove([
-  //       "@hasUsedApp",
-  //       "useAppQuestDate",
-  //       "useAppQuestTriggered",
-  //     ]);
-  //     console.log("🧹 Cleared AsyncStorage for testing first login");
-  //   };
+  useEffect(() => {
+    const initWeeklyReset = async () => {
+      await resetWeeklyProgressIfNeeded();
+    };
 
-  //   debugReset();
-  // }, []);
+    initWeeklyReset();
+  }, []);
 
   // ======================
   // Save Transaction
@@ -753,8 +605,6 @@ export default function Index() {
 
     const amount = Number(transactionAmount);
     const accountId = Number(selectedAccount.id);
-
-    // ⭐ FIX: Check if account has enough balance BEFORE saving
     const currentBalance = getAccountBalance(accountId);
 
     if (currentBalance < amount) {
@@ -769,7 +619,6 @@ export default function Index() {
       const date = new Date().toISOString();
       const accountId = selectedAccount?.id ? Number(selectedAccount.id) : null;
 
-      // ✅ Save to planned_budget_transactions only
       await savePlannedBudgetTransaction(
         selectedBudget.id,
         amount,
@@ -777,7 +626,6 @@ export default function Index() {
         accountId
       );
 
-      // ✅ Check completion before reloading
       const totalSpent =
         getTotalSpentForPlannedBudget(selectedBudget.id) + amount;
       if (totalSpent >= selectedBudget.amount) {
@@ -785,52 +633,41 @@ export default function Index() {
         setBudgetCompleteModalVisible(true);
       }
 
-      // Reset input & close modal
       setTransactionAmount("");
       setSelectedAccount(null);
       setIsTransactionModalVisible(false);
 
-      // ✅ Slight delay before reloading
       setTimeout(loadDatabase, 500);
     } catch (err) {
       console.error("❌ Error saving planned budget transaction:", err);
     }
   };
 
-  // -----------------------------
-  // Handle Close Button in Budget Completed Modal
-  // -----------------------------
   const handleCloseCompletedModal = async () => {
     if (!completedBudget) return;
 
     try {
-      // ✅ Ensure the account ID is a number
       const accountId = accounts.length > 0 ? Number(accounts[0].id) : null;
       if (accountId === null || isNaN(accountId)) return;
 
-      // ✅ Ensure amount is a number
       const amount = Number(completedBudget.amount);
       if (isNaN(amount)) return;
 
-      // ✅ Ensure planned budget ID is a number
       const plannedBudgetId = Number(completedBudget.id);
       if (isNaN(plannedBudgetId)) return;
 
       const date = new Date().toISOString();
 
-      // ✅ Save the completed planned budget as a transaction
       await savePlannedBudgetAsTransaction(
-        accountId, // 1️⃣ account ID (number)
-        plannedBudgetId, // 2️⃣ planned budget ID (number)
-        amount, // 3️⃣ amount
-        completedBudget.budget_name, // 4️⃣ description
-        date // 5️⃣ date
+        accountId,
+        plannedBudgetId,
+        amount,
+        completedBudget.budget_name,
+        date
       );
 
-      // ✅ Delete the planned budget after saving
       await deletePlannedBudget(plannedBudgetId, false);
 
-      // ✅ Close modal and refresh
       setBudgetCompleteModalVisible(false);
       setCompletedBudget(null);
       await loadDatabase();
@@ -839,17 +676,22 @@ export default function Index() {
     }
   };
 
-  // ======================
-  // Navigation Handlers
-  // ======================
   const handleLeftPress = () =>
     setSelectedIndex((prev) => (prev === 0 ? options.length - 1 : prev - 1));
   const handleRightPress = () =>
     setSelectedIndex((prev) => (prev === options.length - 1 ? 0 : prev + 1));
 
-  // ---------- UI ----------
+  // ======================
+  // Layout Dimensions
+  // ======================
+  const mainCardWidth = SCREEN_WIDTH * 0.85;
+  const marginSpace = (SCREEN_WIDTH - mainCardWidth) / 2;
+  const plannedBudgetCardWidth = SCREEN_WIDTH * 0.7;
+  const donutSize = scale(140);
+  const headerPadding = marginSpace;
+
   return (
-    <View className="items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
+    <View className="flex-1 items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <PlannedBudgetModals
         isBudgetModalVisible={isModalVisible}
         setIsBudgetModalVisible={setIsModalVisible}
@@ -917,7 +759,10 @@ export default function Index() {
 
       {/* === Header === */}
       <ReusableRoundedBoxComponent>
-        <View className="flex-col px-[32] pt-[8]">
+        <View
+          className="flex-col pt-[8]"
+          style={{ paddingHorizontal: headerPadding }}
+        >
           <View className="flex-row items-center gap-[4] pb-[16]">
             <View className="w-[25] h-[25] bg-white" />
             <Text className="font-medium text-white">Budget Tracker</Text>
@@ -945,8 +790,13 @@ export default function Index() {
 
       {/* === Overview === */}
       <View
-        className="w-[330] h-[220] -mt-[46] p-[20] rounded-[20] bg-card-light dark:bg-card-dark"
-        style={{ elevation: 5 }}
+        className="p-[20] rounded-[20] bg-card-light dark:bg-card-dark"
+        style={{
+          elevation: 5,
+          width: mainCardWidth,
+          height: scale(220),
+          marginTop: scale(-46),
+        }}
       >
         <View className="pb-[20] flex-row justify-between">
           <View className="flex-row gap-1 items-center justify-center">
@@ -965,7 +815,7 @@ export default function Index() {
               <SVG_ICONS.ArrowLeft width={24} height={24} />
             </TouchableOpacity>
 
-            <View style={{ width: 70 }}>
+            <View style={{ width: scale(70) }}>
               <Text className="text-[12px] font-medium self-center text-textPrimary-light dark:text-textPrimary-dark">
                 {options[selectedIndex]}
               </Text>
@@ -978,12 +828,20 @@ export default function Index() {
         </View>
 
         <View className="flex-row justify-between">
-          <View className="w-[140] h-[140] flex-col justify-center items-center">
+          <View
+            className="flex-col justify-center items-center"
+            style={{ width: donutSize, height: donutSize }}
+          >
+            {/* ✅ Updated DonutChart Call using currentBudgetLimit */}
             <DonutChart
-              progress={scaledBudget > 0 ? amountSpent / scaledBudget : 0}
-              dailyBudget={scaledBudget}
+              progress={
+                currentBudgetLimit > 0 ? amountSpent / currentBudgetLimit : 0
+              }
+              dailyBudget={currentBudgetLimit}
               spent={amountSpent}
               label={budgetLabel}
+              color={isOverBudget ? "#FF3B30" : "#8938E9"}
+              size={donutSize}
             />
           </View>
           <View className="flex-col items-end justify-end pr-[10] pb-[6]">
@@ -991,13 +849,10 @@ export default function Index() {
               <SVG_ICONS.Insight width={16} height={16} />
               <Text className="text-[12px] text-[#8938E9]">Insight</Text>
             </View>
-            {/* <Text className="text-[8px] text-[#392F46] opacity-65">
-              You spent 5% more
-            </Text>
-            <Text className="text-[8px] text-[#392F46] opacity-65">
-              than last week
-            </Text> */}
-            <Text className="text-[8px] opacity-65 text-right text-textHighlight-light dark:text-textHighlight-dark">
+            <Text
+              className="opacity-65 text-right text-textHighlight-light dark:text-textHighlight-dark"
+              style={{ fontSize: normalizeFont(8) }}
+            >
               {insightText || "Please add your budget"}
             </Text>
           </View>
@@ -1007,16 +862,19 @@ export default function Index() {
       {/* === Expense & Income Banners === */}
       {/* === Expense === */}
       <View
-        className="w-[330] h-[80] my-[16] p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
-        style={{ elevation: 5 }}
+        className="my-[16] p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
+        style={{
+          elevation: 5,
+          width: mainCardWidth,
+          height: scale(72),
+        }}
       >
-        <View className="flex-row">
+        <View className="flex-row h-full items-center">
           <View className="w-[48] h-[48] bg-[#8938E9] rounded-[16]" />
           <View className="pl-[20] gap-[6] self-center">
             <Text className="text-[12px] opacity-65 text-right text-textSecondary-light dark:text-textSecondary-dark">
-              Spent this week:
+              Spent last 7 days:
             </Text>
-            {/* Dynamically set the spent amount */}
             <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
               {formatCurrency(weeklySummary.spent)}
             </Text>
@@ -1031,16 +889,19 @@ export default function Index() {
 
       {/* === Income === */}
       <View
-        className="w-[330] h-[80] p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
-        style={{ elevation: 5 }}
+        className="p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
+        style={{
+          elevation: 5,
+          width: mainCardWidth,
+          height: scale(72),
+        }}
       >
-        <View className="flex-row">
+        <View className="flex-row h-full items-center">
           <View className="w-[48] h-[48] bg-[#8938E9] rounded-[16]" />
           <View className="pl-[20] gap-[6] self-center">
             <Text className="text-[12px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
-              Earned this week:
+              Earned last 7 days:
             </Text>
-            {/* Dynamically set the earned amount */}
             <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
               {formatCurrency(weeklySummary.earned)}
             </Text>
@@ -1055,15 +916,14 @@ export default function Index() {
 
       {/* === Planned Budgets Section === */}
       <View
-        className={`w-full mt-[32] mb-[16] pl-[32] bg-bgPrimary-light dark:bg-bgPrimary-dark
-        }`}
-        style={{ minHeight: screenHeight * 0.3 }}
+        className="w-full mt-[20] bg-bgPrimary-light dark:bg-bgPrimary-dark"
+        style={{
+          minHeight: SCREEN_HEIGHT * 0.3,
+          paddingLeft: (SCREEN_WIDTH - mainCardWidth) / 2, // Align start with upper cards
+        }}
       >
         <View className="flex-row gap-2">
-          <Text
-            className={`font-medium text-[16px] mb-[8]  text-textPrimary-light dark:text-textPrimary-dark
-          }`}
-          >
+          <Text className="font-medium text-[16px] mb-[20] text-textPrimary-light dark:text-textPrimary-dark">
             Planned Budgets
           </Text>
           <TouchableOpacity
@@ -1100,9 +960,10 @@ export default function Index() {
                   setSelectedBudget(budget);
                   setIsModalVisible(true);
                 }}
-                className={`w-[280] h-[140] rounded-[20] dark:bg-card-dark bg-card-light
-                }`}
+                className="rounded-[20] dark:bg-card-dark bg-card-light"
                 style={{
+                  width: plannedBudgetCardWidth,
+                  height: scale(110),
                   elevation: 6,
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 4 },
@@ -1125,15 +986,15 @@ export default function Index() {
                   {/* Foreground content */}
                   <View
                     className="flex-row gap-[12] items-center h-full px-[16]"
-                    style={{ zIndex: 1 }} // ensure this is above the overlay
+                    style={{ zIndex: 1 }}
                   >
                     <View
                       className="w-[16] h-[16] rounded-[4]"
                       style={{
                         backgroundColor: budget.color_name
-                          ? budget.color_name // hex + alpha for ~40% opacity
+                          ? budget.color_name
                           : "rgba(137, 56, 233, 0.4)",
-                        zIndex: 2, // extra safety
+                        zIndex: 2,
                       }}
                     />
                     <Text
@@ -1147,7 +1008,6 @@ export default function Index() {
 
                 {/* === Progress & Info === */}
                 <View className="py-[16] px-[20]">
-                  {/* FIX: Use 'budget' instead of 'selectedBudget' for the current item */}
                   <ProgressBar
                     progress={getProgress(budget, plannedBudgetTransactions)}
                   />
