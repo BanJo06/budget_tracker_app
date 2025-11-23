@@ -110,49 +110,59 @@ export default function ExportTransactionsCSV() {
       style={{ padding: 20 }}
       className="flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark"
     >
-      <Text className="text-textPrimary-light dark:text-textPrimary-dark">
-        From:
-      </Text>
-      <TouchableOpacity onPress={() => setShowFromPicker(true)}>
+      <View className="flex-col items-center gap-4 mb-[32]">
         <Text className="text-textPrimary-light dark:text-textPrimary-dark">
-          {fromDate.toDateString()}
+          From:
         </Text>
-      </TouchableOpacity>
-      {showFromPicker && (
-        <DateTimePicker
-          value={fromDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, date) => {
-            setShowFromPicker(false);
-            if (date) setFromDate(date);
-          }}
-        />
-      )}
+        <TouchableOpacity
+          className="w-[150] h-[40] bg-button-light dark:bg-button-dark rounded-[10] items-center justify-center"
+          onPress={() => setShowFromPicker(true)}
+        >
+          <Text className="text-textButton-light dark:text-textButton-dark">
+            {fromDate.toDateString()}
+          </Text>
+        </TouchableOpacity>
 
-      <Text className="text-textPrimary-light dark:text-textPrimary-dark">
-        To:
-      </Text>
-      <TouchableOpacity onPress={() => setShowToPicker(true)}>
+        {showFromPicker && (
+          <DateTimePicker
+            value={fromDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, date) => {
+              setShowFromPicker(false);
+              if (date) setFromDate(date);
+            }}
+          />
+        )}
+      </View>
+      <View className="flex-col items-center gap-4">
         <Text className="text-textPrimary-light dark:text-textPrimary-dark">
-          {toDate.toDateString()}
+          To:
         </Text>
-      </TouchableOpacity>
-      {showToPicker && (
-        <DateTimePicker
-          value={toDate}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, date) => {
-            setShowToPicker(false);
-            if (date) setToDate(date);
-          }}
-        />
-      )}
+        <TouchableOpacity
+          className="w-[150] h-[40] bg-button-light dark:bg-button-dark rounded-[10] items-center justify-center"
+          onPress={() => setShowToPicker(true)}
+        >
+          <Text className="text-textButton-light dark:text-textButton-dark">
+            {toDate.toDateString()}
+          </Text>
+        </TouchableOpacity>
 
+        {showToPicker && (
+          <DateTimePicker
+            value={toDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, date) => {
+              setShowToPicker(false);
+              if (date) setToDate(date);
+            }}
+          />
+        )}
+      </View>
       <TouchableOpacity
         style={{
-          marginTop: 20,
+          marginTop: 80,
           padding: 15,
           borderRadius: 8,
         }}
