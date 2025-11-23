@@ -2,9 +2,19 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import React, { useState } from "react";
-import { Alert, Platform, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { db } from "@/utils/database";
+// import { useColorScheme } from "nativewind";
+
+import { useColorScheme } from "react-native";
 
 // ✅ TypeScript type for transactions
 type TransactionRow = {
@@ -21,6 +31,8 @@ export default function ExportTransactionsCSV() {
   const [toDate, setToDate] = useState(new Date());
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
+
+  const colorScheme = useColorScheme();
 
   // Convert JSON array to CSV
   const convertToCSV = (
@@ -110,15 +122,22 @@ export default function ExportTransactionsCSV() {
       style={{ padding: 20 }}
       className="flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark"
     >
-      <View className="flex-col items-center gap-4 mb-[32]">
-        <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+      <StatusBar
+        // If the colorScheme is 'dark', use 'light-content' (white text/icons)
+        // If the colorScheme is 'light' or null/undefined, use 'dark-content' (black text/icons)
+        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colorScheme === "dark" ? "#000000" : "#FFFFFF"} // Optional: Set background color for Android
+      />
+      {/* FROM Date Picker */}
+      <View className="w-full mb-[32]">
+        <Text className="text-textPrimary-light dark:text-textPrimary-dark mb-2">
           From:
         </Text>
         <TouchableOpacity
-          className="w-[150] h-[40] bg-button-light dark:bg-button-dark rounded-[10] items-center justify-center"
+          className="w-full h-[50] bg-button-light dark:bg-button-dark rounded-[10] items-center justify-center" // w-[150] changed to w-full, h slightly increased
           onPress={() => setShowFromPicker(true)}
         >
-          <Text className="text-textButton-light dark:text-textButton-dark">
+          <Text className="text-textButton-light dark:text-textButton-dark font-bold text-lg">
             {fromDate.toDateString()}
           </Text>
         </TouchableOpacity>
@@ -135,15 +154,17 @@ export default function ExportTransactionsCSV() {
           />
         )}
       </View>
-      <View className="flex-col items-center gap-4">
-        <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+
+      {/* TO Date Picker */}
+      <View className="w-full">
+        <Text className="text-textPrimary-light dark:text-textPrimary-dark mb-2">
           To:
         </Text>
         <TouchableOpacity
-          className="w-[150] h-[40] bg-button-light dark:bg-button-dark rounded-[10] items-center justify-center"
+          className="w-full h-[50] bg-button-light dark:bg-button-dark rounded-[10] items-center justify-center" // w-[150] changed to w-full, h slightly increased
           onPress={() => setShowToPicker(true)}
         >
-          <Text className="text-textButton-light dark:text-textButton-dark">
+          <Text className="text-textButton-light dark:text-textButton-dark font-bold text-lg">
             {toDate.toDateString()}
           </Text>
         </TouchableOpacity>
@@ -160,9 +181,11 @@ export default function ExportTransactionsCSV() {
           />
         )}
       </View>
+
+      {/* Export Button */}
       <TouchableOpacity
         style={{
-          marginTop: 80,
+          marginTop: 60, // Reduced from 80 for better flow
           padding: 15,
           borderRadius: 8,
         }}
@@ -171,7 +194,7 @@ export default function ExportTransactionsCSV() {
       >
         <Text
           style={{ textAlign: "center", fontWeight: "bold" }}
-          className="text-textInsidePrimary-light dark:text-textInsidePrimary-dark"
+          className="text-textInsidePrimary-light dark:text-textInsidePrimary-dark text-lg" // Added text-lg
         >
           Export to CSV
         </Text>

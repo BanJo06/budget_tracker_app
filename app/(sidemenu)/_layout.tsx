@@ -59,7 +59,7 @@ const CustomDrawerContent = (props) => {
     },
     {
       label: "Backup",
-      icon: <MaterialIcons name="post-add" size={24} />,
+      icon: <MaterialIcons name="post-add" size={24} color={iconColor} />,
       route: "backup",
     },
   ];
@@ -239,14 +239,16 @@ export default function Layout() {
         options={({ navigation }) => ({
           drawerLabel: "Backup",
           title: "Backup",
-          headerShown: true, // Show header for this screen
-          // Conditionally render the back button
+          headerShown: true,
+          headerStyle,
+          headerTitleStyle,
+          headerTintColor: backButtonColor,
           headerLeft: () => (
             <Pressable
               onPress={() => navigation.goBack()}
               style={{ paddingHorizontal: 15 }}
             >
-              <Text style={{ fontSize: 24 }}>←</Text>
+              <Text style={{ fontSize: 24, color: backButtonColor }}>←</Text>
             </Pressable>
           ),
         })}

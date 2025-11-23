@@ -1,7 +1,13 @@
 import { getDb } from "@/utils/database";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
-import { Dimensions, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -41,7 +47,6 @@ const fetchTransactions = async (): Promise<IncomeTransaction[]> => {
   }
 };
 
-// Example income category colors
 const categoryColors: { [key: string]: string } = {
   Allowance: "#4ADE80",
   Lottery: "#FACC15",
@@ -54,39 +59,10 @@ const categoryColors: { [key: string]: string } = {
 const getCategoryColor = (categoryName: string) =>
   categoryColors[categoryName] || categoryColors["Uncategorized"];
 
-const getMonths = () => {
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  return monthNames.map((name, i) => ({ label: name, value: i + 1 }));
-};
-
-const getYears = () => {
-  const currentYear = new Date().getFullYear();
-  return Array.from({ length: 6 }, (_, i) => ({
-    label: String(currentYear - i),
-    value: currentYear - i,
-  }));
-};
-
 export default function IncomeContent({ month, year }: IncomeContentProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
-  const [period, setPeriod] = useState("month");
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
   const [incomeData, setIncomeData] = useState({
     totalDay: 0,
     totalWeek: 0,
@@ -96,61 +72,68 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       amount: number;
       percentage: number;
     }[],
-    totalFiltered: 0,
   });
 
-  const months = getMonths();
-  const years = getYears();
-  const currentMonthName = months.find((m) => m.value === selectedMonth)?.label;
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const processIncome = async () => {
+      setIsLoading(true);
+
       const allIncome = await fetchTransactions();
+
+      // 1. Define Time Boundaries based on Selected Month/Year
+      const startOfSelectedMonth = new Date(year, month - 1, 1).toISOString();
+      const endOfSelectedMonth = new Date(
+        year,
+        month,
+        0,
+        23,
+        59,
+        59
+      ).toISOString();
+
+      // 2. Define Time Boundaries for Day/Week Cards (Relative to "Now")
       const now = new Date();
-      const startOfDay = new Date(
+      const startOfToday = new Date(
         now.getFullYear(),
         now.getMonth(),
         now.getDate()
       ).toISOString();
-      const startOfWeek = new Date(
+
+      const todayObj = new Date(
         now.getFullYear(),
         now.getMonth(),
-        now.getDate() - now.getDay()
-      ).toISOString();
-      const startOfSelectedMonth = new Date(year, month - 1, 1).toISOString();
-      const endOfSelectedMonth = new Date(year, month, 0).toISOString();
+        now.getDate()
+      );
+      const dayOfWeek = todayObj.getDay(); // 0 (Sun) to 6 (Sat)
+      const startOfCurrentWeek = new Date(todayObj);
+      startOfCurrentWeek.setDate(todayObj.getDate() - dayOfWeek); // Go back to Sunday
+      const startOfCurrentWeekISO = startOfCurrentWeek.toISOString();
 
-      const totalDay = allIncome
-        .filter((t) => t.date >= startOfDay)
-        .reduce((sum, t) => sum + t.amount, 0);
-      const totalWeek = allIncome
-        .filter((t) => t.date >= startOfWeek)
-        .reduce((sum, t) => sum + t.amount, 0);
-      const totalMonth = allIncome
-        .filter(
-          (t) => t.date >= startOfSelectedMonth && t.date <= endOfSelectedMonth
-        )
-        .reduce((sum, t) => sum + t.amount, 0);
+      // 3. Filter Income Logic
+      // Month Total: Strictly what falls in the selected month
+      const monthIncome = allIncome.filter(
+        (t) => t.date >= startOfSelectedMonth && t.date <= endOfSelectedMonth
+      );
 
-      let filteredIncome: IncomeTransaction[] = [];
-      let totalFiltered = 0;
+      // Day Total: Must be Today AND Today must be within the selected month view
+      const dayIncome = monthIncome.filter((t) => t.date >= startOfToday);
 
-      if (period === "day") {
-        filteredIncome = allIncome.filter((t) => t.date >= startOfDay);
-        totalFiltered = totalDay;
-      } else if (period === "week") {
-        filteredIncome = allIncome.filter((t) => t.date >= startOfWeek);
-        totalFiltered = totalWeek;
-      } else {
-        filteredIncome = allIncome.filter(
-          (t) => t.date >= startOfSelectedMonth && t.date <= endOfSelectedMonth
-        );
-        totalFiltered = totalMonth;
-      }
+      // Week Total: Must be This Week AND This Week must be within the selected month view
+      const weekIncome = monthIncome.filter(
+        (t) => t.date >= startOfCurrentWeekISO
+      );
 
+      const totalMonth = monthIncome.reduce((sum, t) => sum + t.amount, 0);
+      const totalDay = dayIncome.reduce((sum, t) => sum + t.amount, 0);
+      const totalWeek = weekIncome.reduce((sum, t) => sum + t.amount, 0);
+
+      // 4. Build category breakdown
       const categoryMap: { [key: string]: { name: string; amount: number } } =
         {};
-      filteredIncome.forEach((inc) => {
+
+      monthIncome.forEach((inc) => {
         const categoryName = inc.category_name || "Uncategorized";
         if (!categoryMap[categoryName])
           categoryMap[categoryName] = { name: categoryName, amount: 0 };
@@ -160,8 +143,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       const processedCategories = Object.values(categoryMap)
         .map((cat) => ({
           ...cat,
-          percentage:
-            totalFiltered > 0 ? (cat.amount / totalFiltered) * 100 : 0,
+          percentage: totalMonth > 0 ? (cat.amount / totalMonth) * 100 : 0,
         }))
         .sort((a, b) => b.percentage - a.percentage);
 
@@ -170,9 +152,11 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
         totalWeek,
         totalMonth,
         filteredCategories: processedCategories,
-        totalFiltered,
       });
+
+      setIsLoading(false);
     };
+
     processIncome();
   }, [month, year]);
 
@@ -182,21 +166,31 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       name: c.name,
       population: c.amount,
       color: getCategoryColor(c.name),
-      legendFontColor: "#7F7F7F",
+      legendFontColor: isDark ? "#FFFFFF" : "#7F7F7F",
       legendFontSize: 12,
     }));
 
-  const getCurrencyFormatted = (amount: number) => `₱${amount.toFixed(2)}`;
+  const getCurrencyFormatted = (amount: number) => {
+    // If no value (0), standard formatting is P0.00, or you can return "--" if preferred
+    if (amount === 0) return "₱0.00";
+    return `₱${amount.toFixed(2)}`;
+  };
 
   const chartConfig = {
-    color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+    color: (opacity = 1) =>
+      isDark ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`,
+    labelColor: (opacity = 1) =>
+      isDark ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`,
     propsForLabels: { fontSize: 12 },
   };
 
   return (
     <ScrollView
-      contentContainerStyle={{ alignItems: "center", paddingHorizontal: 32 }}
+      contentContainerStyle={{
+        alignItems: "center",
+        paddingHorizontal: 32,
+        paddingBottom: 20,
+      }}
       className="bg-bgPrimary-light dark:bg-bgPrimary-dark"
     >
       {/* Graph Overview */}
@@ -210,31 +204,46 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
           </Text>
         </View>
 
-        <View className="flex-row justify-between items-center mt-4">
-          <PieChart
-            data={pieData}
-            width={screenWidth * 0.5} // Chart size remains
-            height={150}
-            chartConfig={chartConfig}
-            accessor="population"
-            backgroundColor="transparent"
-            paddingLeft="16"
-            hasLegend={false}
-          />
-          <View>
-            {incomeData.filteredCategories.map((category, index) => (
-              <View key={index} className="flex-row items-center mb-1">
-                <View
-                  className="w-3 h-3 rounded-full mr-1"
-                  style={{ backgroundColor: getCategoryColor(category.name) }}
-                />
-                <Text className="text-xs text-textPrimary-light dark:text-textPrimary-dark">
-                  {category.name} ({category.percentage.toFixed(0)}%)
-                </Text>
-              </View>
-            ))}
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#8938E9" />
           </View>
-        </View>
+        ) : pieData.length === 0 ? (
+          <View className="flex-1 items-center justify-center">
+            <Text className="opacity-60 text-textPrimary-light dark:text-textPrimary-dark">
+              No Data
+            </Text>
+          </View>
+        ) : (
+          <View className="flex-row justify-between items-center mt-4">
+            <PieChart
+              data={pieData}
+              width={screenWidth * 0.5}
+              height={150}
+              chartConfig={chartConfig}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="16"
+              hasLegend={false}
+            />
+            <View className="flex-1">
+              {incomeData.filteredCategories.map((category, index) => (
+                <View key={index} className="flex-row items-center mb-1">
+                  <View
+                    className="w-3 h-3 rounded-full mr-1"
+                    style={{ backgroundColor: getCategoryColor(category.name) }}
+                  />
+                  <Text
+                    className="text-xs text-textPrimary-light dark:text-textPrimary-dark flex-1"
+                    numberOfLines={1}
+                  >
+                    {category.name} ({category.percentage.toFixed(0)}%)
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Summary Cards */}
@@ -248,7 +257,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
           return (
             <View
               key={label}
-              className="flex-1 h-22 p-5 rounded-2xl items-center bg-card-light dark:bg-card-dark"
+              className="flex-1 h-22 p-5 rounded-2xl items-center justify-center bg-card-light dark:bg-card-dark"
               style={{ elevation: 5 }}
             >
               <Text className="opacity-60 text-base text-textPrimary-light dark:text-textPrimary-dark">
@@ -263,14 +272,14 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       </View>
 
       {/* Category List */}
-      <View className="flex-col mt-8 gap-4 w-full">
+      <View className="flex-col mt-8 gap-4 w-full mb-8">
         {incomeData.filteredCategories.map((category, index) => (
           <View key={index} className="flex-row gap-4 items-center w-full">
             <View
               className="w-12 h-12 rounded-full"
               style={{ backgroundColor: getCategoryColor(category.name) }}
             />
-            <View className="justify-center gap-1">
+            <View className="justify-center gap-1 flex-1">
               <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
                 {category.name}
               </Text>
@@ -278,7 +287,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
                 Cash
               </Text>
             </View>
-            <View className="flex-1 flex-col justify-end items-end gap-1">
+            <View className="flex-col justify-end items-end gap-1">
               <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
                 {getCurrencyFormatted(category.amount)}
               </Text>
@@ -288,6 +297,11 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
             </View>
           </View>
         ))}
+        {incomeData.filteredCategories.length === 0 && !isLoading && (
+          <Text className="text-center text-gray-400 mt-5">
+            No income found for this month.
+          </Text>
+        )}
       </View>
     </ScrollView>
   );
