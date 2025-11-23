@@ -58,8 +58,8 @@ const CustomDrawerContent = (props) => {
       route: "addlaterecords",
     },
     {
-      label: "Backup",
-      icon: <MaterialIcons name="post-add" size={24} color={iconColor} />,
+      label: "Backup/Restore",
+      icon: <MaterialIcons name="backup" size={24} color={iconColor} />,
       route: "backup",
     },
   ];
@@ -75,9 +75,9 @@ const CustomDrawerContent = (props) => {
       <View className="flex-1 h-full bg-bgPrimary-light dark:bg-bgPrimary-dark">
         {/* Header */}
         <View className="bg-purple-700 p-6 rounded-3xl mb-6">
-          <Text className="text-white text-2xl font-bold">Budget Tracker</Text>
+          <Text className="text-white text-2xl font-bold">PeraPal</Text>
           <Text className="text-purple-200 text-sm mt-1">
-            Manage your expenses easily
+            Manage your expenses easily with fun!
           </Text>
         </View>
 

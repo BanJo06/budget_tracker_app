@@ -29,7 +29,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Dimensions,
   Modal,
+  ScrollView,
   StatusBar,
   Text,
   TextInput,
@@ -57,6 +59,11 @@ type Transaction = {
   source?: string | null;
 };
 
+// Get screen width for potential dynamic sizing (though Flex/Tailwind is often enough)
+const { width: screenWidth } = Dimensions.get("window");
+// Define a max width for the content for better legibility on tablets/very large screens
+const MAX_CONTENT_WIDTH = 500;
+
 // ==============================
 // 🔹 Reusable Components
 // ==============================
@@ -70,13 +77,17 @@ const CalculatorButton = ({
   onPress: () => void;
   isLarge?: boolean;
 }) => {
+  // Ensure the button is touchable and scales
+  const baseWidth = isLarge ? "49%" : "24%";
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`h-[60] border-2 border-search-light dark:border-search-dark rounded-lg justify-center items-center active:bg-search-light dark:active:bg-search-dark ${
-        isLarge ? "w-[49%]" : "w-[24%]"
-      }`}
-      style={isLarge ? { width: "49%" } : { width: "24%" }}
+      // Use dynamic width property for calculation grid
+      style={{
+        width: baseWidth,
+        height: 60, // Fixed height for a consistent calculator feel
+      }}
+      className={`border-2 border-search-light dark:border-search-dark rounded-lg justify-center items-center active:bg-search-light dark:active:bg-search-dark`}
     >
       {label === "←" ? (
         <SVG_ICONS.Backspace size={36} />
@@ -149,7 +160,7 @@ const NewAccountModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12 max-w-lg">
           <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
             Add new account
           </Text>
@@ -159,7 +170,7 @@ const NewAccountModal = ({
               Initial Amount
             </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-bgTextbox-light dark:bg-bgTextbox-dark"
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-bgTextbox-light dark:bg-bgTextbox-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="0"
               keyboardType="numeric"
               value={initialAmount}
@@ -172,7 +183,7 @@ const NewAccountModal = ({
               Name
             </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-bgTextbox-light dark:bg-bgTextbox-dark"
+              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 bg-bgTextbox-light dark:bg-bgTextbox-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="Untitled"
               value={accountName}
               onChangeText={setAccountName}
@@ -207,10 +218,10 @@ const NewAccountModal = ({
 
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-button-light dark:border-button-dark justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-borderButton-light dark:border-borderButton-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-button-light dark:text-button-dark">
+              <Text className="uppercase text-borderButton-light dark:text-borderButton-dark">
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -271,43 +282,48 @@ const AccountsModal = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12 max-w-lg">
           <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
             Select Account
           </Text>
-
-          {accounts.map((account) => {
-            const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
-            return (
-              <TouchableOpacity
-                key={account.id}
-                className="w-full h-[50] px-4 flex-row justify-between items-center mb-2"
-                onPress={() => {
-                  onSelectAccount(account);
-                  onClose();
-                }}
-              >
-                <View className="flex-row gap-2 items-center">
-                  <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
-                    {IconComponent && <IconComponent size={24} color="white" />}
+          {/* Use ScrollView inside modal if account list is long on small screens */}
+          <ScrollView
+            style={{ maxHeight: Dimensions.get("window").height * 0.5 }}
+          >
+            {accounts.map((account) => {
+              const IconComponent = ACCOUNTS_SVG_ICONS[account.icon_name];
+              return (
+                <TouchableOpacity
+                  key={account.id}
+                  className="w-full h-[50] px-4 flex-row justify-between items-center mb-2"
+                  onPress={() => {
+                    onSelectAccount(account);
+                    onClose();
+                  }}
+                >
+                  <View className="flex-row gap-2 items-center">
+                    <View className="w-[40] h-[40] bg-[#8938E9] rounded-full justify-center items-center">
+                      {IconComponent && (
+                        <IconComponent size={24} color="white" />
+                      )}
+                    </View>
+                    <Text className="text-lg text-textPrimary-light dark:text-textPrimary-dark">
+                      {account.name}
+                    </Text>
                   </View>
-                  <Text className="text-lg text-textPrimary-light dark:text-textPrimary-dark">
-                    {account.name}
+                  <Text className="text-lg text-textHighlight-light dark:text-textHighlight-dark">
+                    ₱{account.balance.toFixed(2)}
                   </Text>
-                </View>
-                <Text className="text-lg text-textHighlight-light dark:text-textHighlight-dark">
-                  ₱{account.balance.toFixed(2)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
 
           <TouchableOpacity
             onPress={toggleNewAccountModal}
             className="w-full h-[40] justify-center items-center rounded-lg mt-4 bg-button-light dark:bg-button-dark"
           >
             <View className="flex-row items-center justify-center gap-2">
-              {/* <SVG_ICONS.SmallAdd size={15} color="#8938E9" /> */}
               <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
                 ADD NEW ACCOUNT
               </Text>
@@ -328,31 +344,6 @@ const AccountsModal = ({
 // ==============================
 // 🔹 Small Helper Components
 // ==============================
-
-const AccountSelector = ({
-  label,
-  icon,
-  value,
-  onPress,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  value: string;
-  onPress: () => void;
-}) => {
-  return (
-    <View className="items-center flex-1 mx-1">
-      <Text className="text-sm mb-2">{label}</Text>
-      <TouchableOpacity
-        onPress={onPress}
-        className="w-full h-12 flex-row gap-4 justify-center items-center bg-[#8938E9] rounded-lg"
-      >
-        {icon}
-        <Text className="text-white text-base">{value}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 const CalculatorGrid = ({
   onNumber,
@@ -541,8 +532,14 @@ export default function Add() {
   const handleSwitchChange = (value: "expense" | "income" | "transfer") => {
     setSelectedOption(value);
     setSelectedCategory(null);
-    setSelectedAccount(null);
-    setToAccount(null);
+    // Reset accounts only if changing from transfer to non-transfer or vice-versa
+    if (
+      (selectedOption === "transfer" && value !== "transfer") ||
+      (selectedOption !== "transfer" && value === "transfer")
+    ) {
+      setSelectedAccount(null);
+      setToAccount(null);
+    }
   };
 
   const handleNumberInput = (num: string) => {
@@ -600,7 +597,7 @@ export default function Add() {
   useEffect(() => {
     async function initializeFormForEdit() {
       // 1. If we are NOT editing a transaction, or if the form is already initialized, stop.
-      //    This prevents the form from being reset on every re-render after initial population.
+      //     This prevents the form from being reset on every re-render after initial population.
       if (!parsedTransaction || isInitialized) return; // 1. Load categories
 
       const incomes = await getIncomeCategories();
@@ -611,7 +608,7 @@ export default function Add() {
       const allAccounts = await getAccounts();
       setAccounts(allAccounts); // 3. Populate form for editing
 
-      const t = parsedTransaction; // Set all state variables directly from the transaction object
+      const t = parsedTransaction as Transaction; // Type assertion for safety
 
       setNotes(t.description || "");
       setDisplayValue(t.amount?.toString() || "");
@@ -629,7 +626,9 @@ export default function Add() {
 
       if (t.type !== "transfer" && t.category_id) {
         const categories = t.type === "expense" ? expenses : incomes;
-        const cat = categories.find((c) => c.id === t.category_id);
+        // Search in correct array (categories is a simple list of objects, not the structured state)
+        const allCats = [...incomes, ...expenses];
+        const cat = allCats.find((c: any) => c.id === t.category_id);
         if (cat) setSelectedCategory(cat);
       } else if (t.type === "transfer") {
         setSelectedCategory(null);
@@ -687,6 +686,8 @@ export default function Add() {
     // =================================================
     // 3. INSUFFICIENT FUNDS CHECK
     // =================================================
+    // IMPORTANT: Assuming getAccountBalance is implemented to fetch the *current* balance
+    // based on the account ID number, not just a property on the selectedAccount object.
     const currentBalance = getAccountBalance(Number(fromAccountId));
 
     // Logic: Check funds if it is a NEW expense/transfer OR if editing and increasing amount (simplified)
@@ -710,13 +711,24 @@ export default function Add() {
     // 4. BUDGET CHECKS (Expenses Only)
     // =================================================
     if (transactionType === "expense") {
+      const dailyBudgetValue = getBudgetValue("daily_budget");
+
+      // ✅ NEW CONDITION ADDED HERE
+      if (dailyBudgetValue === 0) {
+        alert(
+          "Your daily budget value is 0. Please set your preferred daily budget first."
+        );
+        return;
+      }
+      // ---------------------------------
+
       // 1. Calculate what has been spent today so far
       let totalSpentToday = 0;
       try {
         const allTransactions = getAllTransactions(); // Assuming this is synchronous based on your utils
         const now = new Date();
-        totalSpentToday = allTransactions
-          .filter((t: any) => {
+        totalSpentToday = (allTransactions as Transaction[])
+          .filter((t: Transaction) => {
             const txDate = new Date(t.date);
             return (
               txDate.getFullYear() === now.getFullYear() &&
@@ -726,12 +738,13 @@ export default function Add() {
               !t.source // Exclude system entries if needed
             );
           })
-          .reduce((sum: number, t: any) => sum + Number(t.amount || 0), 0);
+          .reduce(
+            (sum: number, t: Transaction) => sum + Number(t.amount || 0),
+            0
+          );
       } catch (error) {
         console.error("Failed to calculate today's total expenses:", error);
       }
-
-      const dailyBudgetValue = getBudgetValue("daily_budget");
 
       // Check 1: Exceeds total daily budget?
       if (amount > dailyBudgetValue) {
@@ -785,8 +798,6 @@ export default function Add() {
         // -------------------------------------------
         // A) UPDATE EXISTING TRANSACTION
         // -------------------------------------------
-        // This works for Income, Expense, AND Transfer because
-        // updateExistingTransaction (in transactions.js) now handles the logic for all 3.
 
         const resolvedToAccountId =
           transactionType === "transfer" ? toAccountId : null;
@@ -810,7 +821,6 @@ export default function Add() {
 
         if (transactionType === "transfer") {
           // Case 1: New Transfer
-          // saveTransferTransaction handles balance updates internally
           await saveTransferTransaction(
             Number(fromAccountId),
             Number(toAccountId),
@@ -885,7 +895,7 @@ export default function Add() {
   ];
 
   return (
-    <View className="p-8 flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark">
+    <View className="flex-1 bg-bgPrimary-light dark:bg-bgPrimary-dark">
       <StatusBar barStyle={"dark-content"} />
 
       {/* Modals */}
@@ -916,133 +926,141 @@ export default function Add() {
         />
       </CategoryModal>
 
-      {/* Header Buttons */}
-      <View className="flex-row justify-between mt-4">
-        <TouchableOpacity
-          onPress={handleCancel}
-          className="w-32 h-10 justify-center items-center rounded-lg bg-button-light dark:bg-button-dark"
+      {/* Main Content ScrollView for larger screens */}
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View
+          className="p-8 mx-auto w-full"
+          style={{ maxWidth: MAX_CONTENT_WIDTH }} // Constrain max width for large phones/tablets
         >
-          <Text className="text-white text-base font-medium">CANCEL</Text>
-        </TouchableOpacity>
+          {/* Header Buttons */}
+          <View className="flex-row justify-between mt-4">
+            <TouchableOpacity
+              onPress={handleCancel}
+              className="w-32 h-10 justify-center items-center rounded-lg bg-button-light dark:bg-button-dark"
+            >
+              <Text className="text-white text-base font-medium">CANCEL</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleSaveTransaction}
-          className={`w-32 h-10 justify-center items-center bg-button-light dark:bg-button-dark rounded-lg ${
-            !dbReady ? "opacity-50" : ""
-          }`}
-          disabled={!dbReady}
-        >
-          <Text className="text-white text-base font-medium">
-            {mode === "edit" ? "UPDATE" : "SAVE"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              onPress={handleSaveTransaction}
+              className={`w-32 h-10 justify-center items-center bg-button-light dark:bg-button-dark rounded-lg ${
+                !dbReady ? "opacity-50" : ""
+              }`}
+              disabled={!dbReady}
+            >
+              <Text className="text-white text-base font-medium">
+                {mode === "edit" ? "UPDATE" : "SAVE"}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      {/* Switch */}
-      <View className="mt-10">
-        <SwitchSelector
-          key={selectedOption} // <-- forces re-render when selectedOption changes
-          options={options}
-          initial={options.findIndex((opt) => opt.value === selectedOption)} // index to select
-          onPress={(val) =>
-            handleSwitchChange(val as "expense" | "income" | "transfer")
-          }
-          backgroundColor={"#F0E4FF"}
-          textColor={"#000000"}
-          selectedColor={"#ffffff"}
-          buttonColor={"#7a44cf"}
-          hasPadding={true}
-          borderRadius={30}
-          borderColor={"#F0E4FF"}
-          height={40}
-          textStyle={{ fontSize: 12, fontWeight: "500" }}
-          selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
-        />
-      </View>
+          {/* Switch */}
+          <View className="mt-10">
+            <SwitchSelector
+              key={selectedOption} // <-- forces re-render when selectedOption changes
+              options={options}
+              initial={options.findIndex((opt) => opt.value === selectedOption)} // index to select
+              onPress={(val) =>
+                handleSwitchChange(val as "expense" | "income" | "transfer")
+              }
+              backgroundColor={"#F0E4FF"}
+              textColor={"#000000"}
+              selectedColor={"#ffffff"}
+              buttonColor={"#7a44cf"}
+              hasPadding={true}
+              borderRadius={30}
+              borderColor={"#F0E4FF"}
+              height={40}
+              textStyle={{ fontSize: 12, fontWeight: "500" }}
+              selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
+            />
+          </View>
 
-      {/* Account / Category selectors */}
-      <View className="flex-row justify-between mt-8">
-        <View className="items-center flex-1 mr-2">
-          <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
-            {selectedOption === "transfer" ? "From" : "Account"}
-          </Text>
-          <TouchableOpacity
-            onPress={toggleAccountsModal}
-            className="w-full h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark  rounded-lg"
-          >
-            <SVG_ICONS.Account size={16} color="white" />
-            <Text className="text-white text-base">
-              {selectedAccount ? selectedAccount.name : "Account"}
-            </Text>
-          </TouchableOpacity>
+          {/* Account / Category selectors */}
+          <View className="flex-row justify-between mt-8">
+            <View className="items-center flex-1 mr-2">
+              <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
+                {selectedOption === "transfer" ? "From" : "Account"}
+              </Text>
+              <TouchableOpacity
+                onPress={toggleAccountsModal}
+                className="w-full h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark  rounded-lg"
+              >
+                <SVG_ICONS.Account size={16} color="white" />
+                <Text className="text-white text-base">
+                  {selectedAccount ? selectedAccount.name : "Account"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View className="items-center flex-1 ml-2">
+              <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark ">
+                {selectedOption === "transfer" ? "To" : "Category"}
+              </Text>
+              <TouchableOpacity
+                onPress={
+                  selectedOption === "transfer"
+                    ? toggleToAccountsModal
+                    : toggleCategoriesModal
+                }
+                className="w-full h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark  rounded-lg"
+              >
+                {selectedOption === "transfer" ? (
+                  <SVG_ICONS.Account size={16} color="white" />
+                ) : (
+                  <SVG_ICONS.Category size={16} color="white" />
+                )}
+                <Text className="text-white text-base">
+                  {selectedOption === "transfer"
+                    ? toAccount
+                      ? toAccount.name
+                      : "Account"
+                    : selectedCategory
+                    ? selectedCategory.name
+                    : "Category"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Notes */}
+          <View className="mt-6">
+            <TextInput
+              className="w-full h-24 border-2 border-search-light dark:border-search-dark rounded-lg p-4 text-base text-textTextbox-light dark:text-textTextbox-dark"
+              placeholder="Notes"
+              multiline={true}
+              numberOfLines={3}
+              maxLength={100}
+              value={notes}
+              onChangeText={setNotes}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Display */}
+          <View className="mt-4">
+            <View className="w-full h-[80] border-2 border-search-light dark:border-search-dark rounded-lg p-2 flex items-end justify-center">
+              <Text
+                className="text-7xl text-right text-textPrimary-light dark:text-textPrimary-dark"
+                style={{ lineHeight: 65, includeFontPadding: false }}
+              >
+                {displayValue}
+              </Text>
+            </View>
+          </View>
+
+          {/* Calculator */}
+          <View className="mt-4 mb-10">
+            <CalculatorGrid
+              onNumber={handleNumberInput}
+              onOperator={handleOperatorInput}
+              onDelete={handleDelete}
+              onClear={handleClear}
+              onEqual={handleCalculation}
+            />
+          </View>
         </View>
-
-        <View className="items-center flex-1 ml-2">
-          <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark ">
-            {selectedOption === "transfer" ? "To" : "Category"}
-          </Text>
-          <TouchableOpacity
-            onPress={
-              selectedOption === "transfer"
-                ? toggleToAccountsModal
-                : toggleCategoriesModal
-            }
-            className="w-full h-12 flex-row gap-4 justify-center items-center bg-button-light dark:bg-button-dark  rounded-lg"
-          >
-            {selectedOption === "transfer" ? (
-              <SVG_ICONS.Account size={16} color="white" />
-            ) : (
-              <SVG_ICONS.Category size={16} color="white" />
-            )}
-            <Text className="text-white text-base">
-              {selectedOption === "transfer"
-                ? toAccount
-                  ? toAccount.name
-                  : "Account"
-                : selectedCategory
-                ? selectedCategory.name
-                : "Category"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Notes */}
-      <View className="mt-6">
-        <TextInput
-          className="w-full h-24 border-2 border-search-light dark:border-search-dark rounded-lg p-4 text-base"
-          placeholder="Notes"
-          multiline={true}
-          numberOfLines={3}
-          maxLength={100}
-          value={notes}
-          onChangeText={setNotes}
-          textAlignVertical="top"
-        />
-      </View>
-
-      {/* Display */}
-      <View className="mt-4">
-        <View className="w-full h-[80] border-2 border-search-light dark:border-search-dark rounded-lg p-2 flex items-end justify-center">
-          <Text
-            className="text-7xl text-right text-textPrimary-light dark:text-textPrimary-dark"
-            style={{ lineHeight: 65, includeFontPadding: false }}
-          >
-            {displayValue}
-          </Text>
-        </View>
-      </View>
-
-      {/* Calculator */}
-      <View className="mt-4">
-        <CalculatorGrid
-          onNumber={handleNumberInput}
-          onOperator={handleOperatorInput}
-          onDelete={handleDelete}
-          onClear={handleClear}
-          onEqual={handleCalculation}
-        />
-      </View>
+      </ScrollView>
     </View>
   );
 }

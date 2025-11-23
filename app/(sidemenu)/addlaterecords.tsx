@@ -376,7 +376,7 @@ export default function AddLateRecords() {
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="w-full h-[80%] bg-card-light dark:bg-card-dark rounded-[20] p-4">
+          <View className="w-full h-[80%] bg-[#CACACA] dark:bg-bgModal-dark rounded-[20] p-4">
             {/* Date Picker */}
             <View className="flex-row items-center justify-between pb-5">
               <Text className="text-textPrimary-light dark:text-textPrimary-dark">

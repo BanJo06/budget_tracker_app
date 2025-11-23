@@ -25,8 +25,16 @@ export default function SearchTransactions() {
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
-    navigation.setOptions({ title: "Search Transactions" });
-  }, []);
+    navigation.setOptions({
+      title: "Search Transactions",
+      // background color of the header
+      headerStyle: {
+        backgroundColor: colorScheme === "dark" ? "#121212" : "#ffffff",
+      },
+      // color of the title text and back arrow
+      headerTintColor: colorScheme === "dark" ? "#ffffff" : "#000000",
+    });
+  }, [navigation, colorScheme]);
 
   useEffect(() => {
     async function loadTransactions() {
@@ -93,7 +101,8 @@ export default function SearchTransactions() {
     const isTransfer = type === "transfer";
     const amountPrefix = isIncome ? "+" : "-";
 
-    const amountColorClass = isIncome ? "text-[#8938E9]" : "text-black";
+    const amountColorClass = "text-[#8938E9]";
+    // const amountColorClass = isIncome ? "text-[#8938E9]" : "text-black";
     const iconBgColorClass = isIncome
       ? "bg-[#8938E9]"
       : isExpense
@@ -143,7 +152,9 @@ export default function SearchTransactions() {
           className="self-end p-2.5"
           onPress={() => setSelectedTransaction(null)}
         >
-          <Text className="text-black text-lg">Close</Text>
+          <Text className="text-textPrimary-light dark:text-textPrimary-dark text-lg">
+            Close
+          </Text>
         </Pressable>
         <View className="items-center mb-5">
           <View
@@ -154,25 +165,35 @@ export default function SearchTransactions() {
           <Text className={`text-2xl font-bold mb-1.5 ${amountColorClass}`}>
             {displayAmount}
           </Text>
-          <Text className="text-xl font-medium text-center">{mainText}</Text>
-          <Text className="text-base text-gray-500 text-center">{subText}</Text>
+          <Text className="text-xl font-medium text-center text-textPrimary-light dark:text-textPrimary-dark">
+            {mainText}
+          </Text>
+          <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark text-center">
+            {subText}
+          </Text>
         </View>
         <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-          <Text className="text-base text-gray-500">Account</Text>
-          <Text className="text-base font-medium text-right flex-shrink">
+          <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark">
+            Account
+          </Text>
+          <Text className="text-base font-medium text-right flex-shrink text-textPrimary-light dark:text-textPrimary-dark">
             {account_name}
           </Text>
         </View>
         <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-          <Text className="text-base text-gray-500">Date & Time</Text>
-          <Text className="text-base font-medium text-right flex-shrink">
+          <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark">
+            Date & Time
+          </Text>
+          <Text className="text-base font-medium text-right flex-shrink text-textPrimary-light dark:text-textPrimary-dark">
             {formattedDate} at {formattedTime}
           </Text>
         </View>
         {description && (
           <View className="flex-row justify-between w-full py-2.5 border-b border-gray-100">
-            <Text className="text-base text-gray-500">Notes</Text>
-            <Text className="text-base font-medium text-right flex-shrink">
+            <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark">
+              Notes
+            </Text>
+            <Text className="text-base font-medium text-right flex-shrink text-textPrimary-light dark:text-textPrimary-dark">
               {description}
             </Text>
           </View>
@@ -188,7 +209,7 @@ export default function SearchTransactions() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Search transactions..."
-        className="h-[40] px-4 mb-4 border rounded-full border-search-light dark:border-search-dark"
+        className="h-[40] px-4 mb-4 border rounded-full border-search-light dark:border-search-dark text-search-light dark:text-search-dark"
         placeholderTextColor="#888"
       />
 

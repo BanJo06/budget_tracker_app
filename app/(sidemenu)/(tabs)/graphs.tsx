@@ -103,9 +103,8 @@ export default function Graphs() {
         <View className="flex-col px-[32] pt-[8]">
           {/* Top Bar */}
           <View className="flex-row items-center gap-[4] pb-[16]">
-            <View className="w-[25] h-[25] bg-white" />
             <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
-              Budget Tracker
+              PeraPal
             </Text>
           </View>
 
@@ -165,8 +164,8 @@ export default function Graphs() {
         onRequestClose={handleCancelSelection}
       >
         <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white rounded-2xl p-8 m-4 w-[90%] shadow-md items-center">
-            <Text className="text-lg font-bold mb-4 text-black">
+          <View className="bg-bgModal-light dark:bg-bgModal-dark rounded-2xl p-8 m-4 w-[90%] shadow-md items-center">
+            <Text className="text-lg font-bold mb-4 text-black text-textPrimary-light dark:text-textPrimary-dark">
               Select Month and Year
             </Text>
 

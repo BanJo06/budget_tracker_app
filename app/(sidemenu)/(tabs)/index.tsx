@@ -42,6 +42,7 @@ import React, {
 } from "react";
 import {
   Alert,
+  BackHandler,
   Dimensions,
   FlatList,
   Modal,
@@ -175,6 +176,23 @@ export default function Index() {
       ? "Weekly Budget"
       : "Monthly Budget";
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        () => {
+          Alert.alert("Exit App", "Are you sure you want to exit?", [
+            { text: "Cancel", style: "cancel" },
+            { text: "YES", onPress: () => BackHandler.exitApp() },
+          ]);
+          return true; // prevent default behavior
+        }
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
+
   // ======================
   // Database load
   // ======================
@@ -209,8 +227,29 @@ export default function Index() {
   };
 
   useEffect(() => {
-    createNotificationChannel();
-    seedDefaultCategories();
+    const initializeApp = async () => {
+      createNotificationChannel();
+
+      try {
+        const hasSeeded = await AsyncStorage.getItem("categoriesSeeded");
+
+        if (!hasSeeded) {
+          console.log("Seeding default categories...");
+
+          await seedDefaultCategories();
+
+          await AsyncStorage.setItem("categoriesSeeded", "true");
+
+          console.log("Categories seeded successfully.");
+        } else {
+          console.log("Categories already seeded. Skipping...");
+        }
+      } catch (err) {
+        console.error("Error during app initialization:", err);
+      }
+    };
+
+    initializeApp();
   }, []);
 
   const loadRegularTransactions = async () => {
@@ -420,7 +459,7 @@ export default function Index() {
   // 🟣 Budget Alert Logic
   // ======================
   const isOverBudget =
-    currentBudgetLimit > 0 && amountSpent > currentBudgetLimit;
+    currentBudgetLimit > 0 && amountSpent >= currentBudgetLimit;
 
   useEffect(() => {
     if (isOverBudget) {
@@ -440,14 +479,15 @@ export default function Index() {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        setWeeklySummary(calculateWeeklySummary(7));
+        const summary = await calculateWeeklySummary(7);
+        setWeeklySummary(summary);
       } catch (err) {
         console.error("❌ Weekly summary failed:", err);
         setWeeklySummary({ spent: 0, earned: 0 });
       }
     };
     fetchSummary();
-  }, []);
+  }, [transactions, regularTransactions]);
 
   // ======================
   // Handle Daily Quest
@@ -764,8 +804,7 @@ export default function Index() {
           style={{ paddingHorizontal: headerPadding }}
         >
           <View className="flex-row items-center gap-[4] pb-[16]">
-            <View className="w-[25] h-[25] bg-white" />
-            <Text className="font-medium text-white">Budget Tracker</Text>
+            <Text className="font-medium text-white">PeraPal</Text>
           </View>
 
           <View className="flex-row items-center justify-center">
@@ -870,7 +909,7 @@ export default function Index() {
         }}
       >
         <View className="flex-row h-full items-center">
-          <View className="w-[48] h-[48] bg-[#8938E9] rounded-[16]" />
+          <SVG_ICONS.Expense />
           <View className="pl-[20] gap-[6] self-center">
             <Text className="text-[12px] opacity-65 text-right text-textSecondary-light dark:text-textSecondary-dark">
               Spent last 7 days:
@@ -897,7 +936,7 @@ export default function Index() {
         }}
       >
         <View className="flex-row h-full items-center">
-          <View className="w-[48] h-[48] bg-[#8938E9] rounded-[16]" />
+          <SVG_ICONS.Income />
           <View className="pl-[20] gap-[6] self-center">
             <Text className="text-[12px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
               Earned last 7 days:

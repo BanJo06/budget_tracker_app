@@ -191,7 +191,7 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
           <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
-            Add new planned budget
+            {initialData ? "Edit Planned Budget" : "Add New Planned Budget"}
           </Text>
 
           <View className="w-full flex-row gap-2 items-center mb-6">
@@ -232,22 +232,26 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
           </View>
 
           {isGoalDateEnabled && (
-            <View className="w-full mb-6 mt-2 border-t pt-4 border-gray-200">
+            <View className="w-full mb-6 mt-2 border-t pt-4 border-gray-200 dark:border-gray-700">
               <Text className="mb-2 text-sm font-semibold text-textPrimary-light dark:text-textPrimary-dark">
                 Goal Period
               </Text>
 
+              {/* Start Date Picker */}
               <View className="flex-row gap-2 items-center mb-3">
                 <Text className="w-16 text-textPrimary-light dark:text-textPrimary-dark">
                   From:
                 </Text>
                 <TouchableOpacity
-                  className="flex-1 h-10 border-2 bg-bgModal-light dark:bg-bgModal-dark rounded-lg justify-center border-search-light dark:border-search-dark text-textPrimary-light dark:text-textPrimary-dark"
+                  className="flex-1 h-10 border-2 bg-bgModal-light dark:bg-bgModal-dark rounded-lg justify-center border-search-light dark:border-search-dark"
                   onPress={() => setShowStartDatePicker(true)}
                 >
                   <Text
-                    className="pl-2"
-                    style={{ color: startDate ? "#000" : "#a1a1a1" }}
+                    className={`pl-2 ${
+                      startDate
+                        ? "text-textPrimary-light dark:text-textPrimary-dark"
+                        : "text-gray-400 dark:text-gray-500"
+                    }`}
                   >
                     {startDate ? formatDate(startDate) : "YYYY-MM-DD"}
                   </Text>
@@ -264,17 +268,21 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
                 )}
               </View>
 
+              {/* End Date Picker */}
               <View className="flex-row gap-2 items-center">
                 <Text className="w-16 text-textPrimary-light dark:text-textPrimary-dark">
                   To:
                 </Text>
                 <TouchableOpacity
-                  className="flex-1 h-10 border-2 bg-bgModal-light dark:bg-bgModal-dark rounded-lg justify-center border-search-light dark:border-search-dark text-textPrimary-light dark:text-textPrimary-dark"
+                  className="flex-1 h-10 border-2 bg-bgModal-light dark:bg-bgModal-dark rounded-lg justify-center border-search-light dark:border-search-dark"
                   onPress={() => setShowEndDatePicker(true)}
                 >
                   <Text
-                    className="pl-2"
-                    style={{ color: endDate ? "#000" : "#a1a1a1" }}
+                    className={`pl-2 ${
+                      endDate
+                        ? "text-textPrimary-light dark:text-textPrimary-dark"
+                        : "text-gray-400 dark:text-gray-500"
+                    }`}
                   >
                     {endDate ? formatDate(endDate) : "YYYY-MM-DD"}
                   </Text>
@@ -647,12 +655,10 @@ export default function Budgets() {
               </View>
             </View>
             <TouchableOpacity
-              className="w-18 h-8 px-2 py-1 rounded-md items-center justify-center bg-button-light dark:bg-button-dark"
+              className="w-[80] h-[40] px-2 py-1 rounded-md items-center justify-center bg-button-light dark:bg-button-dark"
               onPress={b.onPress}
             >
-              <Text className="text-textPrimary-light dark:text-textPrimary-dark text-[10px]">
-                Change
-              </Text>
+              <Text className="text-white text-[10px]">CHANGE</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -823,12 +829,11 @@ export default function Budgets() {
 
           {/* ✅ “Add New Budget” button included in scroll */}
           <TouchableOpacity
-            className="w-[137px] h-[136px] p-2 border rounded-lg justify-center items-center border-button-light dark:border-button-dark"
+            className="w-[137px] h-[136px] p-2 rounded-lg justify-center items-center bg-button-light dark:bg-button-dark"
             onPress={() => setNewPlannedBudgetVisible(true)}
           >
-            <View className="items-center gap-4">
-              <View className="w-8 h-8 rounded-full border border-button-light dark:border-button-dark" />
-              <Text className="text-button-light dark:text-button-dark">
+            <View className="items-center">
+              <Text className="text-white text-[12px] uppercase">
                 Add New Budget
               </Text>
             </View>

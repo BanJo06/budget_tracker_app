@@ -39,9 +39,11 @@ const HelpGuideModal: React.FC<HelpGuideModalProps> = ({
           Income, Expense or Transfer
         </Text>{" "}
         (transferring funds from one account to another account). After that,
-        press the “Account” button and select an account. Then, press the
-        “Category” button to select the source of your income or expense. Then,
-        enter an amount. If you’re satisfied, press{" "}
+        press the <Text className="font-bold">“Account” button</Text> and select
+        an account. Then, press the
+        <Text className="font-bold">“Category” button</Text> to select the
+        source of your income or expense. Then, enter an amount. If you’re
+        satisfied, press{" "}
         <Text className="font-bold text-highlight-light dark:text-highlight-dark">
           “Save” button
         </Text>{" "}
@@ -50,6 +52,15 @@ const HelpGuideModal: React.FC<HelpGuideModalProps> = ({
         <Text className="italic">
           Optional: You can input notes or description of your transaction.
         </Text>
+        {"\n\n"}
+        <Text className="font-medium underline">Quests:</Text> Check out the
+        quests by pressing the <Text className="font-bold">Quest Menu</Text>. Do
+        the quests as much as you can in order to get more coins. Also, go to
+        the shop by pressing{" "}
+        <Text className="font-bold">
+          Shop Icon on the top right corner in Quests Menu
+        </Text>
+        and buy your prefered items.
         {"\n\n"}
         {/* --- Categories Highlight --- */}
         <Text className="font-medium underline">Categories:</Text> To create

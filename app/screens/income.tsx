@@ -53,6 +53,7 @@ const categoryColors: { [key: string]: string } = {
   Refunds: "#3B82F6",
   Salary: "#8938E9",
   Sideline: "#EF4444",
+  "Other Income": "#5B1C8C",
   Uncategorized: "#CCCCCC",
 };
 
@@ -195,7 +196,8 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
     >
       {/* Graph Overview */}
       <View
-        className="w-full h-[220px] p-5 mt-4 mb-4 rounded-2xl bg-card-light dark:bg-card-dark"
+        // 1. FIXED: Use min-h-[220px] instead of fixed h-[220px] so it can grow
+        className="w-full min-h-[220px] p-5 mt-4 mb-4 rounded-2xl bg-card-light dark:bg-card-dark"
         style={{ elevation: 5 }}
       >
         <View className="flex-row justify-between">
@@ -215,7 +217,8 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
             </Text>
           </View>
         ) : (
-          <View className="flex-row justify-between items-center mt-4">
+          // 2. FIXED: Use items-start so chart stays at top left
+          <View className="flex-row justify-between items-start mt-4">
             <PieChart
               data={pieData}
               width={screenWidth * 0.5}
@@ -226,7 +229,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
               paddingLeft="16"
               hasLegend={false}
             />
-            <View className="flex-1">
+            <View className="flex-1 pt-2">
               {incomeData.filteredCategories.map((category, index) => (
                 <View key={index} className="flex-row items-center mb-1">
                   <View
@@ -235,7 +238,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
                   />
                   <Text
                     className="text-xs text-textPrimary-light dark:text-textPrimary-dark flex-1"
-                    numberOfLines={1}
+                    // 3. FIXED: Removed numberOfLines={1} to show full name
                   >
                     {category.name} ({category.percentage.toFixed(0)}%)
                   </Text>
@@ -284,7 +287,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
                 {category.name}
               </Text>
               <Text className="opacity-60 text-xs text-textSecondary-light dark:text-textSecondary-dark">
-                Cash
+                Total (%)
               </Text>
             </View>
             <View className="flex-col justify-end items-end gap-1">

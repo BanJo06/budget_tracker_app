@@ -1,53 +1,5 @@
 import { getDb } from "@/utils/database";
 
-/**
- * Saves a new transaction record to the database.
- * @param {number} accountId The ID of the associated account.
- * @param {number} categoryId The ID of the associated category.
- * @param {number} amount The transaction amount.
- * @param {string} type The transaction type ('expense', 'income', 'transfer').
- * @param {string} notes The transaction description.
- */
-
-// export const saveTransaction = (
-//   accountId,
-//   accountName,
-//   categoryId,
-//   amount,
-//   type,
-//   notes,
-//   date,
-//   isLateRecord = false // ✅ NEW optional parameter
-// ) => {
-//   const db = getDb();
-
-//   db.runSync(
-//     `INSERT INTO transactions (account_id, account_name, category_id, amount, type, description, date, source)
-//      VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-//     [
-//       accountId,
-//       accountName,
-//       categoryId,
-//       amount,
-//       type,
-//       notes,
-//       date,
-//       isLateRecord ? "late_record" : null,
-//     ]
-//   );
-
-//   console.log("Transaction saved:", {
-//     accountId,
-//     accountName,
-//     categoryId,
-//     amount,
-//     type,
-//     description: notes,
-//     date,
-//     source: isLateRecord ? "late_record" : null,
-//   });
-// };
-
 export const saveTransaction = (
   accountId,
   accountName,
@@ -228,61 +180,6 @@ export const getTransactionsByAccount = (accountId) => {
   }
 };
 
-// export const saveTransferTransaction = (
-//   fromAccountId,
-//   toAccountId,
-//   amount,
-//   notes,
-//   date
-// ) => {
-//   const db = getDb();
-//   const type = "transfer";
-
-//   try {
-//     db.withTransactionSync(() => {
-//       // 1. Withdraw from the source account
-//       const fromAcc = db.getFirstSync(
-//         "SELECT balance FROM accounts WHERE id = ?",
-//         [fromAccountId]
-//       );
-//       if (!fromAcc) throw new Error("Source account not found");
-//       if (Number(fromAcc.balance) < amount) {
-//         throw new Error("Insufficient funds");
-//       }
-
-//       db.runSync("UPDATE accounts SET balance = balance - ? WHERE id = ?", [
-//         amount,
-//         fromAccountId,
-//       ]);
-
-//       // 2. Deposit into the destination account
-//       const toAcc = db.getFirstSync(
-//         "SELECT balance FROM accounts WHERE id = ?",
-//         [toAccountId]
-//       );
-//       if (!toAcc) throw new Error("Destination account not found");
-
-//       db.runSync("UPDATE accounts SET balance = balance + ? WHERE id = ?", [
-//         amount,
-//         toAccountId,
-//       ]);
-
-//       // 3. Save transaction record
-//       db.runSync(
-//         `INSERT INTO transactions
-//           (account_id, to_account_id, amount, type, description, date)
-//          VALUES (?, ?, ?, ?, ?, ?)`,
-//         [fromAccountId, toAccountId, amount, type, notes, date]
-//       );
-//     });
-
-//     console.log("✅ Atomic transfer successfully committed");
-//   } catch (error) {
-//     console.error("❌ Error saving transfer (rolled back):", error);
-//     throw new Error(`Failed to perform transfer: ${error.message}`);
-//   }
-// };
-
 export const saveTransferTransaction = (
   fromAccountId,
   toAccountId,
@@ -391,47 +288,6 @@ export const getTransactionsForLastNDays = (days) => {
   }
 };
 
-/**
- * Saves a planned budget transaction into the transactions table.
- * This is separate from regular transactions to avoid conflicts.
- * @param {number} accountId The ID of the associated account
- * @param {number} plannedBudgetId The ID of the planned budget
- * @param {number} amount The transaction amount
- * @param {string} budgetName The name of the planned budget (used as description)
- * @param {string} date The transaction date
- */
-
-// export const savePlannedBudgetAsTransaction = (
-//   accountId,
-//   plannedBudgetId,
-//   amount,
-//   budgetName,
-//   date
-// ) => {
-//   const db = getDb();
-
-//   try {
-//     console.log("Saving planned budget as a transaction:", {
-//       accountId,
-//       plannedBudgetId,
-//       amount,
-//       budgetName,
-//       date,
-//     });
-
-//     // ✅ Mark this transaction as "planned_budget"
-//     db.runSync(
-//       `INSERT INTO transactions (account_id, category_id, amount, type, description, date, source)
-//        VALUES (?, ?, ?, ?, ?, ?, ?);`,
-//       [accountId, null, amount, "expense", budgetName, date, "planned_budget"]
-//     );
-
-//     console.log("Planned budget transaction saved successfully.");
-//   } catch (error) {
-//     console.error("Error saving planned budget transaction:", error);
-//   }
-// };
-
 export const savePlannedBudgetAsTransaction = (
   accountId,
   plannedBudgetId,
@@ -467,36 +323,6 @@ export const savePlannedBudgetAsTransaction = (
     return null;
   }
 };
-
-// export const updateExistingTransaction = async ({
-//   transactionId,
-//   accountId,
-//   categoryId,
-//   amount,
-//   type,
-//   description,
-//   date,
-//   toAccountId, // Accept this argument
-// }) => {
-//   const db = await getDb();
-//   await db.runAsync(
-//     `UPDATE transactions
-//       SET account_id = ?, category_id = ?, amount = ?, type = ?, description = ?, date = ?, to_account_id = ?
-//       WHERE id = ?`,
-//     [
-//       accountId,
-//       categoryId,
-//       amount,
-//       type,
-//       description,
-//       date,
-//       toAccountId || null, // <--- CRITICAL: If it's undefined (Expense/Income), send NULL to DB
-//       transactionId,
-//     ]
-//   );
-// };
-
-// transactions.js
 
 export const updateExistingTransaction = async ({
   transactionId,
