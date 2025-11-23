@@ -8,6 +8,7 @@ import {
   saveNewCategory,
   updateCategory,
 } from "@/database/categoryQueries";
+import { useColorScheme } from "nativewind";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -145,6 +146,9 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
       ? CATEGORIES_INCOME_SVG_ICONS
       : CATEGORIES_EXPENSES_SVG_ICONS;
 
+  const modalTitle = editingCategory ? "Edit a category" : "Add new category";
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
   return (
     <Modal
       animationType="slide"
@@ -153,12 +157,16 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="bg-white p-6 rounded-lg w-11/12">
-          <Text className="text-xl font-bold mb-4">Add new category</Text>
+        <View className="bg-bgModal-light dark:bg-bgModal-dark p-6 rounded-lg w-11/12">
+          <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
+            {modalTitle}
+          </Text>
 
           {/* Cash Flow Switch */}
           <View className="flex-row items-center pb-5">
-            <Text>Cash Flow</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Cash Flow
+            </Text>
             <View className="flex-1 ml-[110]">
               <SwitchSelector
                 options={options}
@@ -166,13 +174,12 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
                 onPress={(value) =>
                   handleSwitchChange(value as "income" | "expense")
                 }
-                backgroundColor={"#F0E4FF"}
                 textColor={"#000000"}
-                selectedColor={"#ffffff"}
-                buttonColor={"#7a44cf"}
+                selectedColor={colorScheme === "dark" ? "#fff" : "#fff"}
+                buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
                 hasPadding={true}
                 borderRadius={30}
-                borderColor={"#F0E4FF"}
+                borderColor={"#ffffff"}
                 height={40}
                 textStyle={{ fontSize: 12, fontWeight: "500" }}
                 selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
@@ -182,9 +189,11 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
 
           {/* Category Name Input */}
           <View className="w-full flex-row gap-2 items-center mb-6">
-            <Text>Name</Text>
+            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
+              Name
+            </Text>
             <TextInput
-              className="flex-1 h-[40] border-2 border-gray-300 rounded-lg pl-2 p-0 bg-purple-100"
+              className="flex-1 h-[40] border-2 border-search-light dark:border-search-dark rounded-lg pl-2 p-0 bg-bgModal-light dark:bg-bgModal-dark text-textTextbox-light dark:text-textTextbox-dark"
               placeholder="Untitled"
               value={categoryName}
               onChangeText={setCategoryName}
@@ -193,7 +202,7 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
 
           {/* Icon Selection */}
           <View className="mb-6">
-            <Text className="text-sm mb-2">
+            <Text className="text-sm mb-2 text-textPrimary-light dark:text-textPrimary-dark">
               Select Icon ({selectedOption.toUpperCase()})
             </Text>
             <View className="flex-row flex-wrap justify-start gap-4 h-[120px]">
@@ -228,15 +237,17 @@ const NewCategoryModal: React.FC<NewCategoryModalProps> = ({
           {/* Action Buttons */}
           <View className="flex-row justify-end gap-4">
             <TouchableOpacity
-              className="w-24 h-10 rounded-lg border-2 border-purple-500 justify-center items-center"
+              className="w-24 h-10 rounded-lg border-2 border-borderButton-light dark:border-borderButton-dark justify-center items-center"
               onPress={onClose}
             >
-              <Text className="uppercase text-purple-600">Cancel</Text>
+              <Text className="uppercase text-borderButton-light dark:text-borderButton-dark">
+                Cancel
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`w-24 h-10 rounded-lg justify-center items-center ${
                 categoryName.trim() && selectedIcon
-                  ? "bg-purple-600"
+                  ? "bg-button-light dark:bg-button-dark"
                   : "bg-gray-400"
               }`}
               onPress={handleSave}
@@ -264,6 +275,14 @@ export default function Categories() {
     useState(false);
 
   const toggleNewCategoryModal = () => {
+    if (isNewCategoryModalVisible) {
+      setEditingCategory(null);
+    }
+    setNewCategoryModalVisible(!isNewCategoryModalVisible);
+
+    if (!isNewCategoryModalVisible) {
+      setEditingCategory(null);
+    }
     setNewCategoryModalVisible(!isNewCategoryModalVisible);
   };
 
