@@ -99,7 +99,6 @@ export const initDatabase = async () => {
         CREATE TABLE IF NOT EXISTS planned_budgets (
           id INTEGER PRIMARY KEY NOT NULL,
           budget_name TEXT NOT NULL,
-          budget_type TEXT NOT NULL,
           amount REAL NOT NULL,
           color_name TEXT,
           start_date TEXT NULL,
@@ -250,7 +249,6 @@ export const getDailyBudget = () => {
 // Planned Budgets
 export const savePlannedBudget = (
   budgetName,
-  budgetType,
   amount,
   colorName,
   startDate,
@@ -262,12 +260,11 @@ export const savePlannedBudget = (
     const result = db.runSync(
       `
       INSERT INTO planned_budgets 
-      (budget_name, budget_type, amount, color_name, start_date, end_date, is_ongoing)
-      VALUES (?, ?, ?, ?, ?, ?, ?);
+      (budget_name, amount, color_name, start_date, end_date, is_ongoing)
+      VALUES (?, ?, ?, ?, ?, ?);
       `,
       [
         budgetName,
-        budgetType,
         parseFloat(amount),
         colorName,
         startDate || null,
@@ -286,7 +283,6 @@ export const savePlannedBudget = (
 export const updatePlannedBudget = (
   id,
   budgetName,
-  budgetType,
   amount,
   colorName,
   startDate,
@@ -298,8 +294,7 @@ export const updatePlannedBudget = (
     db.runSync(
       `
       UPDATE planned_budgets
-      SET budget_name = ?, 
-          budget_type = ?, 
+      SET budget_name = ?,  
           amount = ?, 
           color_name = ?, 
           start_date = ?, 
@@ -309,7 +304,6 @@ export const updatePlannedBudget = (
       `,
       [
         budgetName,
-        budgetType,
         parseFloat(amount),
         colorName,
         startDate || null,
@@ -491,7 +485,6 @@ export const getAllPlannedBudgetTransactions = (plannedBudgetId = null) => {
   }
 };
 
-// database.js
 export const getBudgetBalance = (name) => {
   try {
     const row = db.getFirstSync("SELECT balance FROM budgets WHERE name = ?;", [

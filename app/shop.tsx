@@ -8,14 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import { useColorScheme } from "nativewind";
 import React, { useCallback, useState } from "react";
-import {
-  Alert,
-  Image,
-  Modal,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, Modal, Text, TouchableOpacity, View } from "react-native";
 import ReusableRoundedBoxComponent from "../components/RoundedBoxComponent";
 
 // App Icons
@@ -240,54 +233,7 @@ export default function Shop() {
         className={`flex-col mx-8 mt-4 ${
           isDark ? "bg-[#121212]" : "bg-[#F5F5F5]"
         }`}
-      >
-        <View className="gap-2">
-          <Text
-            className={`text-sm mt-1 ${
-              isDark ? "text-gray-300" : "text-gray-500"
-            }`}
-          >
-            App Icons
-          </Text>
-          <View className="h-[2] bg-black rounded-full" />
-
-          <View className="flex-row gap-10">
-            {appIconsState.map((item) => (
-              <View
-                key={item.id}
-                className="flex-col gap-2 items-center relative"
-              >
-                <TouchableOpacity
-                  disabled={item.purchased && selectedHomeIconId === item.id}
-                  onPress={() => handleAppIconPurchase(item)}
-                >
-                  <Image
-                    source={item.icon}
-                    className="w-[70] h-[70] rounded-[10]"
-                    resizeMode="contain"
-                  />
-                  {selectedHomeIconId === item.id && (
-                    <View className="absolute top-1 right-1 w-6 h-6 bg-green-600 rounded-full justify-center items-center">
-                      <Text className="text-white font-bold text-xs">✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                <View className="flex-row gap-2 items-center">
-                  <View className="w-[16] h-[16] rounded-full bg-[#F9C23C]" />
-                  <Text
-                    className={`text-sm mt-1 ${
-                      isDark ? "text-gray-300" : "text-gray-500"
-                    }`}
-                  >
-                    {item.purchased ? "Purchased" : item.price}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
+      ></View>
 
       {/* Shop Items Section */}
       <View

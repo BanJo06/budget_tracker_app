@@ -44,8 +44,7 @@ export default function Reports() {
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
           <View className="flex-row items-center gap-[4] pb-[16]">
-            <View className="w-[25] h-[25] bg-white"></View>
-            <Text className="font-medium text-white">Budget Tracker</Text>
+            <Text className="font-medium text-white">PeraPal</Text>
           </View>
 
           <View className="flex-row items-center justify-center">

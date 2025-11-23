@@ -300,11 +300,6 @@ export default function Accounts() {
     setMenuState({ ...menuState, selectedAccount: null });
   };
 
-  const handleIgnore = () => {
-    console.log("Ignoring account selection.");
-    setMenuState({ ...menuState, isVisible: false });
-  };
-
   const handleSaveAccount = (accountData) => {
     // A simplified way to check for a valid type, since your accounts table requires it.
     const accountType = "default";
@@ -466,7 +461,6 @@ export default function Accounts() {
               {[
                 { label: "Edit", action: handleEdit },
                 { label: "Delete", action: handleDelete },
-                { label: "Ignore", action: handleIgnore },
               ].map((item, idx) => (
                 <TouchableOpacity
                   key={idx}

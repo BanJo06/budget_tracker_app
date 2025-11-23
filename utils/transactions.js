@@ -9,6 +9,45 @@ import { getDb } from "@/utils/database";
  * @param {string} notes The transaction description.
  */
 
+// export const saveTransaction = (
+//   accountId,
+//   accountName,
+//   categoryId,
+//   amount,
+//   type,
+//   notes,
+//   date,
+//   isLateRecord = false // ✅ NEW optional parameter
+// ) => {
+//   const db = getDb();
+
+//   db.runSync(
+//     `INSERT INTO transactions (account_id, account_name, category_id, amount, type, description, date, source)
+//      VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+//     [
+//       accountId,
+//       accountName,
+//       categoryId,
+//       amount,
+//       type,
+//       notes,
+//       date,
+//       isLateRecord ? "late_record" : null,
+//     ]
+//   );
+
+//   console.log("Transaction saved:", {
+//     accountId,
+//     accountName,
+//     categoryId,
+//     amount,
+//     type,
+//     description: notes,
+//     date,
+//     source: isLateRecord ? "late_record" : null,
+//   });
+// };
+
 export const saveTransaction = (
   accountId,
   accountName,
@@ -17,7 +56,7 @@ export const saveTransaction = (
   type,
   notes,
   date,
-  isLateRecord = false // ✅ NEW optional parameter
+  isLateRecord = false
 ) => {
   const db = getDb();
 
@@ -46,6 +85,10 @@ export const saveTransaction = (
     date,
     source: isLateRecord ? "late_record" : null,
   });
+
+  // 🔥 NEW: Return the newly created transaction ID
+  const result = db.getFirstSync("SELECT last_insert_rowid() AS id;");
+  return result.id;
 };
 
 /**
@@ -185,6 +228,61 @@ export const getTransactionsByAccount = (accountId) => {
   }
 };
 
+// export const saveTransferTransaction = (
+//   fromAccountId,
+//   toAccountId,
+//   amount,
+//   notes,
+//   date
+// ) => {
+//   const db = getDb();
+//   const type = "transfer";
+
+//   try {
+//     db.withTransactionSync(() => {
+//       // 1. Withdraw from the source account
+//       const fromAcc = db.getFirstSync(
+//         "SELECT balance FROM accounts WHERE id = ?",
+//         [fromAccountId]
+//       );
+//       if (!fromAcc) throw new Error("Source account not found");
+//       if (Number(fromAcc.balance) < amount) {
+//         throw new Error("Insufficient funds");
+//       }
+
+//       db.runSync("UPDATE accounts SET balance = balance - ? WHERE id = ?", [
+//         amount,
+//         fromAccountId,
+//       ]);
+
+//       // 2. Deposit into the destination account
+//       const toAcc = db.getFirstSync(
+//         "SELECT balance FROM accounts WHERE id = ?",
+//         [toAccountId]
+//       );
+//       if (!toAcc) throw new Error("Destination account not found");
+
+//       db.runSync("UPDATE accounts SET balance = balance + ? WHERE id = ?", [
+//         amount,
+//         toAccountId,
+//       ]);
+
+//       // 3. Save transaction record
+//       db.runSync(
+//         `INSERT INTO transactions
+//           (account_id, to_account_id, amount, type, description, date)
+//          VALUES (?, ?, ?, ?, ?, ?)`,
+//         [fromAccountId, toAccountId, amount, type, notes, date]
+//       );
+//     });
+
+//     console.log("✅ Atomic transfer successfully committed");
+//   } catch (error) {
+//     console.error("❌ Error saving transfer (rolled back):", error);
+//     throw new Error(`Failed to perform transfer: ${error.message}`);
+//   }
+// };
+
 export const saveTransferTransaction = (
   fromAccountId,
   toAccountId,
@@ -197,7 +295,6 @@ export const saveTransferTransaction = (
 
   try {
     db.withTransactionSync(() => {
-      // 1. Withdraw from the source account
       const fromAcc = db.getFirstSync(
         "SELECT balance FROM accounts WHERE id = ?",
         [fromAccountId]
@@ -212,7 +309,6 @@ export const saveTransferTransaction = (
         fromAccountId,
       ]);
 
-      // 2. Deposit into the destination account
       const toAcc = db.getFirstSync(
         "SELECT balance FROM accounts WHERE id = ?",
         [toAccountId]
@@ -224,7 +320,6 @@ export const saveTransferTransaction = (
         toAccountId,
       ]);
 
-      // 3. Save transaction record
       db.runSync(
         `INSERT INTO transactions 
           (account_id, to_account_id, amount, type, description, date)
@@ -234,6 +329,10 @@ export const saveTransferTransaction = (
     });
 
     console.log("✅ Atomic transfer successfully committed");
+
+    // 🔥 NEW: Return newly created transfer transaction ID
+    const result = db.getFirstSync("SELECT last_insert_rowid() AS id;");
+    return result.id;
   } catch (error) {
     console.error("❌ Error saving transfer (rolled back):", error);
     throw new Error(`Failed to perform transfer: ${error.message}`);
@@ -302,6 +401,37 @@ export const getTransactionsForLastNDays = (days) => {
  * @param {string} date The transaction date
  */
 
+// export const savePlannedBudgetAsTransaction = (
+//   accountId,
+//   plannedBudgetId,
+//   amount,
+//   budgetName,
+//   date
+// ) => {
+//   const db = getDb();
+
+//   try {
+//     console.log("Saving planned budget as a transaction:", {
+//       accountId,
+//       plannedBudgetId,
+//       amount,
+//       budgetName,
+//       date,
+//     });
+
+//     // ✅ Mark this transaction as "planned_budget"
+//     db.runSync(
+//       `INSERT INTO transactions (account_id, category_id, amount, type, description, date, source)
+//        VALUES (?, ?, ?, ?, ?, ?, ?);`,
+//       [accountId, null, amount, "expense", budgetName, date, "planned_budget"]
+//     );
+
+//     console.log("Planned budget transaction saved successfully.");
+//   } catch (error) {
+//     console.error("Error saving planned budget transaction:", error);
+//   }
+// };
+
 export const savePlannedBudgetAsTransaction = (
   accountId,
   plannedBudgetId,
@@ -320,7 +450,7 @@ export const savePlannedBudgetAsTransaction = (
       date,
     });
 
-    // ✅ Mark this transaction as "planned_budget"
+    // ✅ Insert planned budget transaction
     db.runSync(
       `INSERT INTO transactions (account_id, category_id, amount, type, description, date, source)
        VALUES (?, ?, ?, ?, ?, ?, ?);`,
@@ -328,7 +458,150 @@ export const savePlannedBudgetAsTransaction = (
     );
 
     console.log("Planned budget transaction saved successfully.");
+
+    // 🔥 NEW: Return the newly created transaction ID
+    const result = db.getFirstSync("SELECT last_insert_rowid() AS id;");
+    return result.id;
   } catch (error) {
     console.error("Error saving planned budget transaction:", error);
+    return null;
+  }
+};
+
+// export const updateExistingTransaction = async ({
+//   transactionId,
+//   accountId,
+//   categoryId,
+//   amount,
+//   type,
+//   description,
+//   date,
+//   toAccountId, // Accept this argument
+// }) => {
+//   const db = await getDb();
+//   await db.runAsync(
+//     `UPDATE transactions
+//       SET account_id = ?, category_id = ?, amount = ?, type = ?, description = ?, date = ?, to_account_id = ?
+//       WHERE id = ?`,
+//     [
+//       accountId,
+//       categoryId,
+//       amount,
+//       type,
+//       description,
+//       date,
+//       toAccountId || null, // <--- CRITICAL: If it's undefined (Expense/Income), send NULL to DB
+//       transactionId,
+//     ]
+//   );
+// };
+
+// transactions.js
+
+export const updateExistingTransaction = async ({
+  transactionId,
+  accountId,
+  categoryId,
+  amount,
+  type,
+  description,
+  date,
+  toAccountId,
+}) => {
+  const db = await getDb();
+
+  try {
+    // 1. FETCH THE OLD TRANSACTION
+    // We need to know what the values were BEFORE this edit to revert the balance correctly.
+    const oldTransaction = await db.getFirstAsync(
+      "SELECT * FROM transactions WHERE id = ?",
+      [transactionId]
+    );
+
+    if (!oldTransaction) {
+      throw new Error("Transaction not found");
+    }
+
+    // 2. REVERT THE OLD BALANCE
+    // "Undo" what the previous version of this transaction did.
+    if (oldTransaction.type === "expense") {
+      // Expense removed money, so we ADD it back to the OLD account
+      await db.runAsync(
+        "UPDATE accounts SET balance = balance + ? WHERE id = ?",
+        [oldTransaction.amount, oldTransaction.account_id]
+      );
+    } else if (oldTransaction.type === "income") {
+      // Income added money, so we SUBTRACT it from the OLD account
+      await db.runAsync(
+        "UPDATE accounts SET balance = balance - ? WHERE id = ?",
+        [oldTransaction.amount, oldTransaction.account_id]
+      );
+    } else if (oldTransaction.type === "transfer") {
+      // Transfer removed from Source and added to Destination.
+      // REVERSE: Add to Source, Subtract from Destination.
+      await db.runAsync(
+        "UPDATE accounts SET balance = balance + ? WHERE id = ?",
+        [oldTransaction.amount, oldTransaction.account_id]
+      );
+      if (oldTransaction.to_account_id) {
+        await db.runAsync(
+          "UPDATE accounts SET balance = balance - ? WHERE id = ?",
+          [oldTransaction.amount, oldTransaction.to_account_id]
+        );
+      }
+    }
+
+    // 3. APPLY THE NEW BALANCE
+    // Now apply the logic for the NEW values (New Amount, New Type, New Account).
+    if (type === "expense") {
+      // New Expense: Subtract from NEW account
+      await db.runAsync(
+        "UPDATE accounts SET balance = balance - ? WHERE id = ?",
+        [amount, accountId]
+      );
+    } else if (type === "income") {
+      // New Income: Add to NEW account
+      await db.runAsync(
+        "UPDATE accounts SET balance = balance + ? WHERE id = ?",
+        [amount, accountId]
+      );
+    } else if (type === "transfer") {
+      // New Transfer: Subtract from Source, Add to Destination
+      await db.runAsync(
+        "UPDATE accounts SET balance = balance - ? WHERE id = ?",
+        [amount, accountId]
+      );
+      if (toAccountId) {
+        await db.runAsync(
+          "UPDATE accounts SET balance = balance + ? WHERE id = ?",
+          [amount, toAccountId]
+        );
+      }
+    }
+
+    // 4. UPDATE THE TRANSACTION RECORD
+    // Finally, update the transaction details in the database
+    await db.runAsync(
+      `UPDATE transactions
+       SET account_id = ?, category_id = ?, amount = ?, type = ?, description = ?, date = ?, to_account_id = ?
+       WHERE id = ?`,
+      [
+        accountId,
+        categoryId,
+        amount,
+        type,
+        description,
+        date,
+        toAccountId || null, // Ensure null if undefined
+        transactionId,
+      ]
+    );
+
+    console.log(
+      `Transaction ${transactionId} and Account Balances updated successfully.`
+    );
+  } catch (error) {
+    console.error("Error updating transaction and balances:", error);
+    throw new Error("Failed to update transaction.");
   }
 };

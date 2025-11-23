@@ -162,9 +162,8 @@ export default function Quests() {
       <ReusableRoundedBoxComponent>
         <View className="flex-col px-[32] pt-[8]">
           <View className="flex-row items-center gap-[4] pb-[16]">
-            <View className="w-[25] h-[25] bg-white" />
             <Text className="font-medium text-textInsidePrimary-light dark:text-textInsidePrimary-dark">
-              Budget Tracker
+              PeraPal
             </Text>
           </View>
 

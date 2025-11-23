@@ -109,3 +109,124 @@ export const deleteCategory = (id) => {
     throw new Error("Failed to delete category.");
   }
 };
+
+//async categoryqueries.js
+// import { executeSqlAsync, getDb, rowsToArray } from "@/utils/database"; // Import async helpers
+
+// // ❌ REMOVED: The synchronous top-level call to `const db = getDb();`
+// // This must be removed because it runs before the DatabaseProvider initializes the DB.
+
+// /**
+//  * Gets all expense categories from the database.
+//  * @returns {Promise<Array<Object>>} A promise that resolves to an array of expense category objects.
+//  */
+// export const getExpenseCategories = async () => {
+//   try {
+//     const db = getDb();
+
+//     const results = await executeSqlAsync(
+//       db,
+//       "SELECT * FROM categories WHERE type = ?;",
+//       ["expense"]
+//     );
+
+//     const allRows = rowsToArray(results);
+//     console.log(`Fetched ${allRows.length} expense categories.`);
+//     return allRows;
+//   } catch (error) {
+//     console.error("Error getting expense categories:", error);
+//     throw new Error("Failed to retrieve expense categories from the database.");
+//   }
+// };
+
+// export const getIncomeCategories = async () => {
+//   try {
+//     const db = getDb();
+
+//     const results = await executeSqlAsync(
+//       db,
+//       "SELECT * FROM categories WHERE type = ?;",
+//       ["income"]
+//     );
+
+//     const allRows = rowsToArray(results);
+//     console.log(`Fetched ${allRows.length} income categories.`);
+//     return allRows;
+//   } catch (error) {
+//     console.error("Error getting income categories:", error);
+//     throw new Error("Failed to retrieve income categories from the database.");
+//   }
+// };
+
+// export const getCategoriesByType = async (type) => {
+//   try {
+//     const db = getDb();
+
+//     const results = await executeSqlAsync(
+//       db,
+//       "SELECT * FROM categories WHERE type = ?;",
+//       [type]
+//     );
+
+//     const allRows = rowsToArray(results);
+//     console.log(`Fetched ${allRows.length} categories of type '${type}'.`);
+//     return allRows;
+//   } catch (error) {
+//     console.error(`Error fetching categories of type '${type}':`, error);
+//     throw new Error(
+//       `Failed to retrieve categories of type '${type}' from the database.`
+//     );
+//   }
+// };
+
+// export const saveNewCategory = async ({ name, type, icon_name }) => {
+//   try {
+//     const db = getDb();
+
+//     const results = await executeSqlAsync(
+//       db,
+//       "INSERT INTO categories (name, type, icon_name) VALUES (?, ?, ?);",
+//       [name, type, icon_name]
+//     );
+
+//     const insertId = results.insertId || results.lastInsertRowId;
+//     console.log(`New category '${name}' saved with ID: ${insertId}`);
+//     return insertId;
+//   } catch (error) {
+//     console.error(`Error saving new category '${name}':`, error);
+//     if (error.message.includes("UNIQUE constraint failed: categories.name")) {
+//       throw new Error(`The category name '${name}' already exists.`);
+//     }
+//     throw new Error("Failed to save new category to the database.");
+//   }
+// };
+
+// export const updateCategory = async (id, { name, type, icon_name }) => {
+//   try {
+//     const db = getDb();
+
+//     await executeSqlAsync(
+//       db,
+//       "UPDATE categories SET name = ?, type = ?, icon_name = ? WHERE id = ?;",
+//       [name, type, icon_name, id]
+//     );
+
+//     console.log(`Category ${id} updated successfully.`);
+//   } catch (error) {
+//     console.error(`Error updating category ${id}:`, error);
+//     throw new Error("Failed to update category.");
+//   }
+// };
+
+// export const deleteCategory = async (id) => {
+//   try {
+//     const db = getDb();
+
+//     await executeSqlAsync(db, "DELETE FROM categories WHERE id = ?;", [id]);
+
+//     console.log(`Category ${id} deleted successfully.`);
+//   } catch (error) {
+//     console.error(`Error deleting category ${id}:`, error);
+//     throw new Error("Failed to delete category.");
+//   }
+// };
