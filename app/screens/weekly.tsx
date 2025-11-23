@@ -452,7 +452,7 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
               isDark ? "bg-[#1E1E1E]" : "bg-white"
             }`}
           >
-            <SVG_ICONS.DailyReward width={70} height={90} />
+            <SVG_ICONS.WeeklyReward width={70} height={90} />
             <Text
               className={`text-xl font-bold mt-4 ${
                 isDark ? "text-[#C8A6FF]" : "text-[#8938E9]"
@@ -481,7 +481,12 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
       {/* Progress Header */}
       <View className="flex-col items-end px-[32] pt-[16] pb-[32] mt-[20]">
         <View className="pr-6 mb-2">
-          <SVG_ICONS.DailyReward width={50} height={66} />
+          <SVG_ICONS.WeeklyReward width={50} height={66} />
+          {currentProgress === 1 && (
+            <View style={{ position: "absolute", top: 12, right: 20 }}>
+              <Check size={50} color={"black"} strokeWidth={3} />
+            </View>
+          )}
         </View>
         <ProgressBar progress={progress} />
         <Text
@@ -576,11 +581,7 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
               {isCompleted && (
                 <View className="items-end flex-1 justify-end mt-2">
                   <View className={`flex-row justify-center`}>
-                    <Check
-                      size={28}
-                      color={isDark ? "white" : "#8938E9"}
-                      strokeWidth={3}
-                    />
+                    <Check size={28} color={"white"} strokeWidth={3} />
                     {/* <Text
                       className={`text-[12px] ${
                         isDark ? "text-white" : "text-[#8938E9]"
@@ -594,14 +595,14 @@ const WeeklyContent: React.FC<WeeklyContentProps> = ({
             </View>
           );
         })}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={handleResetWeeklyQuests}
           className="mt-4 bg-red-500 p-3 rounded-lg self-center"
         >
           <Text className="text-white font-bold">
             Reset Weekly Quests (Testing)
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         {/* <TouchableOpacity
           className="px-4 py-2 bg-purple-500 rounded"
           onPress={handleResetLoginQuest}

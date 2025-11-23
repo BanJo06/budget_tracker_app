@@ -184,7 +184,15 @@ const DailyContent: React.FC<DailyContentProps> = ({
       {/* Progress Bar */}
       <View className="flex-col items-end px-[32] gap-[6] pt-[16] pb-[32] mt-[20]">
         <View className="pr-6 mb-2">
-          <SVG_ICONS.DailyReward width={50} height={66} />
+          {/* MODIFIED SECTION START */}
+          <View>
+            <SVG_ICONS.DailyReward width={50} height={66} />
+            {currentProgress === 1 && (
+              <View style={{ position: "absolute", top: 12, right: 0 }}>
+                <Check size={50} color={"black"} strokeWidth={3} />
+              </View>
+            )}
+          </View>
         </View>
         <ProgressBar progress={currentProgress} />
         <Text className="text-gray-500 dark:text-textPrimary-dark text-sm mt-1">
@@ -234,11 +242,7 @@ const DailyContent: React.FC<DailyContentProps> = ({
 
               {quest.completed && (
                 <View className={`flex-row justify-center items-center`}>
-                  <Check
-                    size={28}
-                    color={isDark ? "white" : "#8938E9"}
-                    strokeWidth={3}
-                  />
+                  <Check size={28} color={"white"} strokeWidth={3} />
                 </View>
               )}
             </View>

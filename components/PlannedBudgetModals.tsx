@@ -160,11 +160,11 @@ export default function PlannedBudgetModals({
                   <Text className="text-[18px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
                     {selectedBudget?.budget_name || "Unnamed Budget"}
                   </Text>
-                  <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark opacity-70">
+                  {/* <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark opacity-70">
                     {selectedBudget?.budget_type
                       ? selectedBudget.budget_type + " category"
                       : "No category"}
-                  </Text>
+                  </Text> */}
                 </View>
               </View>
 

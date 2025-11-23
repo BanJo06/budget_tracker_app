@@ -96,7 +96,17 @@ const HelpGuideModal: React.FC<HelpGuideModalProps> = ({
         </Text>{" "}
         button.
         {"\n\n"}
-        <Text className="font-bold">Happy tracking!</Text>
+        <Text className="font-medium underline">Backup/Restore:</Text> If you're
+        worried about losing your data, backup is for you! Click the{" "}
+        <Text className="font-bold text-highlight-light dark:text-highlight-dark">
+          "Backup Database"
+        </Text>{" "}
+        to create a backup and if you want to restore your data, click the{" "}
+        <Text className="font-bold text-highlight-light dark:text-highlight-dark">
+          "Restore Database" button
+        </Text>
+        .{"\n\n"}
+        <Text className="font-bold">Please enjoy the app!</Text>
       </Text>
     </>
   );

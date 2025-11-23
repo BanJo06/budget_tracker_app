@@ -16,11 +16,13 @@ import DashboardIcon from "../icons/DashboardIcon";
 import DeleteIcon from "../icons/DeleteIcon";
 import EditIcon from "../icons/EditIcon";
 import EllipsisIcon from "../icons/EllipsisIcon";
+import ExpenseIcon from "../icons/ExpenseIcon";
 import ExportRecordsIcon from "../icons/ExportRecordsIcon";
 import GraphsActiveIcon from "../icons/GraphsActiveIcon";
 import GraphsIcon from "../icons/GraphsIcon";
 import HelpIcon from "../icons/HelpIcon";
 import HelpTopIcon from "../icons/HelpTopIcon";
+import IncomeIcon from "../icons/IncomeIcon";
 import InsightIcon from "../icons/InsightIcon";
 import PlannedBudgetsIcon from "../icons/PlannedBudgetsIcon";
 import QuestsActiveIcon from "../icons/QuestsActiveIcon";
@@ -34,6 +36,7 @@ import ShopIcon from "../icons/ShopIcon";
 import SideMenuIcon from "../icons/SideMenuIcon";
 import SmallAddIcon from "../icons/SmallAddIcon";
 import TransferIcon from "../icons/TransferIcon";
+import WeeklyRewardIcon from "../icons/WeeklyRewardIcon";
 
 // Define an interface for your icon map for better type safety
 interface SvgIconMap {
@@ -79,4 +82,7 @@ export const SVG_ICONS: SvgIconMap = {
   HelpTop: HelpTopIcon,
   Delete: DeleteIcon,
   Edit: EditIcon,
+  Income: IncomeIcon,
+  Expense: ExpenseIcon,
+  WeeklyReward: WeeklyRewardIcon,
 };
