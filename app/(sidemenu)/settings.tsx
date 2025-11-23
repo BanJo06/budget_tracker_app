@@ -12,7 +12,6 @@ import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
-  Button,
   Linking,
   Platform,
   StyleSheet,
@@ -118,7 +117,7 @@ export default function Settings() {
             </TouchableOpacity>
 
             {/* Currency Position */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               className="w-full py-[8] active:bg-gray-100 dark:active:bg-gray-800"
               onPress={() => console.log("Currency Position pressed")}
             >
@@ -130,10 +129,10 @@ export default function Settings() {
                   At the start of the amount
                 </Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Decimal Places */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               className="w-full py-[8] active:bg-gray-100 dark:active:bg-gray-800"
               onPress={() => setIsDecimalModalVisible(true)}
             >
@@ -151,7 +150,7 @@ export default function Settings() {
                   )
                 </Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
       </View>
@@ -212,7 +211,7 @@ export default function Settings() {
       {/* About Section */}
       <View className="pt-[28]">
         <View>
-          <View className="pb-[16] px-[32]">
+          {/* <View className="pb-[16] px-[32]">
             <Text className="font-medium text-[12px] text-black dark:text-white">
               About
             </Text>
@@ -227,31 +226,19 @@ export default function Settings() {
                 Privacy Policy
               </Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          <View className="px-[32] mt-4">
+          {/* <View className="px-[32] mt-4">
             <Button
               title="FIRE TEST NOTIFICATION"
               onPress={handleTestNotification}
               color={colorScheme === "dark" ? "#999" : undefined}
             />
-          </View>
+          </View> */}
         </View>
       </View>
 
       {/* UI Mode Modal */}
-      {/* <UIModeModal
-        visible={isUIModalVisible}
-        currentMode={uiMode}
-        hasPurchasedDarkMode={hasPurchasedDarkMode} // ✅ important
-        onClose={() => setIsUIModalVisible(false)}
-        onSelectMode={async (mode) => {
-          if (mode === "dark" && !hasPurchasedDarkMode) return; // prevent selection
-          setUIMode(mode);
-          setColorScheme(mode === "dark" ? "dark" : "light");
-          await AsyncStorage.setItem("uiMode", mode);
-        }}
-      /> */}
       <UIModeModal
         visible={isUIModalVisible}
         currentMode={uiMode}
