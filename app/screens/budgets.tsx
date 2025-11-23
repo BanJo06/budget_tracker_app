@@ -32,12 +32,10 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { useColorScheme } from "nativewind";
 import { TouchableWithoutFeedback } from "react-native";
-import SwitchSelector from "react-native-switch-selector";
 
 type PlannedBudget = {
   id?: number;
   budget_name: string;
-  budget_type: "income" | "expense";
   color_name: string;
   amount?: number;
   start_date?: string | null;
@@ -71,9 +69,6 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
   const [selectedColor, setSelectedColor] = useState<string | null>(
     initialData?.color_name ?? null
   );
-  const [selectedOption, setSelectedOption] = useState<"income" | "expense">(
-    initialData?.budget_type ?? "expense"
-  );
   const [isGoalDateEnabled, setIsGoalDateEnabled] = useState(
     !!initialData?.start_date || !!initialData?.end_date
   );
@@ -92,7 +87,6 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
       setBudgetName(initialData.budget_name ?? "");
       setAmount(initialData.amount ? String(initialData.amount) : "");
       setSelectedColor(initialData.color_name ?? null);
-      setSelectedOption(initialData.budget_type ?? "expense");
       setIsGoalDateEnabled(!!initialData.start_date || !!initialData.end_date);
       setStartDate(
         initialData.start_date ? new Date(initialData.start_date) : undefined
@@ -109,7 +103,6 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
       setBudgetName("");
       setAmount("");
       setSelectedColor(null);
-      setSelectedOption("expense");
       setIsGoalDateEnabled(false);
       setStartDate(undefined);
       setEndDate(undefined);
@@ -173,7 +166,6 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
 
     const payload: Omit<PlannedBudget, "id"> = {
       budget_name: budgetName.trim(),
-      budget_type: selectedOption,
       color_name: selectedColor,
       amount: parsedAmount,
       ...(isGoalDateEnabled && {
@@ -201,38 +193,6 @@ const NewPlannedBudgetModal: React.FC<NewPlannedBudgetModalProps> = ({
           <Text className="text-xl font-bold mb-4 text-textPrimary-light dark:text-textPrimary-dark">
             Add new planned budget
           </Text>
-
-          <View className="flex-row items-center pb-5">
-            <Text className="text-textPrimary-light dark:text-textPrimary-dark">
-              Cash Flow
-            </Text>
-            <View className="flex-1 ml-[110]">
-              <SwitchSelector
-                options={[
-                  { label: "Income", value: "income" },
-                  { label: "Expense", value: "expense" },
-                ]}
-                initial={selectedOption === "income" ? 0 : 1}
-                onPress={(v) => {
-                  const val = v as "income" | "expense";
-                  setSelectedOption(val);
-                  setSelectedColor(null);
-                  setAmount("");
-                  setStartDate(undefined);
-                  setEndDate(undefined);
-                }}
-                textColor={"#000000"}
-                selectedColor={colorScheme === "dark" ? "#fff" : "#fff"}
-                buttonColor={colorScheme === "dark" ? "#461C78" : "#8938E9"}
-                hasPadding={true}
-                borderRadius={30}
-                borderColor={"#ffffff"}
-                height={40}
-                textStyle={{ fontSize: 12, fontWeight: "500" }}
-                selectedTextStyle={{ fontSize: 12, fontWeight: "500" }}
-              />
-            </View>
-          </View>
 
           <View className="w-full flex-row gap-2 items-center mb-6">
             <Text className="text-textPrimary-light dark:text-textPrimary-dark">
@@ -579,12 +539,11 @@ export default function Budgets() {
         getDb().runSync(
           `
           UPDATE planned_budgets
-          SET budget_name = ?, budget_type = ?, color_name = ?, amount = ?, start_date = ?, end_date = ?, is_ongoing = ?
+          SET budget_name = ?, color_name = ?, amount = ?, start_date = ?, end_date = ?, is_ongoing = ?
           WHERE id = ?;
         `,
           [
             data.budget_name,
-            data.budget_type,
             data.color_name,
             data.amount ?? 0,
             startDate,
@@ -597,7 +556,6 @@ export default function Budgets() {
         // Insert new planned budget
         savePlannedBudget(
           data.budget_name,
-          data.budget_type,
           data.amount ?? 0,
           data.color_name ?? "#000000", // fallback
           startDate,
@@ -941,10 +899,10 @@ const BudgetEditModal: React.FC<{
 
       <View className="flex-row pt-4 gap-4">
         <TouchableOpacity
-          className="w-20 h-8 rounded-md border border-button-light dark:border-button-dark justify-center items-center"
+          className="w-20 h-8 rounded-md border border-borderButton-light dark:border-borderButton-dark justify-center items-center"
           onPress={onClose}
         >
-          <Text className="uppercase text-button-light dark:text-button-dark">
+          <Text className="uppercase text-borderButton-light dark:text-borderButton-dark">
             Cancel
           </Text>
         </TouchableOpacity>

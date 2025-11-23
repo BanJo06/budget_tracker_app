@@ -7,6 +7,7 @@ interface Transaction {
   type: "income" | "expense" | "transfer";
   date: string;
   category_name?: string;
+  description?: string;
 }
 
 interface WeeklyTransactionsModalProps {
@@ -61,7 +62,7 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
                 >
                   <View className="flex-col">
                     <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark font-medium">
-                      {t.category_name || "(no category)"}
+                      {t.category_name || t.description || "(no category)"}
                     </Text>
                     <Text className="text-sm text-textPrimary-light dark:text-textPrimary-dark">
                       {formatDate(t.date)}
