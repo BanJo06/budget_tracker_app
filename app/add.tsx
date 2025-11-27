@@ -543,7 +543,50 @@ export default function Add() {
   };
 
   const handleNumberInput = (num: string) => {
-    setDisplayValue((prev) => (prev === "0" ? num : prev + num));
+    setDisplayValue((prev) => {
+      // 1. Prevent multiple periods
+      if (num === "." && prev.includes(".")) {
+        return prev;
+      }
+
+      // 2. Construct the potential new value string
+      let nextValue = prev + num;
+
+      // Handle the "0" start case (clean up the string construction)
+      if (prev === "0") {
+        if (num === "0" || num === "00") return prev; // Ignore "0" or "00" at start
+        if (num === ".") nextValue = "0."; // Start with decimal
+        else nextValue = num; // Replace "0" with number
+      }
+
+      // 3. CHECK: Limit value to 10,000,000 (8 digits)
+      // We parse the string to a number to check the value
+      if (parseFloat(nextValue) > 99999999) {
+        return prev;
+      }
+
+      // 4. CHECK: Limit Integer Length to 8 digits
+      // (This handles cases like 99,999,999 which might pass strictly 'digits' checks but fail value checks)
+      const integerPart = nextValue.split(".")[0];
+      if (integerPart.length > 8) {
+        return prev;
+      }
+
+      return nextValue;
+    });
+  };
+
+  const formatNumberWithCommas = (value: string) => {
+    if (!value) return "0";
+
+    // Split integer and decimal parts
+    const parts = value.split(".");
+
+    // Add commas to the integer part using Regex
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    // Rejoin with the decimal part (if it exists)
+    return parts.join(".");
   };
 
   const handleOperatorInput = (op: string) => {
@@ -1044,7 +1087,7 @@ export default function Add() {
                 className="text-7xl text-right text-textPrimary-light dark:text-textPrimary-dark"
                 style={{ lineHeight: 65, includeFontPadding: false }}
               >
-                {displayValue}
+                {formatNumberWithCommas(displayValue)}
               </Text>
             </View>
           </View>
