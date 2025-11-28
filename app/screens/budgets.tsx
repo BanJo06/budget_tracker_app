@@ -1,3 +1,4 @@
+import { getAccounts } from "@/utils/accounts";
 import { deletePlannedBudget } from "@/utils/database";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Sharing from "expo-sharing";
@@ -365,6 +366,7 @@ export default function Budgets() {
 
   // Visual / state
   const [dailyBudget, setDailyBudget] = useState("0.00");
+  const [accounts, setAccounts] = useState([]);
 
   const [isDailyBudgetModalVisible, setDailyBudgetModalVisible] =
     useState(false);
@@ -387,6 +389,26 @@ export default function Budgets() {
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
 
   const [spentMap, setSpentMap] = useState<Record<number, number>>({});
+
+  // 1. Fetch accounts to calculate the total available balance
+  const fetchAccounts = async () => {
+    try {
+      await initDatabase();
+      const fetchedAccounts = await getAccounts();
+      setAccounts(fetchedAccounts);
+    } catch (error) {
+      console.error("Failed to fetch accounts:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  // 2. Calculate Total Balance dynamically
+  const totalBalance = accounts.reduce((sum, account) => {
+    return sum + (parseFloat(account.balance) || 0);
+  }, 0);
 
   const showAlert = (title: string, message: string) => {
     setAlertTitle(title);
@@ -500,6 +522,7 @@ export default function Budgets() {
   }, []);
 
   const handleSaveBudget = async (budgetType: string, value: string) => {
+    const budgetValue = parseFloat(value);
     if (!dbInitialized) {
       showAlert(
         "Database Not Ready",
@@ -511,13 +534,21 @@ export default function Budgets() {
       showAlert("Input Error", "Please enter a budget amount.");
       return;
     }
-    if (!/^\d+(\.\d{1,2})?$/.test(value)) {
-      showAlert(
-        "Input Error",
-        "Please enter a valid numerical amount (e.g., 1000 or 1000.50)."
+    if (!value || isNaN(budgetValue) || budgetValue <= 0) {
+      Alert.alert("Invalid Input", "Please enter a valid amount.");
+      return;
+    }
+
+    if (budgetValue > (totalBalance || 0)) {
+      Alert.alert(
+        "Insufficient Balance",
+        `You have only total balance of ₱${totalBalance.toFixed(
+          2
+        )} in your all accounts. Please input the daily budget less than your total balance.`
       );
       return;
     }
+
     try {
       saveBudgetValue(budgetType, value);
       const formattedBudgetType =

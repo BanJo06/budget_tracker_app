@@ -24,8 +24,9 @@ export default function DonutChart({
   const circumference = 2 * Math.PI * radius;
 
   const clampedProgress = Math.min(Math.max(progress, 0), 1);
-
   const strokeDashoffset = circumference * (1 - clampedProgress);
+
+  const remaining = dailyBudget - spent;
 
   return (
     <View className="justify-center items-center">
@@ -58,10 +59,11 @@ export default function DonutChart({
           {label}
         </Text>
         <Text style={{ color: color }} className="text-[18px] font-bold">
-          ₱{spent.toFixed(2)}
+          {/* ₱{spent.toFixed(2)} */}₱{remaining.toFixed(2)}
         </Text>
         <Text className="text-[12px] text-textPrimary-light dark:text-textPrimary-dark opacity-65">
-          / ₱{dailyBudget.toFixed(2)}
+          {/* / ₱{dailyBudget.toFixed(2)} */}
+          left from ₱{dailyBudget.toFixed(2)}
         </Text>
       </View>
     </View>
