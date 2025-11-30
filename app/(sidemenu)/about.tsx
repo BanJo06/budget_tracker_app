@@ -32,7 +32,7 @@ const About = () => {
           PeraPal
         </Text>
         <Text className="text-textSecondary-light dark:text-textSecondary-dark mt-1 opacity-65">
-          Version 0.42.2
+          Version 0.42.31
         </Text>
       </View>
 
