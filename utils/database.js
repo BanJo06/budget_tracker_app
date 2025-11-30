@@ -115,7 +115,19 @@ export const initDatabase = async () => {
           FOREIGN KEY (planned_budget_id) REFERENCES planned_budgets(id),
           FOREIGN KEY (account_id) REFERENCES accounts(id)
         );
+
+        CREATE TABLE IF NOT EXISTS user_streak (
+          id INTEGER PRIMARY KEY NOT NULL,
+          current_streak INTEGER DEFAULT 0,
+          last_checked_date TEXT, -- Store as YYYY-MM-DD
+          highest_streak INTEGER DEFAULT 0
+        );
       `);
+
+      db.runSync(
+        `INSERT OR IGNORE INTO user_streak (id, current_streak, last_checked_date, highest_streak) 
+         VALUES (1, 0, '', 0);`
+      );
 
       // === Indexes unchanged ===
       if (
@@ -495,5 +507,183 @@ export const getBudgetBalance = (name) => {
   } catch (error) {
     console.error(`Error getting balance for '${name}':`, error);
     return 0; // fallback
+  }
+};
+
+/**
+ * Updates the user's streak based on yesterday's spending.
+ * Uses modern synchronous SQLite API.
+ */
+// export const updateStreak = (dailyBudgetLimit) => {
+//   // Get reference to the database (assuming 'db' is exported from this file)
+//   // If 'db' is passed as an argument, use that instead.
+//   // const db = getDb();
+
+//   const today = moment().format("YYYY-MM-DD");
+//   const yesterday = moment().subtract(1, "days").format("YYYY-MM-DD");
+
+//   try {
+//     let finalStreak = 0;
+
+//     // Use synchronous transaction
+//     db.withTransactionSync(() => {
+//       // 1. Get current streak info
+//       const streakData = db.getFirstSync(
+//         `SELECT * FROM user_streak WHERE id = 1;`
+//       );
+
+//       // Safety check: if table is empty (shouldn't happen if init ran correctly)
+//       if (!streakData) {
+//         console.warn("User streak table empty, skipping check.");
+//         return;
+//       }
+
+//       let { current_streak, last_checked_date } = streakData;
+
+//       // 2. If we already checked today, do nothing, just return current value
+//       if (last_checked_date === today) {
+//         console.log("Streak already checked for today.");
+//         finalStreak = current_streak;
+//         return;
+//       }
+
+//       // 3. Check YESTERDAY'S spending
+//       const result = db.getFirstSync(
+//         `SELECT SUM(amount) as total_spent FROM transactions
+//          WHERE type = 'Expense' AND date = ?`,
+//         [yesterday]
+//       );
+
+//       const totalSpentYesterday = result?.total_spent || 0;
+//       let newStreak = current_streak;
+
+//       // 4. Logic Checks
+//       if (totalSpentYesterday <= dailyBudgetLimit) {
+//         // SUCCESS: Increment streak (Use <= so hitting exact budget keeps streak)
+//         newStreak += 1;
+//         console.log(
+//           `🔥 Streak maintained! Yesterday spent: ${totalSpentYesterday} (Limit: ${dailyBudgetLimit})`
+//         );
+//       } else {
+//         // FAIL: Reset streak
+//         newStreak = 0;
+//         console.log(
+//           `💔 Overspent yesterday (${totalSpentYesterday} > ${dailyBudgetLimit}). Streak reset.`
+//         );
+//       }
+
+//       // 5. Update the Database
+//       db.runSync(
+//         `UPDATE user_streak
+//          SET current_streak = ?, last_checked_date = ?
+//          WHERE id = 1;`,
+//         [newStreak, today]
+//       );
+
+//       finalStreak = newStreak;
+//     });
+
+//     return finalStreak;
+//   } catch (error) {
+//     console.error("❌ Error updating streak:", error);
+//     return 0; // Return 0 on error
+//   }
+// };
+
+export const updateStreak = (dailyBudgetLimit) => {
+  // 1. Helper to format YYYY-MM-DD in local time
+  const getFormattedDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const now = new Date();
+  const today = getFormattedDate(now);
+
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = getFormattedDate(yesterdayDate);
+
+  try {
+    let finalStreak = 0;
+
+    // Use synchronous transaction
+    db.withTransactionSync(() => {
+      // 1. Get current streak info
+      const streakData = db.getFirstSync(
+        `SELECT * FROM user_streak WHERE id = 1;`
+      );
+
+      if (!streakData) return;
+
+      let { current_streak, last_checked_date } = streakData;
+
+      // 2. If we already checked today, do nothing
+      if (last_checked_date === today) {
+        finalStreak = current_streak;
+        return;
+      }
+
+      // 3. Check YESTERDAY'S spending
+      const result = db.getFirstSync(
+        `SELECT SUM(amount) as total_spent FROM transactions 
+         WHERE type = 'Expense' AND date = ?`,
+        [yesterday]
+      );
+
+      const totalSpentYesterday = result?.total_spent || 0;
+      let newStreak = current_streak;
+
+      // 4. Logic Checks
+      if (dailyBudgetLimit < 50) {
+        newStreak = 0;
+        console.log(`⚠️ Budget too low (< 50). Streak reset.`);
+      } else if (totalSpentYesterday <= dailyBudgetLimit) {
+        newStreak += 1;
+        console.log(`🔥 Streak maintained!`);
+      } else {
+        newStreak = 0;
+        console.log(`💔 Overspent yesterday. Streak reset.`);
+      }
+
+      // 5. Update the Database
+      db.runSync(
+        `UPDATE user_streak 
+         SET current_streak = ?, last_checked_date = ? 
+         WHERE id = 1;`,
+        [newStreak, today]
+      );
+
+      finalStreak = newStreak;
+    });
+
+    return finalStreak;
+  } catch (error) {
+    console.error("❌ Error updating streak:", error);
+    return 0;
+  }
+};
+
+export const getUserStreak = () => {
+  try {
+    const row = db.getFirstSync(
+      "SELECT current_streak FROM user_streak WHERE id = 1;"
+    );
+    return row ? row.current_streak : 0;
+  } catch (error) {
+    console.error("Error fetching user streak:", error);
+    return 0;
+  }
+};
+
+// ✅ Add (or ensure this is exported) to reset streak
+export const resetStreakOnBudgetChange = () => {
+  try {
+    db.runSync("UPDATE user_streak SET current_streak = 0 WHERE id = 1;");
+    console.log("⚠️ Budget limit changed. Streak reset to 0.");
+  } catch (error) {
+    console.error("Error resetting streak:", error);
   }
 };

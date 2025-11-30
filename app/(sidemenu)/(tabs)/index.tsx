@@ -23,6 +23,7 @@ import {
   getPlannedBudgets,
   initDatabase,
   savePlannedBudgetTransaction,
+  updateStreak,
 } from "@/utils/database";
 import { calculateWeeklySummary, formatCurrency } from "@/utils/stats";
 import {
@@ -30,7 +31,7 @@ import {
   savePlannedBudgetAsTransaction,
 } from "@/utils/transactions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import { useColorScheme } from "nativewind";
 import React, {
@@ -119,6 +120,8 @@ export default function Index() {
   const [completedBudget, setCompletedBudget] = useState<PlannedBudget | null>(
     null
   );
+  const [streakCount, setStreakCount] = useState(0);
+  const isFocused = useIsFocused();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]); // regular income/expense
@@ -277,6 +280,21 @@ export default function Index() {
   // ======================
   // Helpers
   // ======================
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      // 1. Get Daily Budget Limit
+      const limit = getDailyBudget(); // Assuming this is also sync now
+
+      // 2. Calculate Streak
+      const currentStreak = updateStreak(limit); // No 'await' needed anymore
+
+      // 3. Update State
+      setStreakCount(currentStreak);
+    };
+
+    loadDashboardData();
+  }, [isFocused]);
 
   const getTotalSpentForPlannedBudget = (plannedBudgetId: number) => {
     const budgetTx = plannedBudgetTransactions.filter(
@@ -724,11 +742,12 @@ export default function Index() {
   // ======================
   // Layout Dimensions
   // ======================
-  const mainCardWidth = SCREEN_WIDTH * 0.85;
+  const SIDE_MARGIN = 32;
+  const mainCardWidth = SCREEN_WIDTH - SIDE_MARGIN * 2;
   const marginSpace = (SCREEN_WIDTH - mainCardWidth) / 2;
   const plannedBudgetCardWidth = SCREEN_WIDTH * 0.7;
   const donutSize = scale(140);
-  const headerPadding = marginSpace;
+  const headerPadding = SIDE_MARGIN;
 
   return (
     <View className="flex-1 items-center bg-bgPrimary-light dark:bg-bgPrimary-dark">
@@ -898,64 +917,104 @@ export default function Index() {
         </View>
       </View>
 
-      {/* === Expense & Income Banners === */}
-      {/* === Expense === */}
-      <View
-        className="my-[16] p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
-        style={{
-          elevation: 5,
-          width: mainCardWidth,
-          height: scale(72),
-        }}
-      >
-        <View className="flex-row h-full items-center">
-          <SVG_ICONS.Expense />
-          <View className="pl-[20] gap-[6] self-center">
-            <Text className="text-[12px] opacity-65 text-right text-textSecondary-light dark:text-textSecondary-dark">
-              Spent last 7 days:
-            </Text>
-            <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
-              {formatCurrency(weeklySummary.spent)}
-            </Text>
-          </View>
-          <View className="flex-1 self-center items-end">
+      {/* === Grid Layout: Row 1 (Expense + Streak) === */}
+      <View className="flex-row w-full gap-[12] my-[16] px-[32]">
+        {/* === Left: Expense Card === */}
+        <View
+          className="flex-1 p-[16] rounded-[20] bg-card-light dark:bg-card-dark justify-center"
+          style={{
+            elevation: 5,
+            height: scale(72), // Maintain fixed height for alignment
+          }}
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <SVG_ICONS.Expense />
+              <View className="pl-[12] gap-[4]">
+                <Text className="text-[12px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
+                  Expense:
+                </Text>
+                <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
+                  {formatCurrency(weeklySummary.spent)}
+                </Text>
+              </View>
+            </View>
+
             <TouchableOpacity onPress={() => openWeeklyModal("spent")}>
               <SVG_ICONS.ArrowRight width={24} height={24} />
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* === Right: Streak Card === */}
+        <View
+          className="w-[28%] rounded-[20] bg-card-light dark:bg-card-dark items-center justify-center p-[8]"
+          style={{
+            elevation: 5,
+            height: scale(72),
+          }}
+        >
+          <Text className="text-[10px] opacity-65 text-center text-textSecondary-light dark:text-textSecondary-dark leading-tight">
+            No overspend
+          </Text>
+          <Text className="text-[20px] font-bold text-textPrimary-light dark:text-textPrimary-dark my-[2]">
+            {streakCount}
+          </Text>
+          <Text className="text-[10px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
+            streak
+          </Text>
+        </View>
       </View>
 
-      {/* === Income === */}
-      <View
-        className="p-[16] rounded-[20] bg-card-light dark:bg-card-dark"
-        style={{
-          elevation: 5,
-          width: mainCardWidth,
-          height: scale(72),
-        }}
-      >
-        <View className="flex-row h-full items-center">
-          <SVG_ICONS.Income />
-          <View className="pl-[20] gap-[6] self-center">
-            <Text className="text-[12px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
-              Earned last 7 days:
-            </Text>
-            <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
-              {formatCurrency(weeklySummary.earned)}
-            </Text>
-          </View>
-          <View className="flex-1 self-center items-end">
+      {/* === Grid Layout: Row 2 (Income + Saved Yesterday) === */}
+      <View className="flex-row w-full gap-[12] mb-[16] px-[32]">
+        {/* === Left: Income Card === */}
+        <View
+          className="flex-1 p-[16] rounded-[20] bg-card-light dark:bg-card-dark justify-center"
+          style={{
+            elevation: 5,
+            height: scale(72),
+          }}
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <SVG_ICONS.Income />
+              <View className="pl-[12] gap-[4]">
+                <Text className="text-[12px] opacity-65 text-textSecondary-light dark:text-textSecondary-dark">
+                  Income:
+                </Text>
+                <Text className="text-[16px] font-medium text-textPrimary-light dark:text-textPrimary-dark">
+                  {formatCurrency(weeklySummary.earned)}
+                </Text>
+              </View>
+            </View>
+
             <TouchableOpacity onPress={() => openWeeklyModal("earned")}>
               <SVG_ICONS.ArrowRight width={24} height={24} />
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* === Right: Saved Yesterday Card === */}
+        <View
+          className="w-[28%] rounded-[20] bg-card-light dark:bg-card-dark items-center justify-center p-[8]"
+          style={{
+            elevation: 5,
+            height: scale(72),
+          }}
+        >
+          <Text className="text-[10px] opacity-65 text-center text-textSecondary-light dark:text-textSecondary-dark mb-[4] leading-tight">
+            Saved yesterday
+          </Text>
+          <Text className="text-[13px] font-bold text-textPrimary-light dark:text-textPrimary-dark text-center">
+            P800.00 {/* Replace with: {formatCurrency(savedYesterdayAmount)} */}
+          </Text>
+        </View>
       </View>
 
       {/* === Planned Budgets Section === */}
       <View
-        className="w-full mt-[20] bg-bgPrimary-light dark:bg-bgPrimary-dark"
+        className="w-full mt-[16] bg-bgPrimary-light dark:bg-bgPrimary-dark"
         style={{
           minHeight: SCREEN_HEIGHT * 0.3,
           paddingLeft: (SCREEN_WIDTH - mainCardWidth) / 2, // Align start with upper cards

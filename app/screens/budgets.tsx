@@ -26,7 +26,9 @@ import {
   getDatabaseFilePath,
   getDb,
   getPlannedBudgets,
+  getUserStreak,
   initDatabase,
+  resetStreakOnBudgetChange,
   saveBudget as saveBudgetDb,
   savePlannedBudget,
 } from "@/utils/database";
@@ -521,8 +523,53 @@ export default function Budgets() {
     }
   }, []);
 
+  // const handleSaveBudget = async (budgetType: string, value: string) => {
+  //   const budgetValue = parseFloat(value);
+  //   if (!dbInitialized) {
+  //     showAlert(
+  //       "Database Not Ready",
+  //       "Please wait while the database initializes."
+  //     );
+  //     return;
+  //   }
+  //   if (value.trim() === "") {
+  //     showAlert("Input Error", "Please enter a budget amount.");
+  //     return;
+  //   }
+  //   if (!value || isNaN(budgetValue) || budgetValue <= 0) {
+  //     Alert.alert("Invalid Input", "Please enter a valid amount.");
+  //     return;
+  //   }
+
+  //   if (budgetValue > (totalBalance || 0)) {
+  //     Alert.alert(
+  //       "Insufficient Balance",
+  //       `You have only total balance of ₱${totalBalance.toFixed(
+  //         2
+  //       )} in your all accounts. Please input the daily budget less than your total balance.`
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     saveBudgetValue(budgetType, value);
+  //     const formattedBudgetType =
+  //       budgetType.replace("_budget", "").charAt(0).toUpperCase() +
+  //       budgetType.replace("_budget", "").slice(1);
+  //     showAlert("Success", `${formattedBudgetType} Budget updated!`);
+  //     loadAllBudgets();
+  //   } catch (error) {
+  //     console.error(error);
+  //     showAlert(
+  //       "Database Error",
+  //       (error as Error).message || "Could not save budget."
+  //     );
+  //   }
+  // };
   const handleSaveBudget = async (budgetType: string, value: string) => {
     const budgetValue = parseFloat(value);
+
+    // 1. Basic Validation
     if (!dbInitialized) {
       showAlert(
         "Database Not Ready",
@@ -538,7 +585,13 @@ export default function Budgets() {
       Alert.alert("Invalid Input", "Please enter a valid amount.");
       return;
     }
-
+    if (budgetValue < 50) {
+      Alert.alert(
+        "Minimum Budget Required",
+        "The budget cannot be less than ₱50.00. Please input a higher amount to maintain streak eligibility."
+      );
+      return;
+    }
     if (budgetValue > (totalBalance || 0)) {
       Alert.alert(
         "Insufficient Balance",
@@ -549,20 +602,67 @@ export default function Budgets() {
       return;
     }
 
-    try {
-      saveBudgetValue(budgetType, value);
-      const formattedBudgetType =
-        budgetType.replace("_budget", "").charAt(0).toUpperCase() +
-        budgetType.replace("_budget", "").slice(1);
-      showAlert("Success", `${formattedBudgetType} Budget updated!`);
-      loadAllBudgets();
-    } catch (error) {
-      console.error(error);
-      showAlert(
-        "Database Error",
-        (error as Error).message || "Could not save budget."
-      );
+    // 2. Define the actual Save Logic as a reusable function
+    const proceedWithSave = (shouldResetStreak: boolean) => {
+      try {
+        saveBudgetValue(budgetType, value);
+
+        if (shouldResetStreak) {
+          resetStreakOnBudgetChange();
+        }
+
+        const formattedBudgetType =
+          budgetType.replace("_budget", "").charAt(0).toUpperCase() +
+          budgetType.replace("_budget", "").slice(1);
+
+        showAlert(
+          "Success",
+          `${formattedBudgetType} Budget updated!${
+            shouldResetStreak ? " Streak has been reset." : ""
+          }`
+        );
+        loadAllBudgets();
+      } catch (error) {
+        console.error(error);
+        showAlert(
+          "Database Error",
+          (error as Error).message || "Could not save budget."
+        );
+      }
+    };
+
+    // 3. Check for Daily Budget Streak Warning
+    if (budgetType === "daily_budget") {
+      try {
+        const currentStreak = getUserStreak();
+
+        // If streak is greater than 1, show confirmation alert
+        if (currentStreak > 1) {
+          Alert.alert(
+            "⚠️ Reset Streak?",
+            `You currently have a ${currentStreak}-day streak! Changing your Daily Budget now will reset your streak to 0.\n\nDo you want to continue?`,
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+                onPress: () => console.log("Budget update cancelled"),
+              },
+              {
+                text: "Yes, Update & Reset",
+                style: "destructive",
+                onPress: () => proceedWithSave(true), // Save and Reset
+              },
+            ]
+          );
+          return; // Stop here, wait for user selection
+        }
+      } catch (e) {
+        console.error("Error checking streak", e);
+      }
     }
+
+    // 4. If not daily budget or streak is 0/1, save immediately without reset
+    proceedWithSave(false);
   };
 
   const handlePlannedBudgetSave = async (
