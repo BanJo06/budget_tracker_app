@@ -130,7 +130,7 @@ export default function Index() {
 
   const [dailyBudget, setDailyBudget] = useState(0);
   const [amountSpent, setAmountSpent] = useState(0);
-  const [currentProgress, setCurrentProgress] = useState(0);
+  const [monthlySavings, setMonthlySavings] = useState(0);
 
   const [selectedBudget, setSelectedBudget] = useState<PlannedBudget | null>(
     null
@@ -506,6 +506,58 @@ export default function Index() {
     };
     fetchSummary();
   }, [transactions, regularTransactions]);
+
+  // ======================
+  // 🟣 Monthly Savings Calculation
+  // ======================
+  useEffect(() => {
+    const calculateMonthlySavings = () => {
+      // If no daily budget is set, we can't calculate savings
+      if (!dailyBudget) {
+        setMonthlySavings(0);
+        return;
+      }
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const currentDay = now.getDate(); // e.g., 30 for Nov 30
+
+      let totalAccumulatedSavings = 0;
+
+      // Loop through every day of the month: 1st, 2nd, 3rd... up to Today
+      for (let day = 1; day <= currentDay; day++) {
+        // Filter transactions strictly for this specific day iteration
+        const dayExpenses = transactions.filter((t) => {
+          const tDate = new Date(t.date);
+          return (
+            t.type === "expense" &&
+            t.source !== "planned_budget" &&
+            tDate.getDate() === day &&
+            tDate.getMonth() === currentMonth &&
+            tDate.getFullYear() === currentYear
+          );
+        });
+
+        // Sum up spending for this specific day
+        const spentOnDay = dayExpenses.reduce(
+          (sum, t) => sum + Number(t.amount || 0),
+          0
+        );
+
+        // Calculate remainder for this specific day
+        // Formula: Daily Budget - Spent on that day
+        const remainderOnDay = dailyBudget - spentOnDay;
+
+        // Add to total
+        totalAccumulatedSavings += remainderOnDay;
+      }
+
+      setMonthlySavings(totalAccumulatedSavings);
+    };
+
+    calculateMonthlySavings();
+  }, [transactions, dailyBudget, isFocused]);
 
   // ======================
   // Handle Daily Quest
@@ -1004,10 +1056,10 @@ export default function Index() {
           }}
         >
           <Text className="text-[10px] opacity-65 text-center text-textSecondary-light dark:text-textSecondary-dark mb-[4] leading-tight">
-            Saved yesterday
+            Saved this month
           </Text>
           <Text className="text-[13px] font-bold text-textPrimary-light dark:text-textPrimary-dark text-center">
-            P800.00 {/* Replace with: {formatCurrency(savedYesterdayAmount)} */}
+            {formatCurrency(monthlySavings)}
           </Text>
         </View>
       </View>

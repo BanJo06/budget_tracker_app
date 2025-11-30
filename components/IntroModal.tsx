@@ -19,10 +19,9 @@ const IntroModal: React.FC<IntroModalProps> = ({ visible, onSave }) => {
   const renderGuideContent = () => (
     <>
       <Text className="text-base text-textPrimary-light dark:text-textPrimary-dark leading-6">
-        <Text className="font-bold">👋 Welcome to the app!</Text>
+        <Text className="font-bold">👋 Welcome to PeraPal!</Text>
         {"\n\n"}
         <Text>What's your name?</Text>
-        {"\n"}
       </Text>
       <TextInput
         className="h-12 border-2 border-gray-300 rounded-lg px-3 bg-purple-100 text-black mt-2"
@@ -39,11 +38,11 @@ const IntroModal: React.FC<IntroModalProps> = ({ visible, onSave }) => {
       <View className="flex-1 justify-center items-center bg-black/50">
         <View
           className="bg-bgModal-light dark:bg-bgModal-dark w-[90%] rounded-2xl p-4"
-          style={{ height: 450 }}
+          style={{ height: 250 }}
         >
           {/* Title */}
           <Text className="text-xl font-bold mb-4 text-center text-textPrimary-light dark:text-textPrimary-dark">
-            Welcome
+            Welcome User!
           </Text>
 
           {/* Scrollable Content Area */}

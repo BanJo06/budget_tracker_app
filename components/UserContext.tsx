@@ -4,7 +4,9 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface UserContextType {
   name: string;
   isFirstLaunch: boolean;
+  shouldShowWelcome: boolean; // NEW: Controls the second modal
   saveUserName: (name: string) => Promise<void>;
+  finishWelcome: () => void; // NEW: Closes the second modal
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -12,8 +14,9 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [name, setName] = useState<string>("User"); // Default name
+  const [name, setName] = useState<string>("User");
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean>(false);
+  const [shouldShowWelcome, setShouldShowWelcome] = useState<boolean>(false); // NEW
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
         setName(storedName);
       }
 
-      // If "has_seen_intro" is null, it means it is the first launch
+      // If "has_seen_intro" is null, it is the first launch
       setIsFirstLaunch(hasSeenIntro === null);
     } catch (error) {
       console.error("Failed to load user data", error);
@@ -40,24 +43,40 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const saveUserName = async (newName: string) => {
     try {
-      const finalName = newName.trim() || "User"; // Fallback if empty
+      const finalName = newName.trim() || "User";
+
+      // 1. Save to storage
       await AsyncStorage.setItem("user_name", finalName);
       await AsyncStorage.setItem("has_seen_intro", "true");
 
+      // 2. Update state
       setName(finalName);
-      setIsFirstLaunch(false);
+      setIsFirstLaunch(false); // Close Intro Modal
+      setShouldShowWelcome(true); // Open Welcome Modal
     } catch (error) {
       console.error("Failed to save user name", error);
     }
   };
 
-  // Prevent rendering children until we check storage to avoid flickering
+  // NEW: Function to close the second modal
+  const finishWelcome = () => {
+    setShouldShowWelcome(false);
+  };
+
   if (isLoading) {
     return null;
   }
 
   return (
-    <UserContext.Provider value={{ name, isFirstLaunch, saveUserName }}>
+    <UserContext.Provider
+      value={{
+        name,
+        isFirstLaunch,
+        shouldShowWelcome,
+        saveUserName,
+        finishWelcome,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
