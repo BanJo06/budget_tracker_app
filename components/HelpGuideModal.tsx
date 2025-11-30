@@ -27,7 +27,8 @@ const HelpGuideModal: React.FC<HelpGuideModalProps> = ({
         {"\n"}
         <Text className="italic">
           Note: In creating an account, you can input your Initial Amount to 0
-          if you don’t have any money.
+          if you don’t have any money. But if this is your first account, you
+          must put Initial Amount to activate your daily budget.
         </Text>
         {"\n\n"}
         {/* --- Adding a Transaction Highlight --- */}

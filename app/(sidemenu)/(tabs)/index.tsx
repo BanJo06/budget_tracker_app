@@ -282,19 +282,30 @@ export default function Index() {
   // ======================
 
   useEffect(() => {
+    // 🛑 CRITICAL FIX: Do not run this until the Database is ready!
+    if (!dbReady || !isFocused) return;
+
     const loadDashboardData = async () => {
-      // 1. Get Daily Budget Limit
-      const limit = getDailyBudget(); // Assuming this is also sync now
+      try {
+        // 1. Get Daily Budget Limit
+        // Ensure getDailyBudget() is synchronous OR await it if it's async in your utils
+        const dailyBudgetRow = await getBudget("daily_budget");
+        const limit = dailyBudgetRow?.balance || 0;
 
-      // 2. Calculate Streak
-      const currentStreak = updateStreak(limit); // No 'await' needed anymore
+        // 2. Calculate Streak
+        const currentStreak = updateStreak(limit);
 
-      // 3. Update State
-      setStreakCount(currentStreak);
+        // 3. Update State
+        const currentStreakValue =
+          typeof currentStreak === "number" ? currentStreak : 0;
+        setStreakCount(currentStreakValue);
+      } catch (e) {
+        console.log("Error loading dashboard data", e);
+      }
     };
 
     loadDashboardData();
-  }, [isFocused]);
+  }, [isFocused, dbReady]); // 👈 Add dbReady here
 
   const getTotalSpentForPlannedBudget = (plannedBudgetId: number) => {
     const budgetTx = plannedBudgetTransactions.filter(
@@ -512,7 +523,6 @@ export default function Index() {
   // ======================
   useEffect(() => {
     const calculateMonthlySavings = () => {
-      // If no daily budget is set, we can't calculate savings
       if (!dailyBudget) {
         setMonthlySavings(0);
         return;
@@ -521,22 +531,47 @@ export default function Index() {
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth();
-      const currentDay = now.getDate(); // e.g., 30 for Nov 30
+      const currentDay = now.getDate(); // e.g., 30
+
+      // ✅ RESET ON MONTH CHANGE:
+      // This filter only allows transactions from the CURRENT month/year.
+      // If the month changes (e.g. Nov -> Dec), this array becomes empty
+      // (or starts fresh with new data), effectively resetting the calculation loop below.
+      const thisMonthTransactions = transactions.filter((t) => {
+        const tDate = new Date(t.date);
+        return (
+          t.type === "expense" &&
+          t.source !== "planned_budget" &&
+          tDate.getMonth() === currentMonth &&
+          tDate.getFullYear() === currentYear &&
+          tDate.getDate() <= currentDay
+        );
+      });
+
+      // DETERMINE START DAY:
+      // Start from day of first transaction, OR today if no transactions exist.
+      let startDay = currentDay;
+
+      if (thisMonthTransactions.length > 0) {
+        // Extract day numbers from transactions
+        const daysWithTransactions = thisMonthTransactions.map((t) =>
+          new Date(t.date).getDate()
+        );
+        // Find the earliest day (min value)
+        startDay = Math.min(...daysWithTransactions);
+      }
 
       let totalAccumulatedSavings = 0;
 
-      // Loop through every day of the month: 1st, 2nd, 3rd... up to Today
-      for (let day = 1; day <= currentDay; day++) {
+      // 🛑 CALCULATE UNTIL YESTERDAY:
+      // Loop from startDay up to (currentDay - 1).
+      // We do NOT include 'currentDay' (today) in the savings calculation.
+      // If it's the 1st of the month, the loop condition (1 < 1) fails, result is 0.
+      for (let day = startDay; day < currentDay; day++) {
         // Filter transactions strictly for this specific day iteration
-        const dayExpenses = transactions.filter((t) => {
+        const dayExpenses = thisMonthTransactions.filter((t) => {
           const tDate = new Date(t.date);
-          return (
-            t.type === "expense" &&
-            t.source !== "planned_budget" &&
-            tDate.getDate() === day &&
-            tDate.getMonth() === currentMonth &&
-            tDate.getFullYear() === currentYear
-          );
+          return tDate.getDate() === day;
         });
 
         // Sum up spending for this specific day
@@ -545,12 +580,8 @@ export default function Index() {
           0
         );
 
-        // Calculate remainder for this specific day
-        // Formula: Daily Budget - Spent on that day
-        const remainderOnDay = dailyBudget - spentOnDay;
-
-        // Add to total
-        totalAccumulatedSavings += remainderOnDay;
+        // Add to total: (Daily Budget - Spent on that day)
+        totalAccumulatedSavings += dailyBudget - spentOnDay;
       }
 
       setMonthlySavings(totalAccumulatedSavings);
