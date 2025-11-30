@@ -1090,7 +1090,7 @@ export default function Index() {
             Saved this month
           </Text>
           <Text className="text-[13px] font-bold text-textPrimary-light dark:text-textPrimary-dark text-center">
-            {formatCurrency(monthlySavings)}
+            ₱{formatCurrency(monthlySavings)}
           </Text>
         </View>
       </View>
@@ -1195,13 +1195,13 @@ export default function Index() {
                   <View className="mt-[8]">
                     <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark">
                       Spent ₱
-                      {(
+                      {formatCurrency(
                         Number(budget.amount) *
-                        Number(getProgress(budget, plannedBudgetTransactions))
-                      ).toFixed(0)}{" "}
+                          Number(getProgress(budget, plannedBudgetTransactions))
+                      )}{" "}
                       from{" "}
                       <Text className="text-[14px] text-textHighlight-light dark:text-textHighlight-dark">
-                        ₱{Number(budget.amount).toFixed(0)}
+                        ₱{formatCurrency(Number(budget.amount))}
                       </Text>
                     </Text>
                   </View>

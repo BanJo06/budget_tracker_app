@@ -7,6 +7,7 @@ import {
   updateAccount,
 } from "@/utils/accounts";
 import { initDatabase } from "@/utils/database";
+import { formatCurrency } from "@/utils/stats";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -376,7 +377,7 @@ export default function Accounts() {
                             Balance:
                           </Text>
                           <Text className="text-sm text-textHighlight-light dark:text-textHighlight-dark">
-                            ₱{parseFloat(account.balance).toFixed(2)}
+                            ₱{formatCurrency(account.balance)}
                           </Text>
                         </View>
                       </View>

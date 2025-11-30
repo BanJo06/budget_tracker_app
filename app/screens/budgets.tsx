@@ -32,6 +32,7 @@ import {
   saveBudget as saveBudgetDb,
   savePlannedBudget,
 } from "@/utils/database";
+import { formatCurrency } from "@/utils/stats";
 import { useFocusEffect } from "@react-navigation/native";
 import { useColorScheme } from "nativewind";
 import { TouchableWithoutFeedback } from "react-native";
@@ -523,49 +524,6 @@ export default function Budgets() {
     }
   }, []);
 
-  // const handleSaveBudget = async (budgetType: string, value: string) => {
-  //   const budgetValue = parseFloat(value);
-  //   if (!dbInitialized) {
-  //     showAlert(
-  //       "Database Not Ready",
-  //       "Please wait while the database initializes."
-  //     );
-  //     return;
-  //   }
-  //   if (value.trim() === "") {
-  //     showAlert("Input Error", "Please enter a budget amount.");
-  //     return;
-  //   }
-  //   if (!value || isNaN(budgetValue) || budgetValue <= 0) {
-  //     Alert.alert("Invalid Input", "Please enter a valid amount.");
-  //     return;
-  //   }
-
-  //   if (budgetValue > (totalBalance || 0)) {
-  //     Alert.alert(
-  //       "Insufficient Balance",
-  //       `You have only total balance of ₱${totalBalance.toFixed(
-  //         2
-  //       )} in your all accounts. Please input the daily budget less than your total balance.`
-  //     );
-  //     return;
-  //   }
-
-  //   try {
-  //     saveBudgetValue(budgetType, value);
-  //     const formattedBudgetType =
-  //       budgetType.replace("_budget", "").charAt(0).toUpperCase() +
-  //       budgetType.replace("_budget", "").slice(1);
-  //     showAlert("Success", `${formattedBudgetType} Budget updated!`);
-  //     loadAllBudgets();
-  //   } catch (error) {
-  //     console.error(error);
-  //     showAlert(
-  //       "Database Error",
-  //       (error as Error).message || "Could not save budget."
-  //     );
-  //   }
-  // };
   const handleSaveBudget = async (budgetType: string, value: string) => {
     const budgetValue = parseFloat(value);
 
@@ -585,6 +543,24 @@ export default function Budgets() {
       Alert.alert("Invalid Input", "Please enter a valid amount.");
       return;
     }
+
+    if (accounts.length === 0) {
+      Alert.alert(
+        "No Accounts Found",
+        "You currently have no accounts. Please add an account with funds before setting a budget."
+      );
+      return;
+    }
+
+    // Since min budget is 50, they can't set a valid budget if they have less than that.
+    if ((totalBalance || 0) < 50) {
+      Alert.alert(
+        "Insufficient Funds",
+        "Your total balance across all accounts is less than ₱50.00. You need at least ₱50.00 to set a valid daily budget."
+      );
+      return;
+    }
+
     if (budgetValue < 50) {
       Alert.alert(
         "Minimum Budget Required",
@@ -637,7 +613,7 @@ export default function Budgets() {
         const currentStreak = getUserStreak();
 
         // If streak is greater than 1, show confirmation alert
-        if (currentStreak > 1) {
+        if (currentStreak > 0) {
           Alert.alert(
             "⚠️ Reset Streak?",
             `You currently have a ${currentStreak}-day streak! Changing your Daily Budget now will reset your streak to 0.\n\nDo you want to continue?`,
@@ -781,7 +757,7 @@ export default function Budgets() {
                   Budget:
                 </Text>
                 <Text className="text-accent-light dark:text-textPrimary-dark">
-                  ₱{b.value}
+                  ₱{formatCurrency(b.value)}
                 </Text>
               </View>
             </View>
@@ -948,10 +924,10 @@ export default function Budgets() {
                   <ProgressBar progress={currentProgress} />
 
                   <Text className="text-lg pt-1 text-textPrimary-light dark:text-textPrimary-dark">
-                    ₱{totalSpent.toFixed(2)}
+                    ₱{formatCurrency(totalSpent)}
                   </Text>
                   <Text className="text-textPrimary-light dark:text-textPrimary-dark">
-                    (₱{(pb.amount ?? 0).toFixed(2)})
+                    (₱{formatCurrency(pb.amount ?? 0)})
                   </Text>
                 </View>
               </View>

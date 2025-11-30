@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/utils/stats";
 import React from "react";
 import { Text, View } from "react-native";
 import { Circle, Svg } from "react-native-svg";
@@ -59,11 +60,11 @@ export default function DonutChart({
           {label}
         </Text>
         <Text style={{ color: color }} className="text-[18px] font-bold">
-          {/* ₱{spent.toFixed(2)} */}₱{remaining.toFixed(2)}
+          {/* ₱{spent.toFixed(2)} */}₱{formatCurrency(remaining)}
         </Text>
         <Text className="text-[12px] text-textPrimary-light dark:text-textPrimary-dark opacity-65">
           {/* / ₱{dailyBudget.toFixed(2)} */}
-          left from ₱{dailyBudget.toFixed(2)}
+          left from ₱{formatCurrency(dailyBudget)}
         </Text>
       </View>
     </View>

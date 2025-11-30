@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/utils/stats";
 import React from "react";
 import { Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -35,7 +36,7 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
   const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="fade" transparent>
       <View className="flex-1 justify-center items-center bg-black/50">
         <View
           className="bg-bgModal-light dark:bg-bgModal-dark w-[90%] rounded-2xl p-4"
@@ -69,7 +70,7 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
                     </Text>
                   </View>
                   <Text className="text-base font-semibold text-textPrimary-light dark:text-textPrimary-dark">
-                    ₱{t.amount.toFixed(2)}
+                    ₱{formatCurrency(t.amount.toFixed(2))}
                   </Text>
                 </View>
               ))}
@@ -82,7 +83,7 @@ const WeeklyTransactionsModal: React.FC<WeeklyTransactionsModalProps> = ({
                 Total
               </Text>
               <Text className="text-base font-semibold text-textPrimary-light dark:text-textPrimary-dark">
-                ₱{totalAmount.toFixed(2)}
+                ₱{formatCurrency(totalAmount.toFixed(2))}
               </Text>
             </View>
           )}

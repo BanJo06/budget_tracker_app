@@ -8,6 +8,7 @@ import type {
   PlannedBudget,
   PlannedBudgetTransaction,
 } from "@/types/types";
+import { formatCurrency } from "@/utils/stats";
 
 interface PlannedBudgetModalsProps {
   isBudgetModalVisible: boolean;
@@ -88,7 +89,7 @@ export default function PlannedBudgetModals({
     onSelectAccount: (acc: Account) => void;
   }) => (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent
       visible={isVisible}
       onRequestClose={onClose} // ✅ enables Android back button
@@ -135,7 +136,7 @@ export default function PlannedBudgetModals({
 
   const BudgetModal = () => (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       visible={isBudgetModalVisible}
       onRequestClose={() => setIsBudgetModalVisible(false)}
@@ -171,7 +172,8 @@ export default function PlannedBudgetModals({
               {/* === DETAILS === */}
               <View>
                 <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark mb-[4]">
-                  Goal Amount: ₱{selectedBudget?.amount?.toFixed(2) || "0.00"}
+                  Goal Amount: ₱
+                  {formatCurrency(selectedBudget?.amount?.toFixed(2)) || "0.00"}
                 </Text>
                 <Text className="text-[14px] text-textPrimary-light dark:text-textPrimary-dark mb-[4]">
                   Start Date: {selectedBudget?.start_date || "Ongoing"}
@@ -252,7 +254,7 @@ export default function PlannedBudgetModals({
                             </Text>
                           </View>
                           <Text className="text-[14px] text-[#8938E9]">
-                            ₱{parseFloat(t.amount).toFixed(2)}
+                            ₱{formatCurrency(parseFloat(t.amount).toFixed(2))}
                           </Text>
                         </View>
                       </View>

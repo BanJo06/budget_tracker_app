@@ -25,6 +25,14 @@ export const calculateWeeklySummary = (days = 7) => {
   };
 };
 
-export const formatCurrency = (amount) => {
-  return `₱${amount.toFixed(2)}`;
+export const formatCurrency = (value) => {
+  const number = Number(value);
+
+  if (isNaN(number)) return "0.00";
+
+  // 'en-US' standardizes the comma for thousands and dot for decimals
+  return number.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };

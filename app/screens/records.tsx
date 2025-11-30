@@ -2,6 +2,7 @@ import { CATEGORIES_EXPENSES_SVG_ICONS } from "@/assets/constants/categories_exp
 import { CATEGORIES_INCOME_SVG_ICONS } from "@/assets/constants/categories_income_icons";
 import { SVG_ICONS } from "@/assets/constants/icons";
 import { initDatabase } from "@/utils/database";
+import { formatCurrency } from "@/utils/stats";
 import { getAllTransactions } from "@/utils/transactions";
 import { router, useFocusEffect } from "expo-router";
 import { useColorScheme } from "nativewind";
@@ -176,7 +177,7 @@ export default function Records() {
               INCOME
             </Text>
             <Text className="text-white text-4xl font-bold mb-1">
-              ₱{amount.toFixed(2)}
+              ₱{formatCurrency(amount.toFixed(2))}
             </Text>
             <Text className="text-white text-right opacity-90">
               {formattedDate} {formattedTime}
@@ -216,7 +217,7 @@ export default function Records() {
               EXPENSE
             </Text>
             <Text className="text-black dark:text-textPrimary-dark text-4xl font-bold mb-1">
-              -₱{amount.toFixed(2)}
+              -₱{formatCurrency(amount.toFixed(2))}
             </Text>
             <Text className="text-black dark:text-textPrimary-dark text-right opacity-70">
               {formattedDate} {formattedTime}
@@ -254,7 +255,7 @@ export default function Records() {
               TRANSFER
             </Text>
             <Text className="text-white text-4xl font-bold mb-1">
-              {displayAmount}
+              ₱{formatCurrency(displayAmount)}
             </Text>
             <Text className="text-white text-right opacity-90">
               {formattedDate} {formattedTime}
@@ -403,7 +404,7 @@ export default function Records() {
               iconBgColorClass = "bg-[#8938E9]";
               amountColorClass = "text-[#8938E9]";
               mainText = categoryName;
-              amountText = `+₱${item.amount.toFixed(2)}`;
+              amountText = `+₱${formatCurrency(item.amount)}`;
             } else if (item.type === "expense") {
               const categoryIconName =
                 item.category_icon_name || "OtherExpenses";
@@ -413,13 +414,13 @@ export default function Records() {
               iconBgColorClass = "bg-black";
               amountColorClass = "text-black";
               mainText = categoryName;
-              amountText = `-₱${item.amount.toFixed(2)}`;
+              amountText = `-₱${formatCurrency(item.amount)}`;
             } else if (item.type === "transfer") {
               IconComponent = SVG_ICONS.Transfer;
               iconBgColorClass = "bg-gray-500";
               amountColorClass = "text-gray-500";
               mainText = `Transfer from ${item.account_name} to ${item.to_account_name}`;
-              amountText = `${item.amount.toFixed(2)}`;
+              amountText = `₱${formatCurrency(item.amount)}`;
             }
 
             return (
@@ -454,7 +455,7 @@ export default function Records() {
       )}
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={!!selectedTransaction}
         onRequestClose={() => {

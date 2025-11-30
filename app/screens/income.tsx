@@ -1,4 +1,5 @@
 import { getDb } from "@/utils/database";
+import { formatCurrency } from "@/utils/stats";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import {
@@ -171,12 +172,6 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
       legendFontSize: 12,
     }));
 
-  const getCurrencyFormatted = (amount: number) => {
-    // If no value (0), standard formatting is P0.00, or you can return "--" if preferred
-    if (amount === 0) return "₱0.00";
-    return `₱${amount.toFixed(2)}`;
-  };
-
   const chartConfig = {
     color: (opacity = 1) =>
       isDark ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`,
@@ -267,7 +262,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
                 {label}
               </Text>
               <Text className="font-bold text-base text-accent-light dark:text-textPrimary-dark">
-                {getCurrencyFormatted(value)}
+                ₱{formatCurrency(value)}
               </Text>
             </View>
           );
@@ -292,7 +287,7 @@ export default function IncomeContent({ month, year }: IncomeContentProps) {
             </View>
             <View className="flex-col justify-end items-end gap-1">
               <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
-                {getCurrencyFormatted(category.amount)}
+                ₱{formatCurrency(category.amount)}
               </Text>
               <Text className="opacity-60 text-xs text-textSecondary-light dark:text-textSecondary-dark">
                 {category.percentage.toFixed(0)}%

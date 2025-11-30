@@ -301,6 +301,7 @@
 
 // expense.tsx
 import { getDb } from "@/utils/database";
+import { formatCurrency } from "@/utils/stats";
 import { useColorScheme } from "nativewind";
 import React, { useEffect, useState } from "react";
 import { Dimensions, ScrollView, Text, View } from "react-native";
@@ -471,11 +472,6 @@ export default function ExpenseContent({ month, year }: ExpenseContentProps) {
       legendFontSize: 12,
     }));
 
-  const getCurrencyFormatted = (amount: number) => {
-    if (amount === 0) return "₱0.00";
-    return `₱${amount.toFixed(2)}`;
-  };
-
   const chartConfig = {
     color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
   };
@@ -561,7 +557,7 @@ export default function ExpenseContent({ month, year }: ExpenseContentProps) {
                 {label}
               </Text>
               <Text className="font-bold text-base text-accent-light dark:text-textPrimary-dark">
-                {value === 0 ? "₱0.00" : getCurrencyFormatted(value)}
+                {value === 0 ? "₱0.00" : `₱${formatCurrency(value)}`}
               </Text>
             </View>
           );
@@ -586,7 +582,7 @@ export default function ExpenseContent({ month, year }: ExpenseContentProps) {
             </View>
             <View className="flex-col justify-end items-end gap-1">
               <Text className="text-base font-medium text-textPrimary-light dark:text-textPrimary-dark">
-                {getCurrencyFormatted(category.amount)}
+                ₱{formatCurrency(category.amount)}
               </Text>
               <Text className="opacity-60 text-xs text-textSecondary-light dark:text-textSecondary-dark">
                 {category.percentage.toFixed(0)}%

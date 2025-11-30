@@ -19,6 +19,7 @@ import {
 } from "@/utils/accounts";
 import { getBudgetValue } from "@/utils/budgets";
 import { getAccountBalance, initDatabase } from "@/utils/database";
+import { formatCurrency } from "@/utils/stats";
 import {
   getAllTransactions,
   saveTransaction,
@@ -276,7 +277,7 @@ const AccountsModal = ({
 
   return (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent
       visible={isVisible}
       onRequestClose={onClose}
@@ -312,7 +313,7 @@ const AccountsModal = ({
                     </Text>
                   </View>
                   <Text className="text-lg text-textHighlight-light dark:text-textHighlight-dark">
-                    ₱{account.balance.toFixed(2)}
+                    ₱{formatCurrency(account.balance)}
                   </Text>
                 </TouchableOpacity>
               );
